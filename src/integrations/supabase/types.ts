@@ -56,6 +56,106 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_history: {
+        Row: {
+          action: string
+          contract_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          contract_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          contract_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_history_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          clauses: string | null
+          client_id: string
+          contract_number: string
+          created_at: string
+          end_date: string | null
+          id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          public_token: string | null
+          service_description: string | null
+          service_type: string
+          start_date: string
+          status: Database["public"]["Enums"]["contract_status"]
+          title: string
+          total_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clauses?: string | null
+          client_id: string
+          contract_number?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          public_token?: string | null
+          service_description?: string | null
+          service_type: string
+          start_date: string
+          status?: Database["public"]["Enums"]["contract_status"]
+          title: string
+          total_value?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clauses?: string | null
+          client_id?: string
+          contract_number?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          public_token?: string | null
+          service_description?: string | null
+          service_type?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["contract_status"]
+          title?: string
+          total_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
@@ -93,6 +193,13 @@ export type Database = {
     Enums: {
       account_type: "mei" | "autonomo" | "prestador" | "liberal"
       client_status: "active" | "inactive"
+      contract_status:
+        | "draft"
+        | "sent"
+        | "awaiting_signature"
+        | "signed"
+        | "cancelled"
+      payment_method: "one_time" | "installments" | "recurring"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -222,6 +329,14 @@ export const Constants = {
     Enums: {
       account_type: ["mei", "autonomo", "prestador", "liberal"],
       client_status: ["active", "inactive"],
+      contract_status: [
+        "draft",
+        "sent",
+        "awaiting_signature",
+        "signed",
+        "cancelled",
+      ],
+      payment_method: ["one_time", "installments", "recurring"],
     },
   },
 } as const
