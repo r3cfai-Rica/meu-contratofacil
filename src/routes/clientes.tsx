@@ -32,7 +32,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ClientFormDialog } from "@/components/clients/ClientFormDialog";
+import { UpgradeDialog } from "@/components/billing/UpgradeDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlan } from "@/hooks/use-plan";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDateBR } from "@/lib/format";
 
@@ -66,12 +68,23 @@ interface Client {
 
 function ClientsPage() {
   const { user } = useAuth();
+  const { planInfo } = usePlan();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Client | null>(null);
+
+  const limit = planInfo.limits.maxClients;
+  const handleNewClient = () => {
+    if (limit !== null && clients.length >= limit) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setDialogOpen(true);
+  };
 
   const loadClients = async () => {
     if (!user) return;
