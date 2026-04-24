@@ -103,6 +103,14 @@ export type Database = {
           public_token: string | null
           service_description: string | null
           service_type: string
+          signature_data: string | null
+          signature_type: string | null
+          signed_at: string | null
+          signer_birth_date: string | null
+          signer_display_name: string | null
+          signer_document: string | null
+          signer_ip: string | null
+          signer_name: string | null
           start_date: string
           status: Database["public"]["Enums"]["contract_status"]
           title: string
@@ -121,6 +129,14 @@ export type Database = {
           public_token?: string | null
           service_description?: string | null
           service_type: string
+          signature_data?: string | null
+          signature_type?: string | null
+          signed_at?: string | null
+          signer_birth_date?: string | null
+          signer_display_name?: string | null
+          signer_document?: string | null
+          signer_ip?: string | null
+          signer_name?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["contract_status"]
           title: string
@@ -139,6 +155,14 @@ export type Database = {
           public_token?: string | null
           service_description?: string | null
           service_type?: string
+          signature_data?: string | null
+          signature_type?: string | null
+          signed_at?: string | null
+          signer_birth_date?: string | null
+          signer_display_name?: string | null
+          signer_document?: string | null
+          signer_ip?: string | null
+          signer_name?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["contract_status"]
           title?: string
