@@ -1,8 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -15,6 +19,55 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const { session } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) navigate({ to: "/dashboard" });
+  }, [session, navigate]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+
+    if (error) {
+      if (error.message.toLowerCase().includes("invalid")) {
+        toast.error("E-mail ou senha incorretos");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+
+    toast.success("Bem-vindo de volta!");
+    navigate({ to: "/dashboard" });
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Digite seu e-mail para recuperar a senha");
+      return;
+    }
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Enviamos um e-mail com instruções para redefinir sua senha");
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
@@ -35,24 +88,29 @@ function LoginPage() {
             </p>
           </div>
 
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" placeholder="voce@exemplo.com" autoComplete="email" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="voce@exemplo.com"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Senha</Label>
                 <button
                   type="button"
-                  className="text-xs text-muted-foreground hover:text-primary"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="text-xs text-muted-foreground hover:text-primary disabled:opacity-50"
                 >
-                  Esqueceu?
+                  {resetLoading ? "Enviando..." : "Esqueci minha senha"}
                 </button>
               </div>
               <Input
@@ -60,17 +118,26 @@ function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Entrar
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Não tem conta?{" "}
             <Link to="/signup" className="text-primary hover:underline">
-              Criar conta grátis
+              Cadastrar
             </Link>
           </p>
         </div>

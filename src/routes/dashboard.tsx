@@ -1,6 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileSignature, QrCode, Users, Plus, FileText } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { FileSignature, QrCode, Users, Plus, FileText, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -9,8 +13,16 @@ export const Route = createFileRoute("/dashboard")({
       { name: "description", content: "Painel de controle do ContratoFácil." },
     ],
   }),
-  component: DashboardPage,
+  component: DashboardRoute,
 });
+
+function DashboardRoute() {
+  return (
+    <ProtectedRoute>
+      <DashboardPage />
+    </ProtectedRoute>
+  );
+}
 
 const stats = [
   { label: "Contratos ativos", value: "0", icon: FileSignature },
@@ -19,9 +31,29 @@ const stats = [
 ];
 
 function DashboardPage() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [fullName, setFullName] = useState<string>("");
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.full_name) setFullName(data.full_name);
+      });
+  }, [user]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/" });
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Top bar */}
       <header className="border-b border-border/60 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 font-semibold">
@@ -32,8 +64,8 @@ function DashboardPage() {
               Contrato<span className="text-primary">Fácil</span>
             </span>
           </Link>
-          <Button size="sm" variant="ghost" asChild>
-            <Link to="/login">Sair</Link>
+          <Button size="sm" variant="ghost" onClick={handleSignOut} className="gap-2">
+            <LogOut className="h-4 w-4" /> Sair
           </Button>
         </div>
       </header>
@@ -41,7 +73,9 @@ function DashboardPage() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Olá 👋</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Olá{fullName ? `, ${fullName.split(" ")[0]}` : ""} 👋
+            </h1>
             <p className="text-sm text-muted-foreground">
               Aqui está um resumo da sua atividade.
             </p>
