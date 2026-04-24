@@ -279,6 +279,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          logo_url: string | null
           updated_at: string
           user_id: string
         }
@@ -287,6 +288,7 @@ export type Database = {
           created_at?: string
           full_name: string
           id?: string
+          logo_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -295,6 +297,49 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          logo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan: Database["public"]["Enums"]["plan_tier"]
+          status: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -305,7 +350,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      count_user_active_contracts: {
+        Args: { _user_id: string }
+        Returns: number
+      }
+      count_user_clients: { Args: { _user_id: string }; Returns: number }
+      count_user_invoices_this_month: {
+        Args: { _user_id: string }
+        Returns: number
+      }
+      get_user_plan: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["plan_tier"]
+      }
     }
     Enums: {
       account_type: "mei" | "autonomo" | "prestador" | "liberal"
@@ -319,6 +376,13 @@ export type Database = {
       invoice_status: "pending" | "paid" | "overdue" | "cancelled"
       payment_method: "one_time" | "installments" | "recurring"
       pix_key_type: "cpf" | "cnpj" | "email" | "phone" | "random"
+      plan_tier: "free" | "pro" | "business"
+      subscription_status:
+        | "active"
+        | "trialing"
+        | "past_due"
+        | "canceled"
+        | "incomplete"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -458,6 +522,14 @@ export const Constants = {
       invoice_status: ["pending", "paid", "overdue", "cancelled"],
       payment_method: ["one_time", "installments", "recurring"],
       pix_key_type: ["cpf", "cnpj", "email", "phone", "random"],
+      plan_tier: ["free", "pro", "business"],
+      subscription_status: [
+        "active",
+        "trialing",
+        "past_due",
+        "canceled",
+        "incomplete",
+      ],
     },
   },
 } as const
