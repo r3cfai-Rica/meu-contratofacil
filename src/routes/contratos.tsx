@@ -128,7 +128,7 @@ function ContractsPage() {
             Crie, envie e acompanhe seus contratos digitais.
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setDialogOpen(true)}>
+        <Button className="gap-2" onClick={handleNewContract}>
           <Plus className="h-4 w-4" /> Novo contrato
         </Button>
       </div>
@@ -180,7 +180,7 @@ function ContractsPage() {
                 : "Tente ajustar os filtros ou a busca."}
             </p>
             {contracts.length === 0 && (
-              <Button className="mt-5 gap-2" onClick={() => setDialogOpen(true)}>
+              <Button className="mt-5 gap-2" onClick={handleNewContract}>
                 <Plus className="h-4 w-4" /> Novo contrato
               </Button>
             )}

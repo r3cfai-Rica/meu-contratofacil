@@ -216,7 +216,7 @@ function InvoicesPage() {
             Gere cobranças PIX e acompanhe os pagamentos.
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setDialogOpen(true)}>
+        <Button className="gap-2" onClick={handleNewInvoice}>
           <Plus className="h-4 w-4" /> Nova cobrança
         </Button>
       </div>
@@ -300,10 +300,7 @@ function InvoicesPage() {
                 : "Tente ajustar os filtros ou a busca."}
             </p>
             {invoices.length === 0 && (
-              <Button
-                className="mt-5 gap-2"
-                onClick={() => setDialogOpen(true)}
-              >
+              <Button className="mt-5 gap-2" onClick={handleNewInvoice}>
                 <Plus className="h-4 w-4" /> Nova cobrança
               </Button>
             )}
