@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string
+          document: string | null
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["client_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
@@ -50,6 +92,7 @@ export type Database = {
     }
     Enums: {
       account_type: "mei" | "autonomo" | "prestador" | "liberal"
+      client_status: "active" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -178,6 +221,7 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["mei", "autonomo", "prestador", "liberal"],
+      client_status: ["active", "inactive"],
     },
   },
 } as const
