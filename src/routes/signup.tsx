@@ -1,8 +1,19 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -14,7 +25,66 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
+const ACCOUNT_TYPES = [
+  { value: "mei", label: "MEI" },
+  { value: "autonomo", label: "Autônomo" },
+  { value: "prestador", label: "Prestador de serviço" },
+  { value: "liberal", label: "Profissional liberal" },
+] as const;
+
 function SignupPage() {
+  const navigate = useNavigate();
+  const { session } = useAuth();
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [accountType, setAccountType] = useState<string>("autonomo");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) navigate({ to: "/dashboard" });
+  }, [session, navigate]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (password.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres");
+      return;
+    }
+    if (!fullName.trim()) {
+      toast.error("Informe seu nome completo");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          full_name: fullName.trim(),
+          account_type: accountType,
+        },
+      },
+    });
+    setLoading(false);
+
+    if (error) {
+      if (error.message.toLowerCase().includes("already")) {
+        toast.error("Este e-mail já está cadastrado. Tente fazer login.");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+
+    toast.success("Conta criada com sucesso!");
+    navigate({ to: "/dashboard" });
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
@@ -35,19 +105,29 @@ function SignupPage() {
             </p>
           </div>
 
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="name">Nome completo</Label>
-              <Input id="name" placeholder="Seu nome" autoComplete="name" />
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                autoComplete="name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" placeholder="voce@exemplo.com" autoComplete="email" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="voce@exemplo.com"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
@@ -56,10 +136,35 @@ function SignupPage() {
                 type="password"
                 placeholder="Mínimo 8 caracteres"
                 autoComplete="new-password"
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Criar conta grátis
+            <div className="space-y-2">
+              <Label htmlFor="account-type">Tipo de conta</Label>
+              <Select value={accountType} onValueChange={setAccountType}>
+                <SelectTrigger id="account-type">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCOUNT_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Criando conta...
+                </>
+              ) : (
+                "Criar conta grátis"
+              )}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
               Ao continuar, você concorda com nossos termos de uso.
