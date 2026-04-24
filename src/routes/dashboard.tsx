@@ -7,10 +7,14 @@ import {
   Clock,
   Plus,
   ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  ContractStatusBadge,
+  type ContractStatus,
+} from "@/components/contracts/ContractStatusBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
@@ -40,6 +44,17 @@ interface Stats {
   awaitingSignature: number;
 }
 
+interface ContractRow {
+  id: string;
+  contract_number: string;
+  title: string;
+  total_value: number;
+  start_date: string;
+  status: ContractStatus;
+  signed_at: string | null;
+  clients: { full_name: string } | null;
+}
+
 function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<Stats>({
@@ -48,24 +63,56 @@ function DashboardPage() {
     pendingAmount: 0,
     awaitingSignature: 0,
   });
+  const [recent, setRecent] = useState<ContractRow[]>([]);
+  const [recentlySigned, setRecentlySigned] = useState<ContractRow[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("clients")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .then(({ count }) => {
-        setStats((s) => ({ ...s, clients: count ?? 0 }));
+
+    void (async () => {
+      const [clientsRes, contractsRes] = await Promise.all([
+        supabase
+          .from("clients")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        supabase
+          .from("contracts")
+          .select(
+            "id, contract_number, title, total_value, start_date, status, signed_at, clients(full_name)",
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+      ]);
+
+      const all = (contractsRes.data ?? []) as unknown as ContractRow[];
+      const active = all.filter((c) => c.status === "signed");
+      const awaiting = all.filter((c) => c.status === "awaiting_signature");
+      const pending = active.reduce((sum, c) => sum + Number(c.total_value), 0);
+
+      // Signed in the last 7 days
+      const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const newlySigned = all
+        .filter(
+          (c) =>
+            c.status === "signed" &&
+            c.signed_at &&
+            new Date(c.signed_at).getTime() > weekAgo,
+        )
+        .slice(0, 5);
+
+      setStats({
+        clients: clientsRes.count ?? 0,
+        activeContracts: active.length,
+        pendingAmount: pending,
+        awaitingSignature: awaiting.length,
       });
+      setRecent(all.slice(0, 5));
+      setRecentlySigned(newlySigned);
+    })();
   }, [user]);
 
   const cards = [
-    {
-      label: "Clientes cadastrados",
-      value: stats.clients.toString(),
-      icon: Users,
-    },
+    { label: "Clientes cadastrados", value: stats.clients.toString(), icon: Users },
     {
       label: "Contratos ativos",
       value: stats.activeContracts.toString(),
@@ -93,11 +140,45 @@ function DashboardPage() {
           </p>
         </div>
         <Button asChild className="gap-2">
-          <Link to="/clientes">
-            <Plus className="h-4 w-4" /> Novo cliente
+          <Link to="/contratos">
+            <Plus className="h-4 w-4" /> Novo contrato
           </Link>
         </Button>
       </div>
+
+      {recentlySigned.length > 0 && (
+        <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-300">
+              <CheckCircle2 className="h-4 w-4" />
+            </span>
+            <div className="flex-1">
+              <h2 className="text-sm font-semibold text-emerald-100">
+                {recentlySigned.length === 1
+                  ? "1 contrato foi assinado recentemente"
+                  : `${recentlySigned.length} contratos foram assinados recentemente`}
+              </h2>
+              <ul className="mt-2 space-y-1 text-sm text-emerald-200/90">
+                {recentlySigned.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-3">
+                    <span className="truncate">
+                      <span className="font-mono text-xs opacity-70">
+                        {c.contract_number}
+                      </span>{" "}
+                      · {c.title} — {c.clients?.full_name ?? "—"}
+                    </span>
+                    <span className="shrink-0 text-xs opacity-70">
+                      {c.signed_at
+                        ? new Date(c.signed_at).toLocaleString("pt-BR")
+                        : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Stats */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -119,81 +200,66 @@ function DashboardPage() {
 
       {/* Lists */}
       <section className="grid gap-6 lg:grid-cols-2">
-        <ListCard
-          title="Últimos contratos"
-          emptyText="Você ainda não tem contratos."
-          actionLabel="Criar contrato"
-          actionTo="/contratos"
-          items={[]}
-        />
-        <ListCard
-          title="Próximas cobranças"
-          emptyText="Nenhuma cobrança a vencer."
-          actionLabel="Criar cobrança"
-          actionTo="/cobrancas"
-          items={[]}
-        />
-      </section>
-    </div>
-  );
-}
-
-interface ListItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  status: string;
-  date: string;
-}
-
-function ListCard({
-  title,
-  emptyText,
-  actionLabel,
-  actionTo,
-  items,
-}: {
-  title: string;
-  emptyText: string;
-  actionLabel: string;
-  actionTo: "/contratos" | "/cobrancas";
-  items: ListItem[];
-}) {
-  return (
-    <div className="rounded-2xl border border-border/70 bg-card">
-      <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
-        <h2 className="text-sm font-semibold">{title}</h2>
-        <Button asChild size="sm" variant="ghost" className="gap-1 text-xs">
-          <Link to={actionTo}>
-            Ver todos <ArrowRight className="h-3 w-3" />
-          </Link>
-        </Button>
-      </div>
-      {items.length === 0 ? (
-        <div className="px-5 py-10 text-center">
-          <p className="text-sm text-muted-foreground">{emptyText}</p>
-          <Button asChild size="sm" variant="outline" className="mt-4">
-            <Link to={actionTo}>{actionLabel}</Link>
-          </Button>
+        <div className="rounded-2xl border border-border/70 bg-card">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+            <h2 className="text-sm font-semibold">Últimos contratos</h2>
+            <Button asChild size="sm" variant="ghost" className="gap-1 text-xs">
+              <Link to="/contratos">
+                Ver todos <ArrowRight className="h-3 w-3" />
+              </Link>
+            </Button>
+          </div>
+          {recent.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                Você ainda não tem contratos.
+              </p>
+              <Button asChild size="sm" variant="outline" className="mt-4">
+                <Link to="/contratos">Criar contrato</Link>
+              </Button>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border/60">
+              {recent.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between gap-3 px-5 py-3"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{c.title}</div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {c.clients?.full_name ?? "—"} ·{" "}
+                      {formatCurrencyBRL(Number(c.total_value))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ContractStatusBadge status={c.status} />
+                    <span className="hidden text-xs text-muted-foreground sm:inline">
+                      {formatDateBR(c.start_date)}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      ) : (
-        <ul className="divide-y divide-border/60">
-          {items.slice(0, 5).map((item) => (
-            <li key={item.id} className="flex items-center justify-between px-5 py-3">
-              <div>
-                <div className="text-sm font-medium">{item.title}</div>
-                <div className="text-xs text-muted-foreground">{item.subtitle}</div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary">{item.status}</Badge>
-                <span className="text-xs text-muted-foreground">
-                  {formatDateBR(item.date)}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+
+        <div className="rounded-2xl border border-border/70 bg-card">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+            <h2 className="text-sm font-semibold">Próximas cobranças</h2>
+            <Button asChild size="sm" variant="ghost" className="gap-1 text-xs">
+              <Link to="/cobrancas">
+                Ver todos <ArrowRight className="h-3 w-3" />
+              </Link>
+            </Button>
+          </div>
+          <div className="px-5 py-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              Nenhuma cobrança a vencer.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
