@@ -403,6 +403,12 @@ function InvoicesPage() {
         onOpenChange={setDialogOpen}
         onSaved={load}
       />
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        resource="cobranças"
+        limit={limit ?? 0}
+      />
 
       <AlertDialog
         open={!!toDelete}

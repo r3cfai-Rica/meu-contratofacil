@@ -232,6 +232,12 @@ function ContractsPage() {
         onOpenChange={setDialogOpen}
         onSaved={load}
       />
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        resource="contratos"
+        limit={limit ?? 0}
+      />
 
       <ContractDetailDialog
         contract={selected}
