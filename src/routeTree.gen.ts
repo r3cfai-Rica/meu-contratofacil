@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContratosRouteImport } from './routes/contratos'
@@ -29,6 +30,11 @@ const SignupRoute = SignupRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanosRoute = PlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/contratos': typeof ContratosRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/c/$token': typeof CTokenRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/contratos': typeof ContratosRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/c/$token': typeof CTokenRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/contratos': typeof ContratosRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/c/$token': typeof CTokenRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/contratos'
     | '/dashboard'
     | '/login'
+    | '/planos'
     | '/reset-password'
     | '/signup'
     | '/c/$token'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/contratos'
     | '/dashboard'
     | '/login'
+    | '/planos'
     | '/reset-password'
     | '/signup'
     | '/c/$token'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/contratos'
     | '/dashboard'
     | '/login'
+    | '/planos'
     | '/reset-password'
     | '/signup'
     | '/c/$token'
@@ -167,6 +179,7 @@ export interface RootRouteChildren {
   ContratosRoute: typeof ContratosRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  PlanosRoute: typeof PlanosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   CTokenRoute: typeof CTokenRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planos': {
+      id: '/planos'
+      path: '/planos'
+      fullPath: '/planos'
+      preLoaderRoute: typeof PlanosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -263,6 +283,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContratosRoute: ContratosRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  PlanosRoute: PlanosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   CTokenRoute: CTokenRoute,
@@ -271,3 +292,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
