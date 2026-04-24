@@ -8,7 +8,7 @@ import { PLANS, planFromProductId, type PlanTier } from "./plans";
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" as Stripe.LatestApiVersion });
+  return new Stripe(key, { apiVersion: "2025-08-27.basil" as Stripe.StripeConfig["apiVersion"] });
 }
 
 function getOrigin(): string {
