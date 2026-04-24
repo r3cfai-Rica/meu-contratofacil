@@ -78,6 +78,7 @@ function PublicContractPage() {
   const { token } = Route.useParams();
   const [contract, setContract] = useState<PublicContract | null>(null);
   const [providerName, setProviderName] = useState<string>("");
+  const [providerLogo, setProviderLogo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
 
@@ -115,13 +116,14 @@ function PublicContractPage() {
         setDisplayName(c.signer_display_name || c.signer_name || c.clients?.full_name || "");
         setBirthDate(c.signer_birth_date || "");
 
-        // Fetch provider name (public read of profiles is restricted; tolerate failure)
+        // Fetch provider name + logo (public read of profiles is restricted; tolerate failure)
         const { data: profile } = await supabase
           .from("profiles")
-          .select("full_name")
+          .select("full_name, logo_url")
           .eq("user_id", c.user_id)
           .maybeSingle();
         if (profile?.full_name) setProviderName(profile.full_name);
+        if (profile?.logo_url) setProviderLogo(profile.logo_url);
       }
       setLoading(false);
     })();
@@ -217,11 +219,12 @@ function PublicContractPage() {
     setContract(data as unknown as PublicContract);
   };
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!contract) return;
-    const pdf = generateContractPdf({
+    const pdf = await generateContractPdf({
       ...contract,
       provider_name: providerName,
+      provider_logo_url: providerLogo,
       client_name: contract.clients?.full_name ?? null,
     });
     pdf.save(`${contract.contract_number}.pdf`);

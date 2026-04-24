@@ -31,7 +31,38 @@ export interface ContractPdfData {
 
 const MARGIN = 56; // ~ 20mm at 72dpi (jsPDF "pt")
 
-export function generateContractPdf(data: ContractPdfData): jsPDF {
+/** Load an image URL and return a data URL + intrinsic dimensions. */
+async function loadImageAsDataUrl(
+  url: string,
+): Promise<{ dataUrl: string; width: number; height: number; format: "PNG" | "JPEG" } | null> {
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const dims = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+    const isJpeg = blob.type.includes("jpeg") || blob.type.includes("jpg");
+    return { dataUrl, width: dims.width, height: dims.height, format: isJpeg ? "JPEG" : "PNG" };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generate a contract PDF. Async because the provider logo (if any) is fetched
+ * from a URL and embedded as a data URL.
+ */
+export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF> {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -45,14 +76,44 @@ export function generateContractPdf(data: ContractPdfData): jsPDF {
     }
   };
 
-  // Header
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(99, 102, 241); // primary
-  doc.text("CONTRATOFÁCIL", MARGIN, y);
+  // Header — logo on the left if available, otherwise the brand name
+  const logo = data.provider_logo_url
+    ? await loadImageAsDataUrl(data.provider_logo_url)
+    : null;
+
+  if (logo) {
+    const maxH = 36;
+    const maxW = 140;
+    const ratio = logo.width / Math.max(1, logo.height);
+    let h = maxH;
+    let w = h * ratio;
+    if (w > maxW) {
+      w = maxW;
+      h = w / ratio;
+    }
+    try {
+      doc.addImage(logo.dataUrl, logo.format, MARGIN, y - 4, w, h);
+    } catch {
+      // ignore image errors
+    }
+    if (data.provider_name) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(30, 41, 59);
+      doc.text(data.provider_name, MARGIN + w + 12, y + h / 2 + 3);
+    }
+    y += h;
+  } else {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(99, 102, 241); // primary
+    doc.text("CONTRATOFÁCIL", MARGIN, y);
+  }
+
   doc.setTextColor(120);
   doc.setFont("helvetica", "normal");
-  doc.text(data.contract_number, pageWidth - MARGIN, y, { align: "right" });
+  doc.setFontSize(9);
+  doc.text(data.contract_number, pageWidth - MARGIN, MARGIN, { align: "right" });
   y += 8;
   doc.setDrawColor(220);
   doc.line(MARGIN, y, pageWidth - MARGIN, y);
@@ -146,7 +207,6 @@ export function generateContractPdf(data: ContractPdfData): jsPDF {
     const lines = doc.splitTextToSize(data.clauses, contentWidth);
     lines.forEach((line: string) => {
       ensureSpace(13);
-      // Bold lines that look like clause titles
       if (/^CLÁUSULA\s/i.test(line.trim())) {
         doc.setFont("helvetica", "bold");
         doc.text(line, MARGIN, y);

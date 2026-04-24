@@ -13,6 +13,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PlanosRouteImport } from './routes/planos'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContratosRouteImport } from './routes/contratos'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
@@ -21,6 +22,7 @@ import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PagarTokenRouteImport } from './routes/pagar.$token'
 import { Route as CTokenRouteImport } from './routes/c.$token'
+import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,6 +42,11 @@ const PlanosRoute = PlanosRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipeRoute = EquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -82,6 +89,11 @@ const CTokenRoute = CTokenRouteImport.update({
   path: '/c/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
+  id: '/aceitar-convite/$token',
+  path: '/aceitar-convite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,10 +102,12 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof ConfiguracoesRoute
   '/contratos': typeof ContratosRoute
   '/dashboard': typeof DashboardRoute
+  '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
 }
@@ -104,10 +118,12 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof ConfiguracoesRoute
   '/contratos': typeof ContratosRoute
   '/dashboard': typeof DashboardRoute
+  '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
 }
@@ -119,10 +135,12 @@ export interface FileRoutesById {
   '/configuracoes': typeof ConfiguracoesRoute
   '/contratos': typeof ContratosRoute
   '/dashboard': typeof DashboardRoute
+  '/equipe': typeof EquipeRoute
   '/login': typeof LoginRoute
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
 }
@@ -135,10 +153,12 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
+    | '/equipe'
     | '/login'
     | '/planos'
     | '/reset-password'
     | '/signup'
+    | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
   fileRoutesByTo: FileRoutesByTo
@@ -149,10 +169,12 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
+    | '/equipe'
     | '/login'
     | '/planos'
     | '/reset-password'
     | '/signup'
+    | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
   id:
@@ -163,10 +185,12 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/contratos'
     | '/dashboard'
+    | '/equipe'
     | '/login'
     | '/planos'
     | '/reset-password'
     | '/signup'
+    | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
   fileRoutesById: FileRoutesById
@@ -178,10 +202,12 @@ export interface RootRouteChildren {
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   ContratosRoute: typeof ContratosRoute
   DashboardRoute: typeof DashboardRoute
+  EquipeRoute: typeof EquipeRoute
   LoginRoute: typeof LoginRoute
   PlanosRoute: typeof PlanosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
   CTokenRoute: typeof CTokenRoute
   PagarTokenRoute: typeof PagarTokenRoute
 }
@@ -214,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipe': {
+      id: '/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof EquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -272,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/aceitar-convite/$token': {
+      id: '/aceitar-convite/$token'
+      path: '/aceitar-convite/$token'
+      fullPath: '/aceitar-convite/$token'
+      preLoaderRoute: typeof AceitarConviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -282,10 +322,12 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesRoute: ConfiguracoesRoute,
   ContratosRoute: ContratosRoute,
   DashboardRoute: DashboardRoute,
+  EquipeRoute: EquipeRoute,
   LoginRoute: LoginRoute,
   PlanosRoute: PlanosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  AceitarConviteTokenRoute: AceitarConviteTokenRoute,
   CTokenRoute: CTokenRoute,
   PagarTokenRoute: PagarTokenRoute,
 }
