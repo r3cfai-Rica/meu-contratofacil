@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, History, Link as LinkIcon, Loader2 } from "lucide-react";
+import { Copy, History, Link as LinkIcon, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -259,5 +259,3 @@ function Field({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-import { Send } from "lucide-react";
