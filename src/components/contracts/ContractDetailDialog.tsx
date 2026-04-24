@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, History, Link as LinkIcon, Loader2, Send } from "lucide-react";
+import { Copy, Download, History, Link as LinkIcon, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { generateContractPdf } from "@/lib/contractPdf";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ContractStatusBadge,
   type ContractStatus,
@@ -55,8 +57,10 @@ const PAYMENT_LABELS: Record<string, string> = {
 };
 
 export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Props) {
+  const { user } = useAuth();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!contract) {
@@ -112,6 +116,44 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
     }
     toast.success("Contrato cancelado");
     onChanged();
+  };
+
+  const downloadPdf = async () => {
+    if (!user) return;
+    setDownloading(true);
+    try {
+      // Fetch full contract + provider profile in parallel
+      const [{ data: full }, { data: profile }] = await Promise.all([
+        supabase
+          .from("contracts")
+          .select(
+            "contract_number, title, service_type, service_description, total_value, payment_method, start_date, end_date, clauses, signer_name, signer_document, signer_display_name, signature_data, signature_type, signed_at, signer_ip",
+          )
+          .eq("id", contract.id)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("full_name, logo_url")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (!full) {
+        toast.error("Não foi possível carregar o contrato");
+        return;
+      }
+      const pdf = await generateContractPdf({
+        ...full,
+        provider_name: profile?.full_name ?? null,
+        provider_logo_url: profile?.logo_url ?? null,
+        client_name: contract.clients?.full_name ?? null,
+      });
+      pdf.save(`${full.contract_number}.pdf`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao gerar PDF";
+      toast.error(msg);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const describeAction = (h: HistoryEntry): string => {
