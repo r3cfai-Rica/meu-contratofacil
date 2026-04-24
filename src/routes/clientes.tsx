@@ -140,7 +140,7 @@ function ClientsPage() {
             Gerencie a base de clientes do seu negócio.
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setDialogOpen(true)}>
+        <Button className="gap-2" onClick={handleNewClient}>
           <Plus className="h-4 w-4" /> Novo cliente
         </Button>
       </div>
@@ -186,7 +186,7 @@ function ClientsPage() {
                 : "Tente ajustar os filtros ou a busca."}
             </p>
             {clients.length === 0 && (
-              <Button className="mt-5 gap-2" onClick={() => setDialogOpen(true)}>
+              <Button className="mt-5 gap-2" onClick={handleNewClient}>
                 <Plus className="h-4 w-4" /> Novo cliente
               </Button>
             )}
