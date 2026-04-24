@@ -36,7 +36,9 @@ import {
   getEffectiveStatus,
   type InvoiceStatus,
 } from "@/components/invoices/InvoiceStatusBadge";
+import { UpgradeDialog } from "@/components/billing/UpgradeDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlan } from "@/hooks/use-plan";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
 
@@ -69,13 +71,32 @@ type Period = "all" | "30" | "60" | "overdue" | "month";
 
 function InvoicesPage() {
   const { user } = useAuth();
+  const { planInfo } = usePlan();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
   const [period, setPeriod] = useState<Period>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [toDelete, setToDelete] = useState<Invoice | null>(null);
+
+  const limit = planInfo.limits.maxInvoicesPerMonth;
+  const thisMonthCount = useMemo(() => {
+    const now = new Date();
+    return invoices.filter((i) => {
+      // we don't have created_at in this select; approximate by due_date month
+      const d = new Date(i.due_date + "T00:00:00");
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+  }, [invoices]);
+  const handleNewInvoice = () => {
+    if (limit !== null && thisMonthCount >= limit) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setDialogOpen(true);
+  };
 
   const load = async () => {
     if (!user) return;

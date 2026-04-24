@@ -26,7 +26,9 @@ import {
   ContractStatusBadge,
   type ContractStatus,
 } from "@/components/contracts/ContractStatusBadge";
+import { UpgradeDialog } from "@/components/billing/UpgradeDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlan } from "@/hooks/use-plan";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
 
@@ -62,12 +64,24 @@ interface Contract {
 
 function ContractsPage() {
   const { user } = useAuth();
+  const { planInfo } = usePlan();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ContractStatus | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [selected, setSelected] = useState<Contract | null>(null);
+
+  const limit = planInfo.limits.maxActiveContracts;
+  const activeCount = contracts.filter((c) => c.status !== "cancelled").length;
+  const handleNewContract = () => {
+    if (limit !== null && activeCount >= limit) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setDialogOpen(true);
+  };
 
   const load = async () => {
     if (!user) return;
