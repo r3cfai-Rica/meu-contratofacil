@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, FileSignature, QrCode, Settings, FileText } from "lucide-react";
+import { LayoutDashboard, Users, FileSignature, QrCode, Settings, FileText, Sparkles } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ const items = [
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Contratos", url: "/contratos", icon: FileSignature },
   { title: "Cobranças", url: "/cobrancas", icon: QrCode },
+  { title: "Planos", url: "/planos", icon: Sparkles },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ] as const;
 
