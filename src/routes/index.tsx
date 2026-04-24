@@ -67,7 +67,10 @@ function LandingPage() {
 
           <h1 className="mx-auto mt-6 max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-6xl">
             Seus contratos, cobranças e clientes.{" "}
-            <span className="bg-gradient-to-r from-primary to-indigo-400 bg-clip-text text-transparent">
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: "var(--gradient-hero)" }}
+            >
               Tudo em um lugar.
             </span>
           </h1>
