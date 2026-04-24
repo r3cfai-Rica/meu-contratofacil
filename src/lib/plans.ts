@@ -4,6 +4,7 @@ export interface PlanLimits {
   maxClients: number | null; // null = unlimited
   maxActiveContracts: number | null;
   maxInvoicesPerMonth: number | null;
+  maxTeamMembers: number; // 0 = no team feature
   customLogo: boolean;
   reminders: boolean;
   multiUser: boolean;
@@ -40,6 +41,7 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
       maxClients: 3,
       maxActiveContracts: 3,
       maxInvoicesPerMonth: 3,
+      maxTeamMembers: 0,
       customLogo: false,
       reminders: false,
       multiUser: false,
@@ -63,6 +65,7 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
       maxClients: null,
       maxActiveContracts: null,
       maxInvoicesPerMonth: null,
+      maxTeamMembers: 0,
       customLogo: true,
       reminders: true,
       multiUser: false,
@@ -88,6 +91,7 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
       maxClients: null,
       maxActiveContracts: null,
       maxInvoicesPerMonth: null,
+      maxTeamMembers: 3,
       customLogo: true,
       reminders: true,
       multiUser: true,
