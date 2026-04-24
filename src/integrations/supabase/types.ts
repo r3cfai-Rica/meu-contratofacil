@@ -180,6 +180,30 @@ export type Database = {
           },
         ]
       }
+      invoice_reminders: {
+        Row: {
+          id: string
+          invoice_id: string
+          recipient_email: string | null
+          reminder_type: string
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          invoice_id: string
+          recipient_email?: string | null
+          reminder_type: string
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          invoice_id?: string
+          recipient_email?: string | null
+          reminder_type?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
@@ -345,11 +369,51 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          id: string
+          invite_token: string
+          invited_at: string
+          member_user_id: string | null
+          owner_id: string
+          status: Database["public"]["Enums"]["team_invite_status"]
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invite_token?: string
+          invited_at?: string
+          member_user_id?: string | null
+          owner_id: string
+          status?: Database["public"]["Enums"]["team_invite_status"]
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invite_token?: string
+          invited_at?: string
+          member_user_id?: string | null
+          owner_id?: string
+          status?: Database["public"]["Enums"]["team_invite_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      count_team_members: { Args: { _owner_id: string }; Returns: number }
       count_user_active_contracts: {
         Args: { _user_id: string }
         Returns: number
@@ -363,6 +427,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["plan_tier"]
       }
+      user_workspace_owners: { Args: { _user_id: string }; Returns: string[] }
     }
     Enums: {
       account_type: "mei" | "autonomo" | "prestador" | "liberal"
@@ -383,6 +448,7 @@ export type Database = {
         | "past_due"
         | "canceled"
         | "incomplete"
+      team_invite_status: "pending" | "accepted" | "revoked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -530,6 +596,7 @@ export const Constants = {
         "canceled",
         "incomplete",
       ],
+      team_invite_status: ["pending", "accepted", "revoked"],
     },
   },
 } as const
