@@ -180,6 +180,99 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_id: string
+          contract_id: string | null
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          installment_number: number | null
+          installment_total: number | null
+          is_recurring: boolean
+          paid_at: string | null
+          payment_notes: string | null
+          public_token: string | null
+          recurrence_group: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          contract_id?: string | null
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          installment_number?: number | null
+          installment_total?: number | null
+          is_recurring?: boolean
+          paid_at?: string | null
+          payment_notes?: string | null
+          public_token?: string | null
+          recurrence_group?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          contract_id?: string | null
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          installment_number?: number | null
+          installment_total?: number | null
+          is_recurring?: boolean
+          paid_at?: string | null
+          payment_notes?: string | null
+          public_token?: string | null
+          recurrence_group?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pix_settings: {
+        Row: {
+          beneficiary_name: string
+          city: string
+          created_at: string
+          id: string
+          key_type: Database["public"]["Enums"]["pix_key_type"]
+          pix_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          beneficiary_name: string
+          city: string
+          created_at?: string
+          id?: string
+          key_type: Database["public"]["Enums"]["pix_key_type"]
+          pix_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          beneficiary_name?: string
+          city?: string
+          created_at?: string
+          id?: string
+          key_type?: Database["public"]["Enums"]["pix_key_type"]
+          pix_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
@@ -223,7 +316,9 @@ export type Database = {
         | "awaiting_signature"
         | "signed"
         | "cancelled"
+      invoice_status: "pending" | "paid" | "overdue" | "cancelled"
       payment_method: "one_time" | "installments" | "recurring"
+      pix_key_type: "cpf" | "cnpj" | "email" | "phone" | "random"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -360,7 +455,9 @@ export const Constants = {
         "signed",
         "cancelled",
       ],
+      invoice_status: ["pending", "paid", "overdue", "cancelled"],
       payment_method: ["one_time", "installments", "recurring"],
+      pix_key_type: ["cpf", "cnpj", "email", "phone", "random"],
     },
   },
 } as const
