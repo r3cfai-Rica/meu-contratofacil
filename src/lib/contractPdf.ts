@@ -18,6 +18,7 @@ export interface ContractPdfData {
   end_date?: string | null;
   clauses?: string | null;
   provider_name?: string | null;
+  provider_logo_url?: string | null;
   client_name?: string | null;
   signer_name?: string | null;
   signer_document?: string | null;
