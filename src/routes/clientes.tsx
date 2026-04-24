@@ -237,6 +237,12 @@ function ClientsPage() {
       </div>
 
       <ClientFormDialog open={dialogOpen} onOpenChange={setDialogOpen} onSaved={loadClients} />
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        resource="clientes"
+        limit={limit ?? 0}
+      />
 
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
