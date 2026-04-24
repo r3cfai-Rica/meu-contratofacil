@@ -206,6 +206,23 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
             </div>
           )}
 
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2"
+              onClick={downloadPdf}
+              disabled={downloading}
+            >
+              {downloading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Baixar PDF
+            </Button>
+          </div>
+
           <Separator />
 
           <div className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-4">
