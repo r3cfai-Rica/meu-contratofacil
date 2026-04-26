@@ -15,7 +15,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+type SignupSearch = { next?: string };
+
 export const Route = createFileRoute("/signup")({
+  validateSearch: (search: Record<string, unknown>): SignupSearch => ({
+    next: typeof search.next === "string" ? search.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Criar conta — ContratoFácil" },
