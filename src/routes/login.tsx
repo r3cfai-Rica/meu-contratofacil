@@ -143,7 +143,11 @@ function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Não tem conta?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
+            <Link
+              to="/signup"
+              search={next ? { next } : {}}
+              className="text-primary hover:underline"
+            >
               Cadastrar
             </Link>
           </p>
