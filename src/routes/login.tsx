@@ -8,7 +8,12 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+type LoginSearch = { next?: string };
+
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>): LoginSearch => ({
+    next: typeof search.next === "string" ? search.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Entrar — ContratoFácil" },
@@ -21,6 +26,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { next } = Route.useSearch();
+  const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,8 +35,8 @@ function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
-    if (session) navigate({ to: "/dashboard" });
-  }, [session, navigate]);
+    if (session) navigate({ to: redirectTo });
+  }, [session, navigate, redirectTo]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,7 +54,7 @@ function LoginPage() {
     }
 
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: redirectTo });
   };
 
   const handleForgotPassword = async () => {
@@ -136,7 +143,11 @@ function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Não tem conta?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
+            <Link
+              to="/signup"
+              search={next ? { next } : {}}
+              className="text-primary hover:underline"
+            >
               Cadastrar
             </Link>
           </p>

@@ -15,7 +15,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+type SignupSearch = { next?: string };
+
 export const Route = createFileRoute("/signup")({
+  validateSearch: (search: Record<string, unknown>): SignupSearch => ({
+    next: typeof search.next === "string" ? search.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Criar conta — ContratoFácil" },
@@ -35,6 +40,8 @@ const ACCOUNT_TYPES = [
 function SignupPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { next } = Route.useSearch();
+  const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -43,8 +50,8 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (session) navigate({ to: "/dashboard" });
-  }, [session, navigate]);
+    if (session) navigate({ to: redirectTo });
+  }, [session, navigate, redirectTo]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -63,7 +70,7 @@ function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}${redirectTo}`,
         data: {
           full_name: fullName.trim(),
           account_type: accountType,
@@ -82,7 +89,7 @@ function SignupPage() {
     }
 
     toast.success("Conta criada com sucesso!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: redirectTo });
   };
 
   return (
@@ -173,7 +180,11 @@ function SignupPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Já tem conta?{" "}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link
+              to="/login"
+              search={next ? { next } : {}}
+              className="text-primary hover:underline"
+            >
               Entrar
             </Link>
           </p>
