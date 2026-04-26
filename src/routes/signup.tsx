@@ -89,7 +89,7 @@ function SignupPage() {
     }
 
     toast.success("Conta criada com sucesso!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: redirectTo });
   };
 
   return (
