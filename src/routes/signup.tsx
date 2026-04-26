@@ -180,7 +180,11 @@ function SignupPage() {
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Já tem conta?{" "}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link
+              to="/login"
+              search={next ? { next } : {}}
+              className="text-primary hover:underline"
+            >
               Entrar
             </Link>
           </p>
