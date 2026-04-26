@@ -35,8 +35,8 @@ function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
-    if (session) navigate({ to: "/dashboard" });
-  }, [session, navigate]);
+    if (session) navigate({ to: redirectTo });
+  }, [session, navigate, redirectTo]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -54,7 +54,7 @@ function LoginPage() {
     }
 
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: redirectTo });
   };
 
   const handleForgotPassword = async () => {
