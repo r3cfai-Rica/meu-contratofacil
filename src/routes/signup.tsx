@@ -40,6 +40,8 @@ const ACCOUNT_TYPES = [
 function SignupPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { next } = Route.useSearch();
+  const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -48,8 +50,8 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (session) navigate({ to: "/dashboard" });
-  }, [session, navigate]);
+    if (session) navigate({ to: redirectTo });
+  }, [session, navigate, redirectTo]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
