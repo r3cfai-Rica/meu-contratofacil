@@ -408,6 +408,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -423,14 +444,41 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      get_admin_stats: { Args: never; Returns: Json }
       get_user_plan: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["plan_tier"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
+      list_admin_users: {
+        Args: never
+        Returns: {
+          account_type: Database["public"]["Enums"]["account_type"]
+          clients_count: number
+          contracts_count: number
+          current_period_end: string
+          email: string
+          full_name: string
+          invoices_count: number
+          is_admin: boolean
+          plan: Database["public"]["Enums"]["plan_tier"]
+          signed_up_at: string
+          subscription_status: Database["public"]["Enums"]["subscription_status"]
+          user_id: string
+        }[]
       }
       user_workspace_owners: { Args: { _user_id: string }; Returns: string[] }
     }
     Enums: {
       account_type: "mei" | "autonomo" | "prestador" | "liberal"
+      app_role: "admin" | "user"
       client_status: "active" | "inactive"
       contract_status:
         | "draft"
@@ -577,6 +625,7 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["mei", "autonomo", "prestador", "liberal"],
+      app_role: ["admin", "user"],
       client_status: ["active", "inactive"],
       contract_status: [
         "draft",
