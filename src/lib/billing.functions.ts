@@ -14,7 +14,7 @@ function getStripe(): Stripe | null {
 }
 
 function requireStripe(): Stripe {
-  const stripe = requireStripe();
+  const stripe = getStripe();
   if (!stripe) throw new Error("Pagamentos ainda não foram configurados. Adicione a STRIPE_SECRET_KEY.");
   return stripe;
 }
