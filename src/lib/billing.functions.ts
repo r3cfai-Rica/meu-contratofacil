@@ -46,7 +46,7 @@ export const checkSubscription = createServerFn({ method: "POST" })
       return { plan: "free" as PlanTier, status: "active", current_period_end: null, cancel_at_period_end: false };
     }
 
-    const stripe = requireStripe();
+    const stripe = getStripe();
     if (!stripe) {
       await supabaseAdmin
         .from("subscriptions")
