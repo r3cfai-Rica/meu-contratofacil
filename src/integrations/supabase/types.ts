@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          actor_id: string | null
+          amount_cents: number | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          plan: string | null
+          reference_id: string | null
+          target_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          plan?: string | null
+          reference_id?: string | null
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          amount_cents?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          plan?: string | null
+          reference_id?: string | null
+          target_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -444,6 +483,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: number
       }
+      get_admin_overview: { Args: never; Returns: Json }
       get_admin_stats: { Args: never; Returns: Json }
       get_user_plan: {
         Args: { _user_id: string }
@@ -457,6 +497,38 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      list_admin_audit_logs: {
+        Args: { _limit?: number }
+        Returns: {
+          actor_id: string | null
+          amount_cents: number | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          plan: string | null
+          reference_id: string | null
+          target_email: string | null
+          target_user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_admin_recent_payments: {
+        Args: { _limit?: number }
+        Returns: {
+          amount_cents: number
+          client_name: string
+          description: string
+          invoice_id: string
+          paid_at: string
+          user_email: string
+        }[]
+      }
       list_admin_users: {
         Args: never
         Returns: {
