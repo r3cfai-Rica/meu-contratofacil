@@ -71,7 +71,7 @@ export function usePlan(): UsePlanState {
 
   return {
     plan,
-    planInfo: PLANS[plan],
+    planInfo: PLANS[plan] ?? PLANS.free,
     status,
     currentPeriodEnd,
     cancelAtPeriodEnd,
