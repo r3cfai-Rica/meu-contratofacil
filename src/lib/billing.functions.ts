@@ -6,11 +6,17 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { withSupabaseAccessToken } from "@/integrations/supabase/server-fn-auth";
 import { PLANS, planFromProductId, type PlanTier } from "./plans";
 
-function getStripe(): Stripe {
+function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
+  if (!key) return null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new Stripe(key, { apiVersion: "2025-08-27.basil" as any });
+}
+
+function requireStripe(): Stripe {
+  const stripe = getStripe();
+  if (!stripe) throw new Error("Pagamentos ainda não foram configurados. Adicione a STRIPE_SECRET_KEY.");
+  return stripe;
 }
 
 function getOrigin(): string {
@@ -41,6 +47,15 @@ export const checkSubscription = createServerFn({ method: "POST" })
     }
 
     const stripe = getStripe();
+    if (!stripe) {
+      await supabaseAdmin
+        .from("subscriptions")
+        .upsert(
+          { user_id: userId, plan: "free", status: "active" },
+          { onConflict: "user_id" },
+        );
+      return { plan: "free" as PlanTier, status: "active", current_period_end: null, cancel_at_period_end: false };
+    }
     const customers = await stripe.customers.list({ email, limit: 1 });
 
     if (customers.data.length === 0) {
@@ -135,7 +150,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const planInfo = PLANS[data.plan];
     if (!planInfo.stripePriceId) throw new Error("Plano não configurado");
 
-    const stripe = getStripe();
+    const stripe = requireStripe();
     const customer = await findOrCreateCustomerByEmail(stripe, email);
 
     const origin = getOrigin();
@@ -163,7 +178,7 @@ export const createPortalSession = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) throw new Error("Email não disponível");
 
-    const stripe = getStripe();
+    const stripe = requireStripe();
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) {
       throw new Error("Nenhuma assinatura encontrada para gerenciar");
@@ -186,7 +201,7 @@ export const listInvoices = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) return { invoices: [] };
 
-    const stripe = getStripe();
+    const stripe = requireStripe();
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) return { invoices: [] };
 
