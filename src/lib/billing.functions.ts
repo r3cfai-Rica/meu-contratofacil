@@ -47,6 +47,15 @@ export const checkSubscription = createServerFn({ method: "POST" })
     }
 
     const stripe = getStripe();
+    if (!stripe) {
+      await supabaseAdmin
+        .from("subscriptions")
+        .upsert(
+          { user_id: userId, plan: "free", status: "active" },
+          { onConflict: "user_id" },
+        );
+      return { plan: "free" as PlanTier, status: "active", current_period_end: null, cancel_at_period_end: false };
+    }
     const customers = await stripe.customers.list({ email, limit: 1 });
 
     if (customers.data.length === 0) {
