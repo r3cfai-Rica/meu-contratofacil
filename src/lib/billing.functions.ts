@@ -14,7 +14,7 @@ function getStripe(): Stripe | null {
 }
 
 function requireStripe(): Stripe {
-  const stripe = getStripe();
+  const stripe = requireStripe();
   if (!stripe) throw new Error("Pagamentos ainda não foram configurados. Adicione a STRIPE_SECRET_KEY.");
   return stripe;
 }
@@ -46,7 +46,7 @@ export const checkSubscription = createServerFn({ method: "POST" })
       return { plan: "free" as PlanTier, status: "active", current_period_end: null, cancel_at_period_end: false };
     }
 
-    const stripe = getStripe();
+    const stripe = requireStripe();
     if (!stripe) {
       await supabaseAdmin
         .from("subscriptions")
@@ -150,7 +150,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const planInfo = PLANS[data.plan];
     if (!planInfo.stripePriceId) throw new Error("Plano não configurado");
 
-    const stripe = getStripe();
+    const stripe = requireStripe();
     const customer = await findOrCreateCustomerByEmail(stripe, email);
 
     const origin = getOrigin();
@@ -178,7 +178,7 @@ export const createPortalSession = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) throw new Error("Email não disponível");
 
-    const stripe = getStripe();
+    const stripe = requireStripe();
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) {
       throw new Error("Nenhuma assinatura encontrada para gerenciar");
@@ -201,7 +201,7 @@ export const listInvoices = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) return { invoices: [] };
 
-    const stripe = getStripe();
+    const stripe = requireStripe();
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) return { invoices: [] };
 
