@@ -6,11 +6,17 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { withSupabaseAccessToken } from "@/integrations/supabase/server-fn-auth";
 import { PLANS, planFromProductId, type PlanTier } from "./plans";
 
-function getStripe(): Stripe {
+function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("STRIPE_SECRET_KEY is not configured");
+  if (!key) return null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new Stripe(key, { apiVersion: "2025-08-27.basil" as any });
+}
+
+function requireStripe(): Stripe {
+  const stripe = getStripe();
+  if (!stripe) throw new Error("Pagamentos ainda não foram configurados. Adicione a STRIPE_SECRET_KEY.");
+  return stripe;
 }
 
 function getOrigin(): string {
