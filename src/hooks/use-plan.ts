@@ -39,6 +39,13 @@ export function usePlan(): UsePlanState {
     }
   }, [user]);
 
+  const resetToFree = useCallback(() => {
+    setPlan("free");
+    setStatus("active");
+    setCurrentPeriodEnd(null);
+    setCancelAtPeriodEnd(false);
+  }, []);
+
   const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -48,18 +55,26 @@ export function usePlan(): UsePlanState {
       setStatus(result.status);
       setCurrentPeriodEnd(result.current_period_end);
       setCancelAtPeriodEnd(result.cancel_at_period_end);
-    } catch {
-      // Fall back to DB
-      await loadFromDb();
+    } catch (error) {
+      if (error instanceof Response && error.status === 401) {
+        await loadFromDb();
+        return;
+      }
+
+      try {
+        await loadFromDb();
+      } catch {
+        resetToFree();
+      }
     } finally {
       setLoading(false);
     }
-  }, [user, checkSubscriptionFn, loadFromDb]);
+  }, [user, checkSubscriptionFn, loadFromDb, resetToFree]);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      setPlan("free");
+      resetToFree();
       setLoading(false);
       return;
     }
@@ -67,7 +82,7 @@ export function usePlan(): UsePlanState {
       await loadFromDb(); // fast first paint
       void refresh(); // then sync with Stripe
     })();
-  }, [user, authLoading, loadFromDb, refresh]);
+  }, [user, authLoading, loadFromDb, refresh, resetToFree]);
 
   return {
     plan,

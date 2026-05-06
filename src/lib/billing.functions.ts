@@ -3,6 +3,7 @@ import { getRequestHeader } from "@tanstack/react-start/server";
 import Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { withSupabaseAccessToken } from "@/integrations/supabase/server-fn-auth";
 import { PLANS, planFromProductId, type PlanTier } from "./plans";
 
 function getStripe(): Stripe {
@@ -31,7 +32,7 @@ async function findOrCreateCustomerByEmail(stripe: Stripe, email: string, name?:
  * Called on login, page load, and after checkout.
  */
 export const checkSubscription = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId, claims } = context;
     const email = (claims as { email?: string }).email;
@@ -119,7 +120,7 @@ export const checkSubscription = createServerFn({ method: "POST" })
 
 /** Create a Stripe Checkout Session for a subscription upgrade. */
 export const createCheckoutSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
   .inputValidator((input: { plan: "pro" | "business" }) => {
     if (input.plan !== "pro" && input.plan !== "business") {
       throw new Error("Plano inválido");
@@ -156,7 +157,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
 /** Create a Stripe Billing Portal session so the user can manage their subscription. */
 export const createPortalSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { claims } = context;
     const email = (claims as { email?: string }).email;
@@ -179,7 +180,7 @@ export const createPortalSession = createServerFn({ method: "POST" })
 
 /** List the user's invoices from Stripe. */
 export const listInvoices = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { claims } = context;
     const email = (claims as { email?: string }).email;
