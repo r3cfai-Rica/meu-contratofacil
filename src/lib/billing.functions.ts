@@ -193,6 +193,87 @@ export const createPortalSession = createServerFn({ method: "POST" })
     return { url: portal.url };
   });
 
+async function findActiveSubscription(stripe: Stripe, email: string) {
+  const customers = await stripe.customers.list({ email, limit: 1 });
+  if (customers.data.length === 0) return null;
+  const subs = await stripe.subscriptions.list({
+    customer: customers.data[0].id,
+    status: "all",
+    limit: 5,
+  });
+  const active = subs.data.find((s) =>
+    ["active", "trialing", "past_due"].includes(s.status),
+  );
+  return active ? { customer: customers.data[0], subscription: active } : null;
+}
+
+/** Cancel the current subscription at the end of the billing period. */
+export const cancelSubscriptionAtPeriodEnd = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const email = (context.claims as { email?: string }).email;
+    if (!email) throw new Error("Email não disponível");
+    const stripe = requireStripe();
+    const found = await findActiveSubscription(stripe, email);
+    if (!found) throw new Error("Nenhuma assinatura ativa encontrada");
+    const updated = await stripe.subscriptions.update(found.subscription.id, {
+      cancel_at_period_end: true,
+    });
+    await supabaseAdmin
+      .from("subscriptions")
+      .update({ cancel_at_period_end: true })
+      .eq("user_id", context.userId);
+    return { ok: true, cancel_at_period_end: updated.cancel_at_period_end };
+  });
+
+/** Undo a scheduled cancellation. */
+export const resumeSubscription = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const email = (context.claims as { email?: string }).email;
+    if (!email) throw new Error("Email não disponível");
+    const stripe = requireStripe();
+    const found = await findActiveSubscription(stripe, email);
+    if (!found) throw new Error("Nenhuma assinatura encontrada");
+    await stripe.subscriptions.update(found.subscription.id, {
+      cancel_at_period_end: false,
+    });
+    await supabaseAdmin
+      .from("subscriptions")
+      .update({ cancel_at_period_end: false })
+      .eq("user_id", context.userId);
+    return { ok: true };
+  });
+
+/** Change plan immediately (upgrade or downgrade) with prorated billing. */
+export const changePlan = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
+  .inputValidator((input: { plan: "pro" | "business" }) => {
+    if (input.plan !== "pro" && input.plan !== "business") {
+      throw new Error("Plano inválido");
+    }
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const email = (context.claims as { email?: string }).email;
+    if (!email) throw new Error("Email não disponível");
+    const planInfo = PLANS[data.plan];
+    if (!planInfo.stripePriceId) throw new Error("Plano não configurado");
+    const stripe = requireStripe();
+    const found = await findActiveSubscription(stripe, email);
+    if (!found) throw new Error("Nenhuma assinatura ativa encontrada");
+    const itemId = found.subscription.items.data[0].id;
+    if (found.subscription.items.data[0].price.id === planInfo.stripePriceId) {
+      return { ok: true, unchanged: true };
+    }
+    await stripe.subscriptions.update(found.subscription.id, {
+      items: [{ id: itemId, price: planInfo.stripePriceId }],
+      proration_behavior: "create_prorations",
+      cancel_at_period_end: false,
+    });
+    return { ok: true };
+  });
+
 /** Admin-only: check if Stripe is configured and return account info. */
 export const getStripeStatus = createServerFn({ method: "POST" })
   .middleware([withSupabaseAccessToken, requireSupabaseAuth])
