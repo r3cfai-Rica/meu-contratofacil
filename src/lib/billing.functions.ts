@@ -211,7 +211,7 @@ export const getStripeStatus = createServerFn({ method: "POST" })
       return { configured: false as const };
     }
     try {
-      const account = await stripe.accounts.retrieve();
+      const account = await stripe.accounts.retrieve("");
       return {
         configured: true as const,
         livemode: !process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_"),
