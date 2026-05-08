@@ -24,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PagarTokenRouteImport } from './routes/pagar.$token'
 import { Route as CTokenRouteImport } from './routes/c.$token'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
+import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -100,6 +101,11 @@ const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
   path: '/aceitar-convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
+  id: '/api/public/stripe/webhook',
+  path: '/api/public/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
+  '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
+  '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
+  '/api/public/stripe/webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
+    | '/api/public/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
+    | '/api/public/stripe/webhook'
   id:
     | '__root__'
     | '/'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
+    | '/api/public/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
   CTokenRoute: typeof CTokenRoute
   PagarTokenRoute: typeof PagarTokenRoute
+  ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AceitarConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/stripe/webhook': {
+      id: '/api/public/stripe/webhook'
+      path: '/api/public/stripe/webhook'
+      fullPath: '/api/public/stripe/webhook'
+      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -351,6 +371,7 @@ const rootRouteChildren: RootRouteChildren = {
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
   CTokenRoute: CTokenRoute,
   PagarTokenRoute: PagarTokenRoute,
+  ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
