@@ -63,8 +63,10 @@ interface InvoiceItem {
 function SettingsPage() {
   const { user } = useAuth();
   const { planInfo, currentPeriodEnd, cancelAtPeriodEnd, refresh } = usePlan();
+  const { isAdmin } = useIsAdmin();
   const portalFn = useServerFn(createPortalSession);
   const invoicesFn = useServerFn(listInvoices);
+  const stripeStatusFn = useServerFn(getStripeStatus);
 
   // Profile
   const [profileName, setProfileName] = useState("");
