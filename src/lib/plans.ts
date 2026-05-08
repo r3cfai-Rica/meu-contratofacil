@@ -116,11 +116,12 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
 
 export const PLAN_ORDER: PlanTier[] = ["free", "pro", "business"];
 
-/** Map a Stripe product id to a plan tier (used by check-subscription). */
+/** Map a Stripe product id to a plan tier (used by check-subscription). Matches both live and test product IDs. */
 export function planFromProductId(productId: string | null | undefined): PlanTier {
   if (!productId) return "free";
   for (const tier of PLAN_ORDER) {
-    if (PLANS[tier].stripeProductId === productId) return tier;
+    const p = PLANS[tier];
+    if (p.stripeProductId === productId || p.stripeProductIdTest === productId) return tier;
   }
   return "free";
 }
