@@ -81,10 +81,16 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secretKey = process.env.STRIPE_SECRET_KEY;
-        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-        if (!secretKey || !webhookSecret) {
-          console.error("[stripe-webhook] missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET");
+        const liveKey = process.env.STRIPE_SECRET_KEY;
+        const testKey = process.env.STRIPE_SECRET_KEY_TEST;
+        const liveWhSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        const testWhSecret = process.env.STRIPE_WEBHOOK_SECRET_TEST;
+        if (!liveKey && !testKey) {
+          console.error("[stripe-webhook] missing STRIPE_SECRET_KEY(_TEST)");
+          return new Response("Webhook not configured", { status: 500 });
+        }
+        if (!liveWhSecret && !testWhSecret) {
+          console.error("[stripe-webhook] missing STRIPE_WEBHOOK_SECRET(_TEST)");
           return new Response("Webhook not configured", { status: 500 });
         }
 
@@ -93,13 +99,30 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
 
         const body = await request.text();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const stripe = new Stripe(secretKey, { apiVersion: "2025-08-27.basil" as any });
+        const apiVersion = "2025-08-27.basil" as any;
+        const liveStripe = liveKey ? new Stripe(liveKey, { apiVersion }) : null;
+        const testStripe = testKey ? new Stripe(testKey, { apiVersion }) : null;
 
-        let event: Stripe.Event;
-        try {
-          event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-        } catch (err) {
-          console.error("[stripe-webhook] signature verification failed", err);
+        // Try live secret first, then test. Whichever verifies determines which Stripe client we use.
+        let event: Stripe.Event | null = null;
+        let stripe: Stripe | null = null;
+        const candidates: Array<{ secret: string; client: Stripe | null; mode: string }> = [];
+        if (liveWhSecret && liveStripe) candidates.push({ secret: liveWhSecret, client: liveStripe, mode: "live" });
+        if (testWhSecret && testStripe) candidates.push({ secret: testWhSecret, client: testStripe, mode: "test" });
+
+        let lastErr: unknown = null;
+        for (const c of candidates) {
+          try {
+            event = await c.client!.webhooks.constructEventAsync(body, signature, c.secret);
+            stripe = c.client;
+            console.log("[stripe-webhook] verified", { mode: c.mode });
+            break;
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+        if (!event || !stripe) {
+          console.error("[stripe-webhook] signature verification failed", lastErr);
           return new Response("Invalid signature", { status: 401 });
         }
 

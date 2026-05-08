@@ -19,10 +19,21 @@ export interface PlanInfo {
   tagline: string;
   features: string[];
   limits: PlanLimits;
-  /** Stripe price id (for paid plans) */
+  /** Stripe price id (live mode) */
   stripePriceId?: string;
   stripeProductId?: string;
+  /** Stripe price id (test mode) */
+  stripePriceIdTest?: string;
+  stripeProductIdTest?: string;
   highlighted?: boolean;
+}
+
+export type StripeMode = "test" | "live";
+
+export function getPlanPriceId(tier: PlanTier, mode: StripeMode): string | undefined {
+  const p = PLANS[tier];
+  if (mode === "test") return p.stripePriceIdTest ?? p.stripePriceId;
+  return p.stripePriceId;
 }
 
 export const PLANS: Record<PlanTier, PlanInfo> = {
@@ -105,11 +116,12 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
 
 export const PLAN_ORDER: PlanTier[] = ["free", "pro", "business"];
 
-/** Map a Stripe product id to a plan tier (used by check-subscription). */
+/** Map a Stripe product id to a plan tier (used by check-subscription). Matches both live and test product IDs. */
 export function planFromProductId(productId: string | null | undefined): PlanTier {
   if (!productId) return "free";
   for (const tier of PLAN_ORDER) {
-    if (PLANS[tier].stripeProductId === productId) return tier;
+    const p = PLANS[tier];
+    if (p.stripeProductId === productId || p.stripeProductIdTest === productId) return tier;
   }
   return "free";
 }

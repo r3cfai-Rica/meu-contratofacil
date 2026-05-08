@@ -4,20 +4,12 @@ import Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { withSupabaseAccessToken } from "@/integrations/supabase/server-fn-auth";
-import { PLANS, planFromProductId, type PlanTier } from "./plans";
-
-function getStripe(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new Stripe(key, { apiVersion: "2025-08-27.basil" as any });
-}
-
-function requireStripe(): Stripe {
-  const stripe = getStripe();
-  if (!stripe) throw new Error("Pagamentos ainda não foram configurados. Adicione a STRIPE_SECRET_KEY.");
-  return stripe;
-}
+import { PLANS, planFromProductId, getPlanPriceId, type PlanTier } from "./plans";
+import {
+  getCurrentStripe,
+  requireCurrentStripe,
+  type StripeMode,
+} from "./stripe-env.server";
 
 function getOrigin(): string {
   return (
@@ -46,7 +38,7 @@ export const checkSubscription = createServerFn({ method: "POST" })
       return { plan: "free" as PlanTier, status: "active", current_period_end: null, cancel_at_period_end: false };
     }
 
-    const stripe = getStripe();
+    const { stripe } = getCurrentStripe();
     if (!stripe) {
       await supabaseAdmin
         .from("subscriptions")
@@ -59,7 +51,6 @@ export const checkSubscription = createServerFn({ method: "POST" })
     const customers = await stripe.customers.list({ email, limit: 1 });
 
     if (customers.data.length === 0) {
-      // Ensure a free row exists
       await supabaseAdmin
         .from("subscriptions")
         .upsert(
@@ -94,7 +85,6 @@ export const checkSubscription = createServerFn({ method: "POST" })
         typeof item.price.product === "string" ? item.price.product : item.price.product?.id;
       plan = planFromProductId(productId);
       status = active.status;
-      // Stripe types: current_period_end may be on subscription items or root depending on version
       const sub = active as unknown as { current_period_end?: number };
       currentPeriodEnd = sub.current_period_end
         ? new Date(sub.current_period_end * 1000).toISOString()
@@ -147,17 +137,25 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) throw new Error("Email não disponível");
 
-    const planInfo = PLANS[data.plan];
-    if (!planInfo.stripePriceId) throw new Error("Plano não configurado");
+    const { stripe, mode } = requireCurrentStripe();
+    const priceId = getPlanPriceId(data.plan, mode);
+    if (!priceId) {
+      throw new Error(
+        mode === "test"
+          ? "Plano não configurado em modo de teste. Crie os produtos em test mode no Stripe."
+          : "Plano não configurado",
+      );
+    }
 
-    const stripe = requireStripe();
     const customer = await findOrCreateCustomerByEmail(stripe, email);
 
     const origin = getOrigin();
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       mode: "subscription",
-      line_items: [{ price: planInfo.stripePriceId, quantity: 1 }],
+      // Restrict to card only — disables Stripe Link prompts (saved phone/email autofill).
+      payment_method_types: ["card"],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/configuracoes?checkout=success`,
       cancel_url: `${origin}/planos?checkout=canceled`,
       allow_promotion_codes: true,
@@ -178,7 +176,7 @@ export const createPortalSession = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) throw new Error("Email não disponível");
 
-    const stripe = requireStripe();
+    const { stripe } = requireCurrentStripe();
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) {
       throw new Error("Nenhuma assinatura encontrada para gerenciar");
@@ -213,7 +211,7 @@ export const cancelSubscriptionAtPeriodEnd = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const email = (context.claims as { email?: string }).email;
     if (!email) throw new Error("Email não disponível");
-    const stripe = requireStripe();
+    const { stripe } = requireCurrentStripe();
     const found = await findActiveSubscription(stripe, email);
     if (!found) throw new Error("Nenhuma assinatura ativa encontrada");
     const updated = await stripe.subscriptions.update(found.subscription.id, {
@@ -232,7 +230,7 @@ export const resumeSubscription = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const email = (context.claims as { email?: string }).email;
     if (!email) throw new Error("Email não disponível");
-    const stripe = requireStripe();
+    const { stripe } = requireCurrentStripe();
     const found = await findActiveSubscription(stripe, email);
     if (!found) throw new Error("Nenhuma assinatura encontrada");
     await stripe.subscriptions.update(found.subscription.id, {
@@ -257,17 +255,17 @@ export const changePlan = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const email = (context.claims as { email?: string }).email;
     if (!email) throw new Error("Email não disponível");
-    const planInfo = PLANS[data.plan];
-    if (!planInfo.stripePriceId) throw new Error("Plano não configurado");
-    const stripe = requireStripe();
+    const { stripe, mode } = requireCurrentStripe();
+    const priceId = getPlanPriceId(data.plan, mode);
+    if (!priceId) throw new Error("Plano não configurado");
     const found = await findActiveSubscription(stripe, email);
     if (!found) throw new Error("Nenhuma assinatura ativa encontrada");
     const itemId = found.subscription.items.data[0].id;
-    if (found.subscription.items.data[0].price.id === planInfo.stripePriceId) {
+    if (found.subscription.items.data[0].price.id === priceId) {
       return { ok: true, unchanged: true };
     }
     await stripe.subscriptions.update(found.subscription.id, {
-      items: [{ id: itemId, price: planInfo.stripePriceId }],
+      items: [{ id: itemId, price: priceId }],
       proration_behavior: "create_prorations",
       cancel_at_period_end: false,
     });
@@ -287,7 +285,7 @@ export const getStripeStatus = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!roleRow) throw new Error("Acesso negado");
 
-    const stripe = getStripe();
+    const { stripe, mode } = getCurrentStripe();
     if (!stripe) {
       return { configured: false as const };
     }
@@ -296,7 +294,8 @@ export const getStripeStatus = createServerFn({ method: "POST" })
       const account = await (stripe.accounts as any).retrieve();
       return {
         configured: true as const,
-        livemode: !process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_"),
+        livemode: mode === "live",
+        mode: mode as StripeMode,
         accountId: account.id,
         accountEmail: account.email ?? null,
         businessName:
@@ -321,7 +320,7 @@ export const listInvoices = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) return { invoices: [] };
 
-    const stripe = getStripe();
+    const { stripe } = getCurrentStripe();
     if (!stripe) return { invoices: [] };
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) return { invoices: [] };
