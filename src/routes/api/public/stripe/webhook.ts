@@ -1,0 +1,174 @@
+import { createFileRoute } from "@tanstack/react-router";
+import Stripe from "stripe";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { planFromProductId, type PlanTier } from "@/lib/plans";
+
+type SubStatus = "active" | "trialing" | "past_due" | "canceled" | "incomplete";
+
+async function resolveUserId(
+  customerId: string,
+  email: string | null | undefined,
+): Promise<string | null> {
+  // Primary: lookup by stripe_customer_id
+  const { data } = await supabaseAdmin
+    .from("subscriptions")
+    .select("user_id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  if (data?.user_id) return data.user_id;
+
+  // Fallback: lookup by email in auth.users
+  if (!email) return null;
+  const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+  const user = list?.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+  return user?.id ?? null;
+}
+
+async function upsertFromSubscription(
+  stripe: Stripe,
+  subscription: Stripe.Subscription,
+) {
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer.id;
+
+  let email: string | null = null;
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.deleted) email = customer.email;
+  } catch (e) {
+    console.error("[stripe-webhook] failed to retrieve customer", e);
+  }
+
+  const userId = await resolveUserId(customerId, email);
+  if (!userId) {
+    console.warn("[stripe-webhook] no user matched", { customerId, email });
+    return;
+  }
+
+  const item = subscription.items.data[0];
+  const productId =
+    typeof item?.price.product === "string"
+      ? item.price.product
+      : item?.price.product?.id;
+
+  const isCanceled = subscription.status === "canceled";
+  const plan: PlanTier = isCanceled ? "free" : planFromProductId(productId);
+
+  const sub = subscription as unknown as { current_period_end?: number };
+  const currentPeriodEnd = sub.current_period_end
+    ? new Date(sub.current_period_end * 1000).toISOString()
+    : null;
+
+  const { error } = await supabaseAdmin.from("subscriptions").upsert(
+    {
+      user_id: userId,
+      plan,
+      status: subscription.status as SubStatus,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      stripe_price_id: item?.price.id ?? null,
+      current_period_end: currentPeriodEnd,
+      cancel_at_period_end: subscription.cancel_at_period_end ?? false,
+    },
+    { onConflict: "user_id" },
+  );
+  if (error) console.error("[stripe-webhook] upsert error", error);
+}
+
+export const Route = createFileRoute("/api/public/stripe/webhook")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const secretKey = process.env.STRIPE_SECRET_KEY;
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        if (!secretKey || !webhookSecret) {
+          console.error("[stripe-webhook] missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET");
+          return new Response("Webhook not configured", { status: 500 });
+        }
+
+        const signature = request.headers.get("stripe-signature");
+        if (!signature) return new Response("Missing signature", { status: 401 });
+
+        const body = await request.text();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const stripe = new Stripe(secretKey, { apiVersion: "2025-08-27.basil" as any });
+
+        let event: Stripe.Event;
+        try {
+          event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+        } catch (err) {
+          console.error("[stripe-webhook] signature verification failed", err);
+          return new Response("Invalid signature", { status: 401 });
+        }
+
+        console.log("[stripe-webhook] received", { id: event.id, type: event.type });
+
+        try {
+          switch (event.type) {
+            case "checkout.session.completed": {
+              const session = event.data.object as Stripe.Checkout.Session;
+              const subId =
+                typeof session.subscription === "string"
+                  ? session.subscription
+                  : session.subscription?.id;
+              if (subId) {
+                const subscription = await stripe.subscriptions.retrieve(subId);
+                await upsertFromSubscription(stripe, subscription);
+              }
+              break;
+            }
+            case "customer.subscription.created":
+            case "customer.subscription.updated":
+            case "customer.subscription.deleted": {
+              const subscription = event.data.object as Stripe.Subscription;
+              await upsertFromSubscription(stripe, subscription);
+              break;
+            }
+            case "invoice.payment_succeeded": {
+              const invoice = event.data.object as Stripe.Invoice;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const subId = (invoice as any).subscription;
+              const subscriptionId =
+                typeof subId === "string" ? subId : subId?.id;
+              if (subscriptionId) {
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                await upsertFromSubscription(stripe, subscription);
+              }
+              break;
+            }
+            case "invoice.payment_failed": {
+              const invoice = event.data.object as Stripe.Invoice;
+              const customerId =
+                typeof invoice.customer === "string"
+                  ? invoice.customer
+                  : invoice.customer?.id;
+              if (customerId) {
+                const userId = await resolveUserId(customerId, invoice.customer_email);
+                if (userId) {
+                  await supabaseAdmin
+                    .from("subscriptions")
+                    .update({ status: "past_due" })
+                    .eq("user_id", userId);
+                }
+              }
+              break;
+            }
+            default:
+              console.log("[stripe-webhook] ignored event type", event.type);
+          }
+        } catch (err) {
+          console.error("[stripe-webhook] handler error", err);
+          // Return 200 anyway so Stripe doesn't keep retrying on logic bugs.
+          // Errors are logged for debugging.
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    },
+  },
+});
