@@ -256,18 +256,43 @@ function SettingsPage() {
     toast.success("Chave PIX salva!");
   };
 
-  const handleManageSubscription = async () => {
-    setOpeningPortal(true);
+  const handleCancel = async () => {
+    setSubBusy(true);
     try {
-      const result = await portalFn();
-      if (result.url) {
-        window.location.href = result.url;
-      }
+      await cancelFn();
+      toast.success("Assinatura cancelada — acesso até o final do período");
+      await refresh();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao abrir portal";
-      toast.error(msg);
+      toast.error(err instanceof Error ? err.message : "Erro ao cancelar");
     } finally {
-      setOpeningPortal(false);
+      setSubBusy(false);
+    }
+  };
+
+  const handleResume = async () => {
+    setSubBusy(true);
+    try {
+      await resumeFn();
+      toast.success("Renovação automática reativada");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao retomar");
+    } finally {
+      setSubBusy(false);
+    }
+  };
+
+  const handleChangePlan = async (target: PlanTier) => {
+    if (target === "free" || target === planInfo.id) return;
+    setSubBusy(true);
+    try {
+      await changePlanFn({ data: { plan: target as "pro" | "business" } });
+      toast.success(`Plano alterado para ${PLANS[target].name}`);
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao mudar de plano");
+    } finally {
+      setSubBusy(false);
     }
   };
 
