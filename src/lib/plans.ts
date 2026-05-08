@@ -72,8 +72,8 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
       advancedReports: false,
       prioritySupport: false,
     },
-    stripePriceId: "price_1TPYsMF7QCShwtsLy0PMiSHN",
-    stripeProductId: "prod_UOLZjAnu1GPRdR",
+    stripePriceId: "price_1TUrApB2CRIHoDBf0Xh6AKR9",
+    stripeProductId: "prod_UToo5KCpR1ECyj",
     highlighted: true,
   },
   business: {
@@ -98,8 +98,8 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
       advancedReports: true,
       prioritySupport: true,
     },
-    stripePriceId: "price_1TPYtWF7QCShwtsL1dyMB4YN",
-    stripeProductId: "prod_UOLaD60vDtYEWI",
+    stripePriceId: "price_1TUrBLB2CRIHoDBfKFFqEEaU",
+    stripeProductId: "prod_UTooQU8Z6Mq2lI",
   },
 };
 
