@@ -8,7 +8,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
 import { PLANS, PLAN_ORDER, type PlanTier } from "@/lib/plans";
-import { createCheckoutSession } from "@/lib/billing.functions";
+import { createCheckoutSession, changePlan } from "@/lib/billing.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/planos")({
