@@ -27,9 +27,11 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { supabase } from "@/integrations/supabase/client";
-import { createPortalSession, listInvoices } from "@/lib/billing.functions";
+import { createPortalSession, listInvoices, getStripeStatus } from "@/lib/billing.functions";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { CheckCircle2, AlertTriangle, KeyRound } from "lucide-react";
 
 type KeyType = "cpf" | "cnpj" | "email" | "phone" | "random";
 
