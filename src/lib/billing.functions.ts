@@ -211,7 +211,8 @@ export const getStripeStatus = createServerFn({ method: "POST" })
       return { configured: false as const };
     }
     try {
-      const account = await stripe.accounts.retrieve("");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const account = await (stripe.accounts as any).retrieve();
       return {
         configured: true as const,
         livemode: !process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_"),
