@@ -108,7 +108,7 @@ function SettingsPage() {
   // Billing
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
-  const [openingPortal, setOpeningPortal] = useState(false);
+  const [subBusy, setSubBusy] = useState(false);
 
   // Stripe (admin)
   type StripeStatus = Awaited<ReturnType<typeof getStripeStatus>>;
