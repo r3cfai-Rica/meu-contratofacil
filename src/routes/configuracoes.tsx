@@ -484,16 +484,58 @@ function SettingsPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/planos">
-                <Sparkles className="h-4 w-4" /> Ver planos
-              </Link>
-            </Button>
-            {planInfo.id !== "free" && (
-              <Button onClick={handleManageSubscription} disabled={openingPortal} className="gap-2">
-                {openingPortal ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                Gerenciar assinatura
+            {planInfo.id === "free" ? (
+              <Button asChild className="gap-2">
+                <Link to="/planos">
+                  <Sparkles className="h-4 w-4" /> Ver planos
+                </Link>
               </Button>
+            ) : (
+              <>
+                {/* Switch plan inline */}
+                {PLAN_ORDER.filter((t) => t !== "free" && t !== planInfo.id).map((t) => (
+                  <Button
+                    key={t}
+                    variant="outline"
+                    className="gap-2"
+                    disabled={subBusy}
+                    onClick={() => handleChangePlan(t)}
+                  >
+                    {subBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Mudar para {PLANS[t].name}
+                  </Button>
+                ))}
+                {cancelAtPeriodEnd ? (
+                  <Button onClick={handleResume} disabled={subBusy} className="gap-2">
+                    {subBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                    Reativar renovação
+                  </Button>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={subBusy} className="gap-2">
+                        Cancelar assinatura
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Cancelar assinatura?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Você manterá acesso ao plano <strong>{planInfo.name}</strong>{" "}
+                          {currentPeriodEnd ? `até ${formatDateBR(currentPeriodEnd)}.` : "até o fim do período pago."}{" "}
+                          Após isso, sua conta volta para o plano Grátis. Você pode reativar a qualquer momento antes.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Manter assinatura</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCancel}>
+                          Cancelar mesmo assim
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </>
             )}
           </div>
         </div>
