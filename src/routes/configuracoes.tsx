@@ -29,7 +29,25 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { supabase } from "@/integrations/supabase/client";
-import { createPortalSession, listInvoices, getStripeStatus } from "@/lib/billing.functions";
+import {
+  listInvoices,
+  getStripeStatus,
+  cancelSubscriptionAtPeriodEnd,
+  resumeSubscription,
+  changePlan,
+} from "@/lib/billing.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { PLAN_ORDER, PLANS, type PlanTier } from "@/lib/plans";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
 import { CheckCircle2, AlertTriangle, KeyRound } from "lucide-react";
 
@@ -64,7 +82,9 @@ function SettingsPage() {
   const { user } = useAuth();
   const { planInfo, currentPeriodEnd, cancelAtPeriodEnd, refresh } = usePlan();
   const { isAdmin } = useIsAdmin();
-  const portalFn = useServerFn(createPortalSession);
+  const cancelFn = useServerFn(cancelSubscriptionAtPeriodEnd);
+  const resumeFn = useServerFn(resumeSubscription);
+  const changePlanFn = useServerFn(changePlan);
   const invoicesFn = useServerFn(listInvoices);
   const stripeStatusFn = useServerFn(getStripeStatus);
 
@@ -88,7 +108,7 @@ function SettingsPage() {
   // Billing
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
-  const [openingPortal, setOpeningPortal] = useState(false);
+  const [subBusy, setSubBusy] = useState(false);
 
   // Stripe (admin)
   type StripeStatus = Awaited<ReturnType<typeof getStripeStatus>>;
@@ -236,18 +256,43 @@ function SettingsPage() {
     toast.success("Chave PIX salva!");
   };
 
-  const handleManageSubscription = async () => {
-    setOpeningPortal(true);
+  const handleCancel = async () => {
+    setSubBusy(true);
     try {
-      const result = await portalFn();
-      if (result.url) {
-        window.location.href = result.url;
-      }
+      await cancelFn();
+      toast.success("Assinatura cancelada — acesso até o final do período");
+      await refresh();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao abrir portal";
-      toast.error(msg);
+      toast.error(err instanceof Error ? err.message : "Erro ao cancelar");
     } finally {
-      setOpeningPortal(false);
+      setSubBusy(false);
+    }
+  };
+
+  const handleResume = async () => {
+    setSubBusy(true);
+    try {
+      await resumeFn();
+      toast.success("Renovação automática reativada");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao retomar");
+    } finally {
+      setSubBusy(false);
+    }
+  };
+
+  const handleChangePlan = async (target: PlanTier) => {
+    if (target === "free" || target === planInfo.id) return;
+    setSubBusy(true);
+    try {
+      await changePlanFn({ data: { plan: target as "pro" | "business" } });
+      toast.success(`Plano alterado para ${PLANS[target].name}`);
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao mudar de plano");
+    } finally {
+      setSubBusy(false);
     }
   };
 
@@ -439,16 +484,58 @@ function SettingsPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/planos">
-                <Sparkles className="h-4 w-4" /> Ver planos
-              </Link>
-            </Button>
-            {planInfo.id !== "free" && (
-              <Button onClick={handleManageSubscription} disabled={openingPortal} className="gap-2">
-                {openingPortal ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                Gerenciar assinatura
+            {planInfo.id === "free" ? (
+              <Button asChild className="gap-2">
+                <Link to="/planos">
+                  <Sparkles className="h-4 w-4" /> Ver planos
+                </Link>
               </Button>
+            ) : (
+              <>
+                {/* Switch plan inline */}
+                {PLAN_ORDER.filter((t) => t !== "free" && t !== planInfo.id).map((t) => (
+                  <Button
+                    key={t}
+                    variant="outline"
+                    className="gap-2"
+                    disabled={subBusy}
+                    onClick={() => handleChangePlan(t)}
+                  >
+                    {subBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Mudar para {PLANS[t].name}
+                  </Button>
+                ))}
+                {cancelAtPeriodEnd ? (
+                  <Button onClick={handleResume} disabled={subBusy} className="gap-2">
+                    {subBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                    Reativar renovação
+                  </Button>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={subBusy} className="gap-2">
+                        Cancelar assinatura
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Cancelar assinatura?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Você manterá acesso ao plano <strong>{planInfo.name}</strong>{" "}
+                          {currentPeriodEnd ? `até ${formatDateBR(currentPeriodEnd)}.` : "até o fim do período pago."}{" "}
+                          Após isso, sua conta volta para o plano Grátis. Você pode reativar a qualquer momento antes.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Manter assinatura</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCancel}>
+                          Cancelar mesmo assim
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </>
             )}
           </div>
         </div>
