@@ -201,7 +201,8 @@ export const listInvoices = createServerFn({ method: "POST" })
     const email = (claims as { email?: string }).email;
     if (!email) return { invoices: [] };
 
-    const stripe = requireStripe();
+    const stripe = getStripe();
+    if (!stripe) return { invoices: [] };
     const customers = await stripe.customers.list({ email, limit: 1 });
     if (customers.data.length === 0) return { invoices: [] };
 
