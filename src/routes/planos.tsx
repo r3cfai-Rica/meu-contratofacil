@@ -108,7 +108,11 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const checkoutFn = useServerFn(createCheckoutSession);
+  const changePlanFn = useServerFn(changePlan);
+  const { refresh } = usePlan();
   const [loadingPlan, setLoadingPlan] = useState<PlanTier | null>(null);
+
+  const isPaidCurrent = currentPlan === "pro" || currentPlan === "business";
 
   const handleSubscribe = async (target: PlanTier) => {
     if (!user) {
