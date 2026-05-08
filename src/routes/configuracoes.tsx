@@ -90,6 +90,29 @@ function SettingsPage() {
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
 
+  // Stripe (admin)
+  type StripeStatus = Awaited<ReturnType<typeof getStripeStatus>>;
+  const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
+  const [stripeStatusLoading, setStripeStatusLoading] = useState(false);
+
+  const loadStripeStatus = async () => {
+    if (!isAdmin) return;
+    setStripeStatusLoading(true);
+    try {
+      const s = await stripeStatusFn();
+      setStripeStatus(s);
+    } catch {
+      // ignore
+    } finally {
+      setStripeStatusLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin) void loadStripeStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+
   useEffect(() => {
     if (!user) return;
     void (async () => {
