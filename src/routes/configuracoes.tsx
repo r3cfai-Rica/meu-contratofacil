@@ -29,7 +29,25 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { supabase } from "@/integrations/supabase/client";
-import { createPortalSession, listInvoices, getStripeStatus } from "@/lib/billing.functions";
+import {
+  listInvoices,
+  getStripeStatus,
+  cancelSubscriptionAtPeriodEnd,
+  resumeSubscription,
+  changePlan,
+} from "@/lib/billing.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { PLAN_ORDER, PLANS, type PlanTier } from "@/lib/plans";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
 import { CheckCircle2, AlertTriangle, KeyRound } from "lucide-react";
 
