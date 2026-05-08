@@ -17,6 +17,15 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
 
+    // Admins bypass plan limits
+    const { data: adminRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    const isAdmin = !!adminRow;
+
     // Check plan
     const { data: planRow } = await supabaseAdmin
       .from("subscriptions")
@@ -27,7 +36,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       planRow && ["active", "trialing"].includes(planRow.status)
         ? (planRow.plan as PlanTier)
         : "free";
-    const limit = PLANS[plan].limits.maxTeamMembers;
+    const limit = isAdmin ? Number.MAX_SAFE_INTEGER : PLANS[plan].limits.maxTeamMembers;
     if (limit <= 0) {
       throw new Error("Convidar membros está disponível apenas no plano Business");
     }

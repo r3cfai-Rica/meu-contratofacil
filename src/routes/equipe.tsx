@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
 import { supabase } from "@/integrations/supabase/client";
 import { inviteTeamMember } from "@/lib/team.functions";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 
 export const Route = createFileRoute("/equipe")({
   head: () => ({ meta: [{ title: "Equipe — ContratoFácil" }] }),
@@ -47,6 +48,7 @@ interface TeamMemberRow {
 function TeamPage() {
   const { user } = useAuth();
   const { planInfo, loading: planLoading } = usePlan();
+  const { isAdmin } = useIsAdmin();
   const inviteFn = useServerFn(inviteTeamMember);
 
   const [members, setMembers] = useState<TeamMemberRow[]>([]);
@@ -54,8 +56,8 @@ function TeamPage() {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const isBusiness = planInfo.limits.multiUser;
-  const limit = planInfo.limits.maxTeamMembers;
+  const isBusiness = planInfo.limits.multiUser || isAdmin;
+  const limit = isAdmin ? 999 : planInfo.limits.maxTeamMembers;
   const activeCount = members.filter((m) => m.status !== "revoked").length;
 
   const load = async () => {
