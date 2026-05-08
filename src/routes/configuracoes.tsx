@@ -82,7 +82,9 @@ function SettingsPage() {
   const { user } = useAuth();
   const { planInfo, currentPeriodEnd, cancelAtPeriodEnd, refresh } = usePlan();
   const { isAdmin } = useIsAdmin();
-  const portalFn = useServerFn(createPortalSession);
+  const cancelFn = useServerFn(cancelSubscriptionAtPeriodEnd);
+  const resumeFn = useServerFn(resumeSubscription);
+  const changePlanFn = useServerFn(changePlan);
   const invoicesFn = useServerFn(listInvoices);
   const stripeStatusFn = useServerFn(getStripeStatus);
 
