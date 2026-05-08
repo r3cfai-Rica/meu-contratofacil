@@ -27,9 +27,11 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { supabase } from "@/integrations/supabase/client";
-import { createPortalSession, listInvoices } from "@/lib/billing.functions";
+import { createPortalSession, listInvoices, getStripeStatus } from "@/lib/billing.functions";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { CheckCircle2, AlertTriangle, KeyRound } from "lucide-react";
 
 type KeyType = "cpf" | "cnpj" | "email" | "phone" | "random";
 
@@ -61,8 +63,10 @@ interface InvoiceItem {
 function SettingsPage() {
   const { user } = useAuth();
   const { planInfo, currentPeriodEnd, cancelAtPeriodEnd, refresh } = usePlan();
+  const { isAdmin } = useIsAdmin();
   const portalFn = useServerFn(createPortalSession);
   const invoicesFn = useServerFn(listInvoices);
+  const stripeStatusFn = useServerFn(getStripeStatus);
 
   // Profile
   const [profileName, setProfileName] = useState("");
@@ -85,6 +89,29 @@ function SettingsPage() {
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
+
+  // Stripe (admin)
+  type StripeStatus = Awaited<ReturnType<typeof getStripeStatus>>;
+  const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
+  const [stripeStatusLoading, setStripeStatusLoading] = useState(false);
+
+  const loadStripeStatus = async () => {
+    if (!isAdmin) return;
+    setStripeStatusLoading(true);
+    try {
+      const s = await stripeStatusFn();
+      setStripeStatus(s);
+    } catch {
+      // ignore
+    } finally {
+      setStripeStatusLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin) void loadStripeStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!user) return;
@@ -281,6 +308,106 @@ function SettingsPage() {
           </Button>
         </div>
       </form>
+
+      {/* Stripe (admin only) */}
+      {isAdmin && (
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-6">
+          <div className="flex items-center gap-3 border-b border-border/60 pb-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <KeyRound className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <h2 className="text-base font-semibold">Stripe (admin)</h2>
+              <p className="text-xs text-muted-foreground">
+                Conecte o Stripe para habilitar cobranças, assinaturas e faturas dos seus clientes.
+              </p>
+            </div>
+            <Badge variant="secondary">Admin</Badge>
+          </div>
+
+          {stripeStatusLoading && !stripeStatus ? (
+            <div className="py-4 text-sm text-muted-foreground">Verificando conexão...</div>
+          ) : !stripeStatus?.configured ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+                <div>
+                  <p className="font-medium">Stripe não configurado</p>
+                  <p className="text-xs text-muted-foreground">
+                    Adicione a chave secreta do Stripe (STRIPE_SECRET_KEY) para começar a aceitar pagamentos.
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Peça ao Lovable: <em>"atualizar minha chave do Stripe"</em>. Você poderá colar a
+                chave em um formulário seguro — ela nunca fica visível no código.
+              </p>
+            </div>
+          ) : "error" in stripeStatus && stripeStatus.error ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                <AlertTriangle className="mt-0.5 h-4 w-4 text-destructive" />
+                <div>
+                  <p className="font-medium">Chave inválida ou inacessível</p>
+                  <p className="text-xs text-muted-foreground">{stripeStatus.error}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Peça ao Lovable: <em>"atualizar minha chave do Stripe"</em> para corrigir.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+                <div className="flex-1">
+                  <p className="font-medium">
+                    Stripe conectado{" "}
+                    <Badge variant={stripeStatus.livemode ? "default" : "secondary"} className="ml-1">
+                      {stripeStatus.livemode ? "Live" : "Test"}
+                    </Badge>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {stripeStatus.businessName ?? stripeStatus.accountEmail ?? stripeStatus.accountId}
+                    {stripeStatus.country ? ` · ${stripeStatus.country}` : ""}
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-border/60 px-3 py-2 text-xs">
+                  Cobranças:{" "}
+                  <span className={stripeStatus.chargesEnabled ? "font-medium text-emerald-600" : "font-medium text-amber-600"}>
+                    {stripeStatus.chargesEnabled ? "Habilitadas" : "Pendente verificação"}
+                  </span>
+                </div>
+                <div className="rounded-lg border border-border/60 px-3 py-2 text-xs">
+                  Repasses:{" "}
+                  <span className={stripeStatus.payoutsEnabled ? "font-medium text-emerald-600" : "font-medium text-amber-600"}>
+                    {stripeStatus.payoutsEnabled ? "Habilitados" : "Pendente verificação"}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Para trocar a chave, peça ao Lovable: <em>"atualizar minha chave do Stripe"</em>.
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={loadStripeStatus}
+              disabled={stripeStatusLoading}
+              className="gap-2"
+            >
+              {stripeStatusLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+              Verificar conexão
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Plan */}
       <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-6">

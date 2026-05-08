@@ -193,6 +193,45 @@ export const createPortalSession = createServerFn({ method: "POST" })
     return { url: portal.url };
   });
 
+/** Admin-only: check if Stripe is configured and return account info. */
+export const getStripeStatus = createServerFn({ method: "POST" })
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleRow) throw new Error("Acesso negado");
+
+    const stripe = getStripe();
+    if (!stripe) {
+      return { configured: false as const };
+    }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const account = await (stripe.accounts as any).retrieve();
+      return {
+        configured: true as const,
+        livemode: !process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_"),
+        accountId: account.id,
+        accountEmail: account.email ?? null,
+        businessName:
+          account.business_profile?.name ?? account.settings?.dashboard?.display_name ?? null,
+        country: account.country ?? null,
+        chargesEnabled: account.charges_enabled ?? false,
+        payoutsEnabled: account.payouts_enabled ?? false,
+      };
+    } catch (err) {
+      return {
+        configured: true as const,
+        error: err instanceof Error ? err.message : "Falha ao validar a chave do Stripe",
+      };
+    }
+  });
+
 /** List the user's invoices from Stripe. */
 export const listInvoices = createServerFn({ method: "POST" })
   .middleware([withSupabaseAccessToken, requireSupabaseAuth])
