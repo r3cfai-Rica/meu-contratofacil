@@ -122,6 +122,14 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
     if (target === "free" || target === currentPlan) return;
     setLoadingPlan(target);
     try {
+      if (isPaidCurrent) {
+        // Existing subscriber → switch in-app, no redirect
+        await changePlanFn({ data: { plan: target as "pro" | "business" } });
+        toast.success(`Plano alterado para ${PLANS[target].name}`);
+        await refresh();
+        void navigate({ to: "/configuracoes" });
+        return;
+      }
       const result = await checkoutFn({ data: { plan: target as "pro" | "business" } });
       if (result.url) {
         window.location.href = result.url;
@@ -129,7 +137,7 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
         toast.error("Não foi possível iniciar o checkout");
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao iniciar checkout";
+      const msg = e instanceof Error ? e.message : "Erro ao iniciar a alteração";
       toast.error(msg);
     } finally {
       setLoadingPlan(null);
