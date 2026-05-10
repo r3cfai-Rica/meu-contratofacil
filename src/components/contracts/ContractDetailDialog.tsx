@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Copy, Download, History, Link as LinkIcon, Loader2, Send } from "lucide-react";
+import { Copy, Download, History, Link as LinkIcon, Loader2, Mail, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendContractEmail } from "@/lib/email.functions";
 import {
   Dialog,
   DialogContent,
@@ -58,9 +60,11 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Props) {
   const { user } = useAuth();
+  const sendEmail = useServerFn(sendContractEmail);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     if (!contract) {
@@ -88,13 +92,40 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       .from("contracts")
       .update({ public_token: token, status: "awaiting_signature" })
       .eq("id", contract.id);
-    setLoadingAction(false);
     if (error) {
+      setLoadingAction(false);
       toast.error(error.message);
       return;
     }
     toast.success("Link de assinatura gerado");
+    // Envia email automaticamente
+    try {
+      const result = await sendEmail({
+        data: { contractId: contract.id, appOrigin: window.location.origin },
+      });
+      toast.success(`Email enviado para ${result.recipient}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao enviar email";
+      toast.error(`Link gerado, mas o email falhou: ${msg}`);
+    }
+    setLoadingAction(false);
     onChanged();
+  };
+
+  const resendEmail = async () => {
+    setSendingEmail(true);
+    try {
+      const result = await sendEmail({
+        data: { contractId: contract.id, appOrigin: window.location.origin },
+      });
+      toast.success(`Email reenviado para ${result.recipient}`);
+      onChanged();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao reenviar email";
+      toast.error(msg);
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   const copyLink = async () => {
@@ -164,6 +195,10 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       return `Status alterado: ${from ? CONTRACT_STATUS_LABELS[from] : "?"} → ${to ? CONTRACT_STATUS_LABELS[to] : "?"}`;
     }
     if (h.action === "updated") return "Contrato atualizado";
+    if (h.action === "email_sent") {
+      const recipient = h.details?.recipient as string | undefined;
+      return recipient ? `Email enviado para ${recipient}` : "Email enviado";
+    }
     return h.action;
   };
 
@@ -230,12 +265,28 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
               <LinkIcon className="h-4 w-4 text-primary" /> Link público de assinatura
             </div>
             {publicUrl ? (
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <code className="flex-1 truncate rounded-md bg-background/60 px-3 py-2 text-xs">
-                  {publicUrl}
-                </code>
-                <Button size="sm" variant="secondary" onClick={copyLink} className="gap-2">
-                  <Copy className="h-3.5 w-3.5" /> Copiar
+              <div className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <code className="flex-1 truncate rounded-md bg-background/60 px-3 py-2 text-xs">
+                    {publicUrl}
+                  </code>
+                  <Button size="sm" variant="secondary" onClick={copyLink} className="gap-2">
+                    <Copy className="h-3.5 w-3.5" /> Copiar
+                  </Button>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={resendEmail}
+                  disabled={sendingEmail}
+                  className="gap-2"
+                >
+                  {sendingEmail ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Mail className="h-3.5 w-3.5" />
+                  )}
+                  Reenviar email para o cliente
                 </Button>
               </div>
             ) : (
