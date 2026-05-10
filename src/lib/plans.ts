@@ -85,6 +85,8 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
     },
     stripePriceId: "price_1TUrApB2CRIHoDBf0Xh6AKR9",
     stripeProductId: "prod_UToo5KCpR1ECyj",
+    stripePriceIdTest: "price_1TVLDiB2CRIHoDBfBUFTEoaR",
+    stripeProductIdTest: "prod_UUJrzhShBRRD1t",
     highlighted: true,
   },
   business: {
