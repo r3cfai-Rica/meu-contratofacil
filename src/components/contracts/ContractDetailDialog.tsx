@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Copy, Download, History, Link as LinkIcon, Loader2, Send } from "lucide-react";
+import { Copy, Download, History, Link as LinkIcon, Loader2, Mail, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendContractEmail } from "@/lib/email.functions";
 import {
   Dialog,
   DialogContent,
@@ -58,9 +60,11 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Props) {
   const { user } = useAuth();
+  const sendEmail = useServerFn(sendContractEmail);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     if (!contract) {
@@ -88,13 +92,40 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       .from("contracts")
       .update({ public_token: token, status: "awaiting_signature" })
       .eq("id", contract.id);
-    setLoadingAction(false);
     if (error) {
+      setLoadingAction(false);
       toast.error(error.message);
       return;
     }
     toast.success("Link de assinatura gerado");
+    // Envia email automaticamente
+    try {
+      const result = await sendEmail({
+        data: { contractId: contract.id, appOrigin: window.location.origin },
+      });
+      toast.success(`Email enviado para ${result.recipient}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao enviar email";
+      toast.error(`Link gerado, mas o email falhou: ${msg}`);
+    }
+    setLoadingAction(false);
     onChanged();
+  };
+
+  const resendEmail = async () => {
+    setSendingEmail(true);
+    try {
+      const result = await sendEmail({
+        data: { contractId: contract.id, appOrigin: window.location.origin },
+      });
+      toast.success(`Email reenviado para ${result.recipient}`);
+      onChanged();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao reenviar email";
+      toast.error(msg);
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   const copyLink = async () => {
