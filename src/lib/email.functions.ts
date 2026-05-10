@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { withSupabaseAccessToken } from "@/integrations/supabase/server-fn-auth";
 
 const FROM = "ContratoFácil <contratos@r3cf.com>";
 
@@ -135,7 +136,7 @@ function buildHtml(params: {
 }
 
 export const sendContractEmail = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([withSupabaseAccessToken, requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
