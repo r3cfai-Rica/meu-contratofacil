@@ -195,6 +195,10 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       return `Status alterado: ${from ? CONTRACT_STATUS_LABELS[from] : "?"} → ${to ? CONTRACT_STATUS_LABELS[to] : "?"}`;
     }
     if (h.action === "updated") return "Contrato atualizado";
+    if (h.action === "email_sent") {
+      const recipient = h.details?.recipient as string | undefined;
+      return recipient ? `Email enviado para ${recipient}` : "Email enviado";
+    }
     return h.action;
   };
 
