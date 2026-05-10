@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2, Send, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendContractEmail } from "@/lib/email.functions";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +41,7 @@ type PaymentMethod = "one_time" | "installments" | "recurring";
 
 export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   const { user } = useAuth();
+  const sendEmail = useServerFn(sendContractEmail);
   const [loading, setLoading] = useState(false);
   const [clientsList, setClientsList] = useState<ClientOption[]>([]);
 
@@ -126,9 +129,20 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
       return;
     }
 
-    if (sendForSignature) {
-      toast.success("Contrato enviado para assinatura!");
-    } else {
+    if (sendForSignature && data?.id) {
+      try {
+        const result = await sendEmail({
+          data: {
+            contractId: data.id,
+            appOrigin: window.location.origin,
+          },
+        });
+        toast.success(`Contrato enviado por email para ${result.recipient}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro ao enviar email";
+        toast.error(`Contrato criado, mas o email falhou: ${msg}`);
+      }
+    } else if (!sendForSignature) {
       toast.success("Rascunho salvo");
     }
     onOpenChange(false);
