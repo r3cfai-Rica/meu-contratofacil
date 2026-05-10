@@ -1,49 +1,57 @@
-## Retomar de onde paramos
+## Diagnóstico (causa raiz)
 
-O código já está pronto. Faltam só os passos operacionais com você + Stripe.
+Analisei o fluxo de "Enviar para assinatura" em `ContractFormDialog.tsx` e `ContractDetailDialog.tsx`. **Não existe nenhum bug — existe uma funcionalidade ausente**:
 
-### Passo 1 — Pegar a chave de teste do Stripe
-1. No Stripe, ative o toggle **"Test mode"** no canto superior direito.
-2. Vá em **Developers → API keys**.
-3. Copie a **Secret key** que começa com `sk_test_...`.
+- O botão "Enviar para assinatura" apenas:
+  1. Gera um `public_token` (UUID)
+  2. Muda o status para `awaiting_signature`
+  3. Mostra um toast "Contrato enviado para assinatura!"
+- **Nenhum email é enviado em nenhum momento.** Não há Edge Function, nem integração com Resend/SMTP/Lovable Emails, nem chamada de envio. O cliente nunca recebeu porque o sistema nunca mandou.
+- O fluxo atual presume que você copie o link manualmente (botão "Copiar link") e envie por WhatsApp/email por fora.
 
-### Passo 2 — Criar o webhook em modo Test
-1. Ainda em Test mode, vá em **Developers → Webhooks**.
-2. Clique em **Add endpoint**.
-3. URL: `https://meu-contrato-na-mao.lovable.app/api/public/stripe/webhook`
-4. Selecione os mesmos 6 eventos do webhook live:
-   - `checkout.session.completed`
-   - `customer.subscription.created`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_succeeded`
-   - `invoice.payment_failed`
-5. Após criar, copie o **Signing secret** (`whsec_...`).
+Além disso, ainda não há domínio de email configurado no projeto, então não há infraestrutura de envio.
 
-### Passo 3 — Cadastrar os 2 secrets no Lovable Cloud
-Eu abro o formulário seguro pedindo:
-- `STRIPE_SECRET_KEY_TEST` → cole o `sk_test_...`
-- `STRIPE_WEBHOOK_SECRET_TEST` → cole o `whsec_...`
+## Plano para corrigir
 
-### Passo 4 — Criar produtos Pro e Business em modo Test
-Eu disparo via tool `stripe--create_stripe_product_and_price`:
-- **Pro** — R$ 49,00/mês recorrente
-- **Business** — R$ 99,00/mês recorrente
+### 1. Configurar domínio de envio de emails
+Pré-requisito obrigatório. Vou abrir o diálogo de setup do domínio de email (você escolhe o domínio, ex.: `notify.meucontratonamao.com.br`, ou usa um subdomínio do app). DNS pode levar até 72h, mas o resto da infra já fica pronto e dispara assim que o domínio verificar.
 
-Catálogos test e live são separados no Stripe, por isso precisamos recriar.
+### 2. Provisionar a infraestrutura de emails
+Criar tabelas de fila, log de envios, supressão, cron de processamento e a rota de envio transacional.
 
-### Passo 5 — Atualizar `src/lib/plans.ts`
-Adiciono os campos `stripePriceIdTest` e `stripeProductIdTest` para Pro e Business com os IDs criados no passo 4. O helper `getPlanPriceId(tier, mode)` já está pronto para escolher o ID correto automaticamente.
+### 3. Criar template de email "Contrato para assinatura"
+Email em React Email com:
+- Saudação personalizada (nome do cliente)
+- Nome do prestador / logo (se houver)
+- Número, título e resumo do contrato (valor, datas)
+- Botão grande "Revisar e assinar contrato" → link público `/c/{token}`
+- Visual alinhado ao branding do app
 
-### Passo 6 — Testar
-Você abre o preview, vai em **Planos → Assinar Pro**, e usa:
-- Cartão: `4242 4242 4242 4242`
-- Validade: qualquer data futura (ex: `12/34`)
-- CVC: qualquer (ex: `123`)
-- CEP: qualquer
+### 4. Disparar email automaticamente ao "Enviar para assinatura"
+Atualizar dois pontos:
+- `ContractFormDialog.tsx` (criar contrato e enviar)
+- `ContractDetailDialog.tsx` (gerar link de assinatura)
 
-Se funcionar, sua assinatura aparecerá como **Pro** em **Configurações** (em modo test, sem cobrar dinheiro real). Eu confiro os logs do webhook para validar.
+Em ambos, após gravar o `public_token`, chamar o envio transacional usando o email do cliente cadastrado (`clients.email`). Validar antes que o cliente tem email — se não tiver, avisar para cadastrar.
 
----
+Adicionar também um botão "Reenviar email" no diálogo de detalhes do contrato.
 
-**Próximo passo agora:** começar pelo **Passo 1** no Stripe. Me avise quando tiver as chaves em mãos que eu abro o formulário de secrets.
+### 5. Registrar envios em histórico
+Inserir entrada em `contract_history` com action `email_sent` para auditoria.
+
+### 6. Teste com contrato existente
+Após o domínio verificar, vou disparar o envio de um contrato já criado (ex.: o último `awaiting_signature`) para o seu email cadastrado para confirmar entrega ponta-a-ponta.
+
+## Observações
+
+- Enquanto o DNS do domínio não verificar, os emails ficam enfileirados e disparam automaticamente assim que verificar — nada se perde.
+- O envio passa pela fila com retry automático, supressão de bounces e link de descadastro (footer obrigatório, anexado pelo sistema).
+- Não vou usar serviços externos (Resend/SendGrid) — Lovable Cloud já fornece envio nativo sem API key.
+
+## Pergunta antes de começar
+
+Qual domínio você quer usar como remetente?
+- Algo do tipo `contratos@notify.meucontratonamao.com.br` (precisa que você adicione registros NS no seu provedor de domínio)
+- Ou prefere que eu te oriente passo-a-passo no diálogo de configuração
+
+Confirma que posso seguir? Assim que aprovar, eu abro o diálogo de domínio e implemento tudo na sequência.
