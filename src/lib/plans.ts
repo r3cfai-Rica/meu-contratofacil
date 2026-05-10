@@ -85,6 +85,8 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
     },
     stripePriceId: "price_1TUrApB2CRIHoDBf0Xh6AKR9",
     stripeProductId: "prod_UToo5KCpR1ECyj",
+    stripePriceIdTest: "price_1TVLDiB2CRIHoDBfBUFTEoaR",
+    stripeProductIdTest: "prod_UUJrzhShBRRD1t",
     highlighted: true,
   },
   business: {
@@ -111,6 +113,8 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
     },
     stripePriceId: "price_1TUrBLB2CRIHoDBfKFFqEEaU",
     stripeProductId: "prod_UTooQU8Z6Mq2lI",
+    stripePriceIdTest: "price_1TVLEXB2CRIHoDBftSJ9JXYg",
+    stripeProductIdTest: "prod_UUJs16I4P3FG13",
   },
 };
 
