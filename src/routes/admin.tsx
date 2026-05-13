@@ -111,6 +111,23 @@ interface AuditRow {
   created_at: string;
 }
 
+interface AdminClientRow {
+  client_id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  document: string | null;
+  status: "active" | "inactive";
+  created_at: string;
+  owner_user_id: string;
+  owner_email: string;
+  owner_name: string;
+  owner_plan: "free" | "pro" | "business";
+  contracts_count: number;
+  invoices_count: number;
+  total_paid_cents: number;
+}
+
 function AdminPage() {
   const { isAdmin, loading: roleLoading } = useIsAdmin();
   const navigate = useNavigate();
