@@ -276,6 +276,7 @@ function AdminPage() {
             <Tabs defaultValue="users">
               <TabsList>
                 <TabsTrigger value="users">Usuários ({users.length})</TabsTrigger>
+                <TabsTrigger value="clients">Clientes / CRM ({clients.length})</TabsTrigger>
                 <TabsTrigger value="payments">Pagamentos ({payments.length})</TabsTrigger>
                 <TabsTrigger value="audit">Auditoria ({audit.length})</TabsTrigger>
               </TabsList>
