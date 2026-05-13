@@ -1,57 +1,33 @@
-## Diagnóstico (causa raiz)
+## Problema
 
-Analisei o fluxo de "Enviar para assinatura" em `ContractFormDialog.tsx` e `ContractDetailDialog.tsx`. **Não existe nenhum bug — existe uma funcionalidade ausente**:
+A página **Cobranças** falha com:
+> Could not find a relationship between 'invoices' and 'clients' in the schema cache
 
-- O botão "Enviar para assinatura" apenas:
-  1. Gera um `public_token` (UUID)
-  2. Muda o status para `awaiting_signature`
-  3. Mostra um toast "Contrato enviado para assinatura!"
-- **Nenhum email é enviado em nenhum momento.** Não há Edge Function, nem integração com Resend/SMTP/Lovable Emails, nem chamada de envio. O cliente nunca recebeu porque o sistema nunca mandou.
-- O fluxo atual presume que você copie o link manualmente (botão "Copiar link") e envie por WhatsApp/email por fora.
+A query em `src/routes/cobrancas.tsx` (linha 105-107) usa embed do PostgREST:
+```ts
+.from("invoices").select("..., client_id, clients(full_name)")
+```
 
-Além disso, ainda não há domínio de email configurado no projeto, então não há infraestrutura de envio.
+Isso exige uma **foreign key declarada** entre `invoices.client_id` e `clients.id`. Inspecionando o schema da tabela `public.invoices`, a coluna `client_id uuid NOT NULL` existe e tem índice, mas **não há FK constraint** apontando para `public.clients(id)`. Sem a FK, o PostgREST não consegue resolver o embed `clients(...)` e retorna esse erro — por isso nenhuma cobrança carrega na lista (e o teste com cliente cadastrado fica bloqueado antes mesmo de gerar/enviar PIX).
 
-## Plano para corrigir
+A tabela `contracts` provavelmente já tem essa FK configurada corretamente (por isso contratos com cliente funcionam), mas `invoices` foi criada sem ela.
 
-### 1. Configurar domínio de envio de emails
-Pré-requisito obrigatório. Vou abrir o diálogo de setup do domínio de email (você escolhe o domínio, ex.: `notify.meucontratonamao.com.br`, ou usa um subdomínio do app). DNS pode levar até 72h, mas o resto da infra já fica pronto e dispara assim que o domínio verificar.
+## Correção
 
-### 2. Provisionar a infraestrutura de emails
-Criar tabelas de fila, log de envios, supressão, cron de processamento e a rota de envio transacional.
+Migration única adicionando a foreign key faltante:
 
-### 3. Criar template de email "Contrato para assinatura"
-Email em React Email com:
-- Saudação personalizada (nome do cliente)
-- Nome do prestador / logo (se houver)
-- Número, título e resumo do contrato (valor, datas)
-- Botão grande "Revisar e assinar contrato" → link público `/c/{token}`
-- Visual alinhado ao branding do app
+```sql
+ALTER TABLE public.invoices
+  ADD CONSTRAINT invoices_client_id_fkey
+  FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE RESTRICT;
+```
 
-### 4. Disparar email automaticamente ao "Enviar para assinatura"
-Atualizar dois pontos:
-- `ContractFormDialog.tsx` (criar contrato e enviar)
-- `ContractDetailDialog.tsx` (gerar link de assinatura)
+Após a migration, o PostgREST recarrega o schema cache automaticamente e o embed `clients(full_name)` passa a funcionar — a lista de cobranças carrega e o fluxo de envio da cobrança de teste destrava.
 
-Em ambos, após gravar o `public_token`, chamar o envio transacional usando o email do cliente cadastrado (`clients.email`). Validar antes que o cliente tem email — se não tiver, avisar para cadastrar.
+Não há mudanças de código necessárias — apenas a migration de banco.
 
-Adicionar também um botão "Reenviar email" no diálogo de detalhes do contrato.
+## Validação
 
-### 5. Registrar envios em histórico
-Inserir entrada em `contract_history` com action `email_sent` para auditoria.
-
-### 6. Teste com contrato existente
-Após o domínio verificar, vou disparar o envio de um contrato já criado (ex.: o último `awaiting_signature`) para o seu email cadastrado para confirmar entrega ponta-a-ponta.
-
-## Observações
-
-- Enquanto o DNS do domínio não verificar, os emails ficam enfileirados e disparam automaticamente assim que verificar — nada se perde.
-- O envio passa pela fila com retry automático, supressão de bounces e link de descadastro (footer obrigatório, anexado pelo sistema).
-- Não vou usar serviços externos (Resend/SendGrid) — Lovable Cloud já fornece envio nativo sem API key.
-
-## Pergunta antes de começar
-
-Qual domínio você quer usar como remetente?
-- Algo do tipo `contratos@notify.meucontratonamao.com.br` (precisa que você adicione registros NS no seu provedor de domínio)
-- Ou prefere que eu te oriente passo-a-passo no diálogo de configuração
-
-Confirma que posso seguir? Assim que aprovar, eu abro o diálogo de domínio e implemento tudo na sequência.
+1. Recarregar `/cobrancas` — a lista deve carregar sem o toast de erro.
+2. Abrir uma cobrança existente / criar uma nova vinculada ao cliente cadastrado.
+3. Enviar a cobrança (PIX) e confirmar que o fluxo segue normalmente.
