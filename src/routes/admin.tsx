@@ -135,10 +135,13 @@ function AdminPage() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [clients, setClients] = useState<AdminClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientPlanFilter, setClientPlanFilter] = useState<string>("all");
 
   useEffect(() => {
     if (roleLoading) return;
@@ -152,11 +155,12 @@ function AdminPage() {
 
   const loadData = async () => {
     setLoading(true);
-    const [ovRes, usersRes, payRes, audRes] = await Promise.all([
+    const [ovRes, usersRes, payRes, audRes, cliRes] = await Promise.all([
       supabase.rpc("get_admin_overview"),
       supabase.rpc("list_admin_users"),
       supabase.rpc("list_admin_recent_payments", { _limit: 25 }),
       supabase.rpc("list_admin_audit_logs", { _limit: 80 }),
+      supabase.rpc("list_admin_clients", { _limit: 500 }),
     ]);
     if (ovRes.error) toast.error(ovRes.error.message);
     else setOverview(ovRes.data as unknown as AdminOverview);
@@ -166,6 +170,8 @@ function AdminPage() {
     else setPayments((payRes.data as unknown as PaymentRow[]) ?? []);
     if (audRes.error) toast.error(audRes.error.message);
     else setAudit((audRes.data as unknown as AuditRow[]) ?? []);
+    if (cliRes.error) toast.error(cliRes.error.message);
+    else setClients((cliRes.data as unknown as AdminClientRow[]) ?? []);
     setLoading(false);
   };
 
@@ -181,6 +187,20 @@ function AdminPage() {
       );
     });
   }, [users, search, planFilter, statusFilter]);
+
+  const filteredClients = useMemo(() => {
+    const q = clientSearch.toLowerCase().trim();
+    return clients.filter((c) => {
+      if (clientPlanFilter !== "all" && c.owner_plan !== clientPlanFilter) return false;
+      if (!q) return true;
+      return (
+        c.full_name.toLowerCase().includes(q) ||
+        (c.email?.toLowerCase().includes(q) ?? false) ||
+        (c.document?.toLowerCase().includes(q) ?? false) ||
+        c.owner_email.toLowerCase().includes(q)
+      );
+    });
+  }, [clients, clientSearch, clientPlanFilter]);
 
   if (roleLoading || !isAdmin) {
     return (
