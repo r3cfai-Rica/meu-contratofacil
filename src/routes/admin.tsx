@@ -13,6 +13,7 @@ import {
   Activity,
   Receipt,
   Mail,
+  Contact,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
@@ -110,6 +111,23 @@ interface AuditRow {
   created_at: string;
 }
 
+interface AdminClientRow {
+  client_id: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  document: string | null;
+  status: "active" | "inactive";
+  created_at: string;
+  owner_user_id: string;
+  owner_email: string;
+  owner_name: string;
+  owner_plan: "free" | "pro" | "business";
+  contracts_count: number;
+  invoices_count: number;
+  total_paid_cents: number;
+}
+
 function AdminPage() {
   const { isAdmin, loading: roleLoading } = useIsAdmin();
   const navigate = useNavigate();
@@ -117,10 +135,13 @@ function AdminPage() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [clients, setClients] = useState<AdminClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientPlanFilter, setClientPlanFilter] = useState<string>("all");
 
   useEffect(() => {
     if (roleLoading) return;
@@ -134,11 +155,12 @@ function AdminPage() {
 
   const loadData = async () => {
     setLoading(true);
-    const [ovRes, usersRes, payRes, audRes] = await Promise.all([
+    const [ovRes, usersRes, payRes, audRes, cliRes] = await Promise.all([
       supabase.rpc("get_admin_overview"),
       supabase.rpc("list_admin_users"),
       supabase.rpc("list_admin_recent_payments", { _limit: 25 }),
       supabase.rpc("list_admin_audit_logs", { _limit: 80 }),
+      supabase.rpc("list_admin_clients", { _limit: 500 }),
     ]);
     if (ovRes.error) toast.error(ovRes.error.message);
     else setOverview(ovRes.data as unknown as AdminOverview);
@@ -148,6 +170,8 @@ function AdminPage() {
     else setPayments((payRes.data as unknown as PaymentRow[]) ?? []);
     if (audRes.error) toast.error(audRes.error.message);
     else setAudit((audRes.data as unknown as AuditRow[]) ?? []);
+    if (cliRes.error) toast.error(cliRes.error.message);
+    else setClients((cliRes.data as unknown as AdminClientRow[]) ?? []);
     setLoading(false);
   };
 
@@ -163,6 +187,20 @@ function AdminPage() {
       );
     });
   }, [users, search, planFilter, statusFilter]);
+
+  const filteredClients = useMemo(() => {
+    const q = clientSearch.toLowerCase().trim();
+    return clients.filter((c) => {
+      if (clientPlanFilter !== "all" && c.owner_plan !== clientPlanFilter) return false;
+      if (!q) return true;
+      return (
+        c.full_name.toLowerCase().includes(q) ||
+        (c.email?.toLowerCase().includes(q) ?? false) ||
+        (c.document?.toLowerCase().includes(q) ?? false) ||
+        c.owner_email.toLowerCase().includes(q)
+      );
+    });
+  }, [clients, clientSearch, clientPlanFilter]);
 
   if (roleLoading || !isAdmin) {
     return (
@@ -238,6 +276,7 @@ function AdminPage() {
             <Tabs defaultValue="users">
               <TabsList>
                 <TabsTrigger value="users">Usuários ({users.length})</TabsTrigger>
+                <TabsTrigger value="clients">Clientes / CRM ({clients.length})</TabsTrigger>
                 <TabsTrigger value="payments">Pagamentos ({payments.length})</TabsTrigger>
                 <TabsTrigger value="audit">Auditoria ({audit.length})</TabsTrigger>
               </TabsList>
@@ -336,6 +375,108 @@ function AdminPage() {
                                 <TableCell className="text-sm">
                                   {u.current_period_end ? formatDateBR(u.current_period_end) : "—"}
                                 </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="clients">
+                <Card>
+                  <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Contact className="h-4 w-4" />
+                        Clientes da plataforma (CRM)
+                      </CardTitle>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {filteredClients.length} de {clients.length} clientes cadastrados por todos os usuários
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Input
+                        placeholder="Buscar nome, e-mail, doc, dono..."
+                        value={clientSearch}
+                        onChange={(e) => setClientSearch(e.target.value)}
+                        className="w-full sm:w-72"
+                      />
+                      <Select value={clientPlanFilter} onValueChange={setClientPlanFilter}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Plano do dono" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos planos</SelectItem>
+                          <SelectItem value="free">Grátis</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="business">Business</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Contato</TableHead>
+                            <TableHead>Dono (usuário)</TableHead>
+                            <TableHead>Plano do dono</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Contratos</TableHead>
+                            <TableHead className="text-right">Cobranças</TableHead>
+                            <TableHead className="text-right">Total pago</TableHead>
+                            <TableHead>Cadastro</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredClients.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={9} className="text-center text-muted-foreground">
+                                Nenhum cliente encontrado.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            filteredClients.map((c) => (
+                              <TableRow key={c.client_id}>
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{c.full_name}</span>
+                                    {c.document && (
+                                      <span className="text-xs text-muted-foreground">{c.document}</span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  <div className="flex flex-col">
+                                    <span>{c.email ?? "—"}</span>
+                                    <span className="text-xs text-muted-foreground">{c.phone ?? "—"}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  <div className="flex flex-col">
+                                    <span>{c.owner_name || "(sem nome)"}</span>
+                                    <span className="text-xs text-muted-foreground">{c.owner_email}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className={planColor(c.owner_plan)}>{c.owner_plan.toUpperCase()}</Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={c.status === "active" ? "default" : "secondary"}>
+                                    {c.status === "active" ? "Ativo" : "Inativo"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">{c.contracts_count}</TableCell>
+                                <TableCell className="text-right">{c.invoices_count}</TableCell>
+                                <TableCell className="text-right font-medium">
+                                  {formatCurrencyBRL((c.total_paid_cents ?? 0) / 100)}
+                                </TableCell>
+                                <TableCell className="text-sm">{formatDateBR(c.created_at)}</TableCell>
                               </TableRow>
                             ))
                           )}

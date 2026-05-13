@@ -533,6 +533,25 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_admin_clients: {
+        Args: { _limit?: number }
+        Returns: {
+          client_id: string
+          contracts_count: number
+          created_at: string
+          document: string
+          email: string
+          full_name: string
+          invoices_count: number
+          owner_email: string
+          owner_name: string
+          owner_plan: Database["public"]["Enums"]["plan_tier"]
+          owner_user_id: string
+          phone: string
+          status: Database["public"]["Enums"]["client_status"]
+          total_paid_cents: number
+        }[]
+      }
       list_admin_recent_payments: {
         Args: { _limit?: number }
         Returns: {
