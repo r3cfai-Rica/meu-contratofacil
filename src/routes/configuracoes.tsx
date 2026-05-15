@@ -197,6 +197,7 @@ function SettingsPage() {
       .update({
         full_name: profileName.trim(),
         account_type: accountType as "mei" | "autonomo" | "prestador" | "liberal",
+        country,
       })
       .eq("user_id", user.id);
     setSavingProfile(false);
