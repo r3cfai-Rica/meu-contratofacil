@@ -62,18 +62,24 @@ function PublicInvoicePage() {
   const [qrUrl, setQrUrl] = useState("");
   const [copied, setCopied] = useState<"key" | "code" | null>(null);
   const [loading, setLoading] = useState(true);
+  const [payingCard, setPayingCard] = useState(false);
+  const search = Route.useSearch();
+  const createCheckout = useServerFn(createInvoiceCheckout);
+
+  const loadInvoice = async () => {
+    const { data: inv } = await supabase
+      .from("invoices")
+      .select(
+        "id, description, amount, currency, due_date, status, paid_at, user_id, public_token, clients(full_name)",
+      )
+      .eq("public_token", token)
+      .maybeSingle();
+    return inv as unknown as PublicInvoice | null;
+  };
 
   useEffect(() => {
     void (async () => {
-      const { data: inv } = await supabase
-        .from("invoices")
-        .select(
-          "id, description, amount, currency, due_date, status, paid_at, user_id, public_token, clients(full_name)",
-        )
-        .eq("public_token", token)
-        .maybeSingle();
-
-      const invoice = inv as unknown as PublicInvoice | null;
+      const invoice = await loadInvoice();
       setInvoice(invoice);
 
       if (invoice) {
