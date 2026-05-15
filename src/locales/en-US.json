@@ -288,14 +288,56 @@
     "title": "Plans",
     "subtitle": "Choose the right plan for your business.",
     "currentPlan": "Current plan",
-    "free": "Free",
-    "pro": "Pro",
-    "business": "Business",
     "month": "/mo",
     "selectPlan": "Select plan",
     "manageBilling": "Manage subscription",
     "upgrade": "Upgrade",
-    "downgrade": "Downgrade"
+    "downgrade": "Downgrade",
+    "back": "Back",
+    "signIn": "Sign in",
+    "badge": "Plans & Pricing",
+    "heroTitle": "Choose the right plan for your business",
+    "heroSubtitle": "Start free and upgrade when you need to. No commitment — cancel anytime.",
+    "mostPopular": "Most popular",
+    "startFree": "Start free",
+    "subscribePrefix": "Subscribe to",
+    "checkoutCanceled": "Checkout canceled",
+    "checkoutError": "Could not start checkout",
+    "changeError": "Failed to start the change",
+    "changedTo": "Plan changed to {{plan}}",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "tagline": "Get started for free to validate your operation",
+        "features": [
+          "Up to 3 clients",
+          "Up to 3 active contracts",
+          "Up to 3 invoices per month",
+          "No brand customization"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "tagline": "For professionals who want to grow without limits",
+        "features": [
+          "Unlimited clients",
+          "Unlimited contracts",
+          "Unlimited invoices",
+          "Custom logo on contracts",
+          "Automatic due-date reminders"
+        ]
+      },
+      "business": {
+        "name": "Business",
+        "tagline": "For teams with advanced needs",
+        "features": [
+          "Everything in Pro",
+          "Multiple users (up to 3)",
+          "Advanced reports",
+          "Priority support"
+        ]
+      }
+    }
   },
   "settings": {
     "title": "Settings",
