@@ -82,6 +82,7 @@ function SignupPage() {
         data: {
           full_name: fullName.trim(),
           account_type: accountType,
+          country,
         },
       },
     });
