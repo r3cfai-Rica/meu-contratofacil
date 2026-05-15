@@ -92,6 +92,7 @@ function SettingsPage() {
 
   const [profileName, setProfileName] = useState("");
   const [accountType, setAccountType] = useState<string>("autonomo");
+  const [country, setCountry] = useState<string>("BR");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
