@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
-import i18n, { getBrowserLanguage } from "@/lib/i18n";
+import i18n, { getBrowserLanguage, resetServerLanguage } from "@/lib/i18n";
 
 import appCss from "../styles.css?url";
 
