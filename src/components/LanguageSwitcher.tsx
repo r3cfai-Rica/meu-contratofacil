@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DEFAULT_LANGUAGE, normalizeLanguage } from "@/lib/i18n";
 
 const LANGS = [
   { code: "pt-BR", flag: "🇧🇷", short: "PT", label: "Português (Brasil)" },
@@ -14,9 +16,15 @@ const LANGS = [
 
 export function LanguageSwitcher({ className }: { className?: string }) {
   const { i18n } = useTranslation();
+  const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
+
+  useEffect(() => {
+    setLanguage(normalizeLanguage(i18n.resolvedLanguage ?? i18n.language));
+  }, [i18n.language, i18n.resolvedLanguage]);
+
   const current =
-    LANGS.find((l) => l.code === i18n.language) ??
-    (i18n.language?.startsWith("en") ? LANGS[1] : LANGS[0]);
+    LANGS.find((l) => l.code === language) ??
+    (language.startsWith("en") ? LANGS[1] : LANGS[0]);
 
   return (
     <DropdownMenu>

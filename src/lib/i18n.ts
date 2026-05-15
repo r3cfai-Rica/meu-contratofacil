@@ -1,41 +1,45 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import ptBR from "@/locales/pt-BR.json";
 import enUS from "@/locales/en-US.json";
 
-const STORAGE_KEY = "contratofacil.lang";
-const isBrowser = typeof window !== "undefined";
+export const STORAGE_KEY = "contratofacil.lang";
+export const DEFAULT_LANGUAGE = "pt-BR";
 
-const instance = i18n.use(initReactI18next);
-if (isBrowser) instance.use(LanguageDetector);
+function normalizeLanguage(language?: string | null) {
+  return language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
+}
 
-void instance.init({
+function getBrowserLanguage() {
+  if (typeof window === "undefined") return DEFAULT_LANGUAGE;
+
+  const saved = window.localStorage.getItem(STORAGE_KEY);
+  if (saved) return normalizeLanguage(saved);
+
+  return normalizeLanguage(window.navigator.language);
+}
+
+void i18n.use(initReactI18next).init({
   resources: {
     "pt-BR": { translation: ptBR },
     "en-US": { translation: enUS },
   },
-  lng: isBrowser ? undefined : "pt-BR",
-  fallbackLng: "pt-BR",
-  supportedLngs: ["pt-BR", "en-US"],
-  nonExplicitSupportedLngs: true,
-  load: "currentOnly",
+  ns: ["translation"],
+  defaultNS: "translation",
+  lng: DEFAULT_LANGUAGE,
+  fallbackLng: DEFAULT_LANGUAGE,
+  initAsync: false,
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
-  detection: {
-    order: ["localStorage", "navigator"],
-    lookupLocalStorage: STORAGE_KEY,
-    caches: ["localStorage"],
-  },
 });
 
-if (isBrowser) {
-  const current = i18n.language || "";
-  if (/^en/i.test(current) && current !== "en-US") {
-    void i18n.changeLanguage("en-US");
-  } else if (!/^en/i.test(current) && current !== "pt-BR") {
-    void i18n.changeLanguage("pt-BR");
-  }
+if (typeof window !== "undefined") {
+  i18n.on("languageChanged", (language) => {
+    const normalized = normalizeLanguage(language);
+    window.localStorage.setItem(STORAGE_KEY, normalized);
+    document.documentElement.lang = normalized;
+  });
 }
 
+export { normalizeLanguage, getBrowserLanguage };
 export default i18n;
