@@ -64,6 +64,9 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  // Reset i18n to default on every server render — the singleton state
+  // can leak across requests in the Worker isolate and cause hydration mismatches.
+  resetServerLanguage();
   return (
     <html lang="pt-BR">
       <head>
