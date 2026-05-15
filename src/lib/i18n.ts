@@ -20,7 +20,8 @@ function getBrowserLanguage() {
 }
 
 if (!i18n.isInitialized) {
-  void i18n.use(initReactI18next).init({
+  i18n.use(initReactI18next);
+  i18n.init({
     resources: {
       "pt-BR": { translation: ptBR },
       "en-US": { translation: enUS },
@@ -29,9 +30,9 @@ if (!i18n.isInitialized) {
     defaultNS: "translation",
     lng: DEFAULT_LANGUAGE,
     fallbackLng: DEFAULT_LANGUAGE,
-    initAsync: false,
     interpolation: { escapeValue: false },
-    react: { useSuspense: false },
+    react: { useSuspense: false, bindI18n: "languageChanged loaded" },
+    ...({ initImmediate: false } as Record<string, unknown>),
   });
 }
 

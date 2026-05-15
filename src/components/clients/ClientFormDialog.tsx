@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function ClientFormDialog({ open, onOpenChange, onSaved }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -50,11 +52,11 @@ export function ClientFormDialog({ open, onOpenChange, onSaved }: Props) {
     if (!user) return;
 
     if (!fullName.trim()) {
-      toast.error("Informe o nome do cliente");
+      toast.error(t("clients.form.errorName"));
       return;
     }
     if (document && !isValidDocument(document)) {
-      toast.error("CPF ou CNPJ inválido");
+      toast.error(t("clients.form.errorDocument"));
       return;
     }
 
@@ -75,7 +77,7 @@ export function ClientFormDialog({ open, onOpenChange, onSaved }: Props) {
       return;
     }
 
-    toast.success("Cliente cadastrado com sucesso!");
+    toast.success(t("clients.form.saved"));
     onOpenChange(false);
     onSaved();
   };
@@ -84,19 +86,18 @@ export function ClientFormDialog({ open, onOpenChange, onSaved }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Novo cliente</DialogTitle>
-          <DialogDescription>
-            Preencha os dados para cadastrar um novo cliente.
-          </DialogDescription>
+          <DialogTitle>{t("clients.form.createTitle")}</DialogTitle>
+          <DialogDescription>{t("clients.form.description")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="full_name">Nome completo *</Label>
+            <Label htmlFor="full_name">{t("clients.form.fullName")} *</Label>
             <Input
               id="full_name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              placeholder={t("clients.form.namePlaceholder")}
               required
               maxLength={120}
             />
@@ -104,7 +105,7 @@ export function ClientFormDialog({ open, onOpenChange, onSaved }: Props) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t("clients.form.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -114,41 +115,41 @@ export function ClientFormDialog({ open, onOpenChange, onSaved }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone">{t("clients.form.phone")}</Label>
               <Input
                 id="phone"
                 value={phone}
                 onChange={(e) => setPhone(maskPhone(e.target.value))}
-                placeholder="(11) 99999-9999"
+                placeholder={t("clients.form.phonePlaceholder")}
                 inputMode="tel"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="document">CPF / CNPJ</Label>
+            <Label htmlFor="document">{t("clients.form.document")}</Label>
             <Input
               id="document"
               value={document}
               onChange={(e) => setDocument(maskDocument(e.target.value))}
-              placeholder="000.000.000-00"
+              placeholder={t("clients.form.documentPlaceholder")}
               inputMode="numeric"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Endereço completo</Label>
+            <Label htmlFor="address">{t("clients.form.address")}</Label>
             <Input
               id="address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Rua, número, bairro, cidade — UF"
+              placeholder={t("clients.form.addressPlaceholder")}
               maxLength={255}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
+            <Label htmlFor="notes">{t("clients.form.notes")}</Label>
             <Textarea
               id="notes"
               value={notes}
@@ -165,11 +166,11 @@ export function ClientFormDialog({ open, onOpenChange, onSaved }: Props) {
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={loading} className="gap-2">
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar cliente
+              {t("clients.form.saveButton")}
             </Button>
           </DialogFooter>
         </form>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2, Sparkles, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +35,6 @@ function PlansRoute() {
       </div>
     );
   }
-  // Show plans page even without auth, but inside layout if logged in
   return user ? (
     <AppLayout>
       <PlansPage />
@@ -45,6 +45,7 @@ function PlansRoute() {
 }
 
 function PublicPlans() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="mx-auto max-w-6xl">
@@ -53,10 +54,10 @@ function PublicPlans() {
             to="/"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-4 w-4" /> Voltar
+            <ArrowLeft className="h-4 w-4" /> {t("plans.back")}
           </Link>
           <Button asChild variant="outline" size="sm">
-            <Link to="/login">Entrar</Link>
+            <Link to="/login">{t("plans.signIn")}</Link>
           </Button>
         </div>
         <PlansHero />
@@ -67,17 +68,18 @@ function PublicPlans() {
 }
 
 function PlansPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { plan, refresh } = usePlan();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "canceled") {
-      toast.info("Checkout cancelado");
+      toast.info(t("plans.checkoutCanceled"));
       void navigate({ to: "/planos", replace: true });
     }
     void refresh();
-  }, [navigate, refresh]);
+  }, [navigate, refresh, t]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -88,23 +90,24 @@ function PlansPage() {
 }
 
 function PlansHero() {
+  const { t } = useTranslation();
   return (
     <div className="mb-10 text-center">
       <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-        <Sparkles className="h-3 w-3" /> Planos & Preços
+        <Sparkles className="h-3 w-3" /> {t("plans.badge")}
       </div>
       <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-        Escolha o plano ideal para o seu negócio
+        {t("plans.heroTitle")}
       </h1>
       <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
-        Comece grátis e faça upgrade quando precisar. Sem fidelidade — cancele a qualquer
-        momento direto pelo Stripe.
+        {t("plans.heroSubtitle")}
       </p>
     </div>
   );
 }
 
 function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const checkoutFn = useServerFn(createCheckoutSession);
@@ -113,6 +116,16 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
   const [loadingPlan, setLoadingPlan] = useState<PlanTier | null>(null);
 
   const isPaidCurrent = currentPlan === "pro" || currentPlan === "business";
+  const isEnglish = i18n.language?.toLowerCase().startsWith("en");
+  const currencyPrefix = isEnglish ? "$" : "R$";
+  const priceFor = (tier: PlanTier) => {
+    const brl = PLANS[tier].monthlyPriceBRL;
+    if (!isEnglish) return brl;
+    // Approximate USD prices for the English variant
+    if (tier === "pro") return 9;
+    if (tier === "business") return 19;
+    return 0;
+  };
 
   const handleSubscribe = async (target: PlanTier) => {
     if (!user) {
@@ -122,10 +135,10 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
     if (target === "free" || target === currentPlan) return;
     setLoadingPlan(target);
     try {
+      const tierName = t(`plans.tiers.${target}.name`);
       if (isPaidCurrent) {
-        // Existing subscriber → switch in-app, no redirect
         await changePlanFn({ data: { plan: target as "pro" | "business" } });
-        toast.success(`Plano alterado para ${PLANS[target].name}`);
+        toast.success(t("plans.changedTo", { plan: tierName }));
         await refresh();
         void navigate({ to: "/configuracoes" });
         return;
@@ -134,10 +147,10 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
       if (result.url) {
         window.location.href = result.url;
       } else {
-        toast.error("Não foi possível iniciar o checkout");
+        toast.error(t("plans.checkoutError"));
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao iniciar a alteração";
+      const msg = e instanceof Error ? e.message : t("plans.changeError");
       toast.error(msg);
     } finally {
       setLoadingPlan(null);
@@ -151,6 +164,11 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
         const isCurrent = currentPlan === tier;
         const isHighlighted = !!p.highlighted;
         const isLoading = loadingPlan === tier;
+        const tierName = t(`plans.tiers.${tier}.name`);
+        const tagline = t(`plans.tiers.${tier}.tagline`);
+        const features = t(`plans.tiers.${tier}.features`, {
+          returnObjects: true,
+        }) as string[];
 
         return (
           <div
@@ -164,31 +182,32 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
           >
             {isHighlighted && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
-                Mais popular
+                {t("plans.mostPopular")}
               </div>
             )}
             {isCurrent && (
               <div className="absolute -top-3 right-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
-                Plano atual
+                {t("plans.currentPlan")}
               </div>
             )}
 
             <div className="mb-4">
-              <h3 className="text-lg font-semibold">{p.name}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{p.tagline}</p>
+              <h3 className="text-lg font-semibold">{tierName}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{tagline}</p>
             </div>
 
             <div className="mb-6">
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-bold tracking-tight">
-                  R${p.monthlyPriceBRL}
+                  {currencyPrefix}
+                  {priceFor(tier)}
                 </span>
-                <span className="text-sm text-muted-foreground">/mês</span>
+                <span className="text-sm text-muted-foreground">{t("plans.month")}</span>
               </div>
             </div>
 
             <ul className="mb-6 flex-1 space-y-2 text-sm">
-              {p.features.map((f) => (
+              {(Array.isArray(features) ? features : []).map((f) => (
                 <li key={f} className="flex items-start gap-2">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span>{f}</span>
@@ -203,7 +222,7 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
                 className="w-full"
                 onClick={() => !user && void navigate({ to: "/signup" })}
               >
-                {isCurrent ? "Plano atual" : "Começar grátis"}
+                {isCurrent ? t("plans.currentPlan") : t("plans.startFree")}
               </Button>
             ) : (
               <Button
@@ -219,7 +238,9 @@ function PlansGrid({ currentPlan }: { currentPlan: PlanTier }) {
                 ) : isCurrent ? null : (
                   <Sparkles className="h-4 w-4" />
                 )}
-                {isCurrent ? "Plano atual" : `Assinar ${p.name}`}
+                {isCurrent
+                  ? t("plans.currentPlan")
+                  : `${t("plans.subscribePrefix")} ${tierName}`}
               </Button>
             )}
           </div>

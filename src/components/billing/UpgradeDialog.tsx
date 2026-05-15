@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,10 @@ interface UpgradeDialogProps {
 }
 
 export function UpgradeDialog({ open, onOpenChange, resource, limit }: UpgradeDialogProps) {
+  const { t } = useTranslation();
+  const resourceKey = resource === "cobranças" ? "cobrancas" : resource;
+  const resourceLabel = t(`upgrade.resources.${resourceKey}`);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -25,30 +30,29 @@ export function UpgradeDialog({ open, onOpenChange, resource, limit }: UpgradeDi
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
             <Sparkles className="h-6 w-6" />
           </div>
-          <DialogTitle className="text-xl">Limite do plano grátis atingido</DialogTitle>
+          <DialogTitle className="text-xl">{t("upgrade.title")}</DialogTitle>
           <DialogDescription className="text-base">
-            Você atingiu o limite de <strong>{limit} {resource}</strong> do plano grátis.
-            Faça upgrade para continuar criando sem limites.
+            {t("upgrade.description", { limit, resource: resourceLabel })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
-          <div className="font-semibold text-primary">Plano Pro — R$49/mês</div>
+          <div className="font-semibold text-primary">{t("upgrade.proTitle")}</div>
           <ul className="mt-2 space-y-1 text-muted-foreground">
-            <li>• Clientes, contratos e cobranças ilimitados</li>
-            <li>• Logo personalizado nos contratos</li>
-            <li>• Lembretes automáticos de vencimento</li>
+            <li>• {t("upgrade.benefit1")}</li>
+            <li>• {t("upgrade.benefit2")}</li>
+            <li>• {t("upgrade.benefit3")}</li>
           </ul>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Agora não
+            {t("upgrade.later")}
           </Button>
           <Button asChild className="gap-2">
             <Link to="/planos" onClick={() => onOpenChange(false)}>
               <Sparkles className="h-4 w-4" />
-              Ver planos
+              {t("upgrade.viewPlans")}
             </Link>
           </Button>
         </DialogFooter>
