@@ -247,7 +247,7 @@ function InvoicesPage() {
               <InvoiceStatusBadge status={c.key} />
             </div>
             <p className={`mt-2 text-2xl font-semibold ${c.tone}`}>
-              {formatCurrencyBRL(c.value)}
+              {formatMoney(c.value, defaultCurrency)}
             </p>
           </div>
         ))}
@@ -339,7 +339,7 @@ function InvoicesPage() {
                   <TableCell className="max-w-xs truncate text-muted-foreground">
                     {i.description}
                   </TableCell>
-                  <TableCell>{formatCurrencyBRL(Number(i.amount))}</TableCell>
+                  <TableCell>{formatMoney(Number(i.amount), i.currency ?? defaultCurrency)}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDateBR(i.due_date)}
                   </TableCell>
