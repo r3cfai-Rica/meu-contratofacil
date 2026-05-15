@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +70,7 @@ interface Client {
 function ClientsPage() {
   const { user } = useAuth();
   const { planInfo } = usePlan();
+  const { t } = useTranslation();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -126,7 +128,7 @@ function ClientsPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Cliente excluído");
+    toast.success(t("clients.deleted"));
     setToDelete(null);
     void loadClients();
   };
@@ -135,13 +137,13 @@ function ClientsPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("clients.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Gerencie a base de clientes do seu negócio.
+            {t("clients.subtitle")}
           </p>
         </div>
         <Button className="gap-2" onClick={handleNewClient}>
-          <Plus className="h-4 w-4" /> Novo cliente
+          <Plus className="h-4 w-4" /> {t("clients.new")}
         </Button>
       </div>
 
@@ -151,7 +153,7 @@ function ClientsPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome ou e-mail"
+            placeholder={t("clients.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -160,9 +162,9 @@ function ClientsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="active">Ativos</SelectItem>
-            <SelectItem value="inactive">Inativos</SelectItem>
+            <SelectItem value="all">{t("common.allStatuses")}</SelectItem>
+            <SelectItem value="active">{t("common.active")}</SelectItem>
+            <SelectItem value="inactive">{t("common.inactive")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -170,7 +172,7 @@ function ClientsPage() {
       <div className="rounded-2xl border border-border/70 bg-card">
         {loading ? (
           <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            Carregando...
+            {t("common.loading")}
           </div>
         ) : filtered.length === 0 ? (
           <div className="px-6 py-16 text-center">
@@ -178,16 +180,16 @@ function ClientsPage() {
               <Users className="h-5 w-5" />
             </span>
             <h2 className="text-base font-semibold">
-              {clients.length === 0 ? "Nenhum cliente ainda" : "Nada encontrado"}
+              {clients.length === 0 ? t("clients.empty") : t("common.nothingFound")}
             </h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
               {clients.length === 0
-                ? "Cadastre seu primeiro cliente para começar a emitir contratos."
-                : "Tente ajustar os filtros ou a busca."}
+                ? t("clients.emptyDesc")
+                : t("common.tryAdjustFilters")}
             </p>
             {clients.length === 0 && (
               <Button className="mt-5 gap-2" onClick={handleNewClient}>
-                <Plus className="h-4 w-4" /> Novo cliente
+                <Plus className="h-4 w-4" /> {t("clients.new")}
               </Button>
             )}
           </div>
@@ -195,12 +197,12 @@ function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
-                <TableHead>Cadastro</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("common.name")}</TableHead>
+                <TableHead>{t("common.email")}</TableHead>
+                <TableHead>{t("common.phone")}</TableHead>
+                <TableHead>{t("common.document")}</TableHead>
+                <TableHead>{t("common.createdAt")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -216,7 +218,7 @@ function ClientsPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={c.status === "active" ? "default" : "secondary"}>
-                      {c.status === "active" ? "Ativo" : "Inativo"}
+                      {c.status === "active" ? t("common.active") : t("common.inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -224,7 +226,7 @@ function ClientsPage() {
                       size="icon"
                       variant="ghost"
                       onClick={() => setToDelete(c)}
-                      aria-label="Excluir"
+                      aria-label={t("common.delete")}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -247,20 +249,18 @@ function ClientsPage() {
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogTitle>{t("clients.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O cliente{" "}
-              <span className="font-medium text-foreground">{toDelete?.full_name}</span> será
-              removido permanentemente.
+              {t("clients.deleteDesc", { name: toDelete?.full_name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
