@@ -5,33 +5,38 @@ import ptBR from "@/locales/pt-BR.json";
 import enUS from "@/locales/en-US.json";
 
 const STORAGE_KEY = "contratofacil.lang";
+const isBrowser = typeof window !== "undefined";
 
-void i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources: {
-      "pt-BR": { translation: ptBR },
-      "en-US": { translation: enUS },
-    },
-    fallbackLng: "pt-BR",
-    supportedLngs: ["pt-BR", "en-US"],
-    nonExplicitSupportedLngs: true,
-    load: "currentOnly",
-    interpolation: { escapeValue: false },
-    detection: {
-      order: ["localStorage", "navigator"],
-      lookupLocalStorage: STORAGE_KEY,
-      caches: ["localStorage"],
-    },
-  });
+const instance = i18n.use(initReactI18next);
+if (isBrowser) instance.use(LanguageDetector);
 
-// Normaliza inglês de qualquer região para en-US, restante vai para pt-BR
-const current = i18n.language || "";
-if (/^en/i.test(current)) {
-  void i18n.changeLanguage("en-US");
-} else if (current !== "pt-BR" && current !== "en-US") {
-  void i18n.changeLanguage("pt-BR");
+void instance.init({
+  resources: {
+    "pt-BR": { translation: ptBR },
+    "en-US": { translation: enUS },
+  },
+  lng: isBrowser ? undefined : "pt-BR",
+  fallbackLng: "pt-BR",
+  supportedLngs: ["pt-BR", "en-US"],
+  nonExplicitSupportedLngs: true,
+  load: "currentOnly",
+  interpolation: { escapeValue: false },
+  react: { useSuspense: false },
+  initImmediate: false,
+  detection: {
+    order: ["localStorage", "navigator"],
+    lookupLocalStorage: STORAGE_KEY,
+    caches: ["localStorage"],
+  },
+});
+
+if (isBrowser) {
+  const current = i18n.language || "";
+  if (/^en/i.test(current) && current !== "en-US") {
+    void i18n.changeLanguage("en-US");
+  } else if (!/^en/i.test(current) && current !== "pt-BR") {
+    void i18n.changeLanguage("pt-BR");
+  }
 }
 
 export default i18n;
