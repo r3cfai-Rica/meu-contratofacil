@@ -23,6 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useTranslation } from "react-i18next";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
