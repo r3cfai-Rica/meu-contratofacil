@@ -460,6 +460,8 @@
     "profileCard": "Dados do perfil",
     "fullName": "Nome completo",
     "accountType": "Tipo de conta",
+    "country": "País",
+    "countryHint": "Define o método de pagamento padrão: PIX (Brasil) ou cartão via Stripe (EUA).",
     "saveProfile": "Salvar perfil",
     "profileSaved": "Perfil atualizado",
     "stripeCard": "Stripe (admin)",

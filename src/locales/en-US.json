@@ -460,6 +460,8 @@
     "profileCard": "Profile data",
     "fullName": "Full name",
     "accountType": "Account type",
+    "country": "Country",
+    "countryHint": "Defines the default payment method: PIX (Brazil) or card via Stripe (US).",
     "saveProfile": "Save profile",
     "profileSaved": "Profile updated",
     "stripeCard": "Stripe (admin)",
