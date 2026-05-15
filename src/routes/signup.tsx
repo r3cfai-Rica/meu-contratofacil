@@ -188,6 +188,7 @@ function SignupPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">{t("auth.countryHint")}</p>
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
