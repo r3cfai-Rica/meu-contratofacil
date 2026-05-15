@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,7 @@ type Frequency = "one_time" | "recurring";
 
 export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [hasPix, setHasPix] = useState<boolean | null>(null);
 
@@ -103,18 +105,18 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     e.preventDefault();
     if (!user) return;
 
-    if (!clientId) return toast.error("Selecione um cliente");
-    if (!description.trim()) return toast.error("Informe a descrição");
+    if (!clientId) return toast.error(t("invoices.form.errClient"));
+    if (!description.trim()) return toast.error(t("invoices.form.errDescription"));
     const amountNum = parseFloat(amount.replace(",", "."));
-    if (!amountNum || amountNum <= 0) return toast.error("Valor inválido");
-    if (!dueDate) return toast.error("Informe a data de vencimento");
+    if (!amountNum || amountNum <= 0) return toast.error(t("invoices.form.errAmount"));
+    if (!dueDate) return toast.error(t("invoices.form.errDueDate"));
 
     const recurrenceGroup =
       frequency === "recurring" ? crypto.randomUUID() : null;
     const total =
       frequency === "recurring"
         ? indefinite
-          ? 12 // pré-cria 12 meses para "indeterminado"
+          ? 12
           : Math.max(1, parseInt(installments) || 1)
         : 1;
 
@@ -146,8 +148,8 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
 
     toast.success(
       total > 1
-        ? `${total} cobranças geradas com sucesso!`
-        : "Cobrança gerada com sucesso!",
+        ? t("invoices.form.createdMany", { count: total })
+        : t("invoices.form.createdOne"),
     );
     onOpenChange(false);
     onSaved();
@@ -157,31 +159,27 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nova cobrança</DialogTitle>
-          <DialogDescription>
-            Gere uma cobrança PIX para enviar ao seu cliente.
-          </DialogDescription>
+          <DialogTitle>{t("invoices.form.createTitle")}</DialogTitle>
+          <DialogDescription>{t("invoices.form.description")}</DialogDescription>
         </DialogHeader>
 
         {hasPix === false && (
           <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-200">
-            Você ainda não cadastrou sua chave PIX. Vá em{" "}
-            <strong>Configurações</strong> para configurá-la antes de enviar
-            cobranças ao cliente.
+            {t("invoices.form.noPixWarning")}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Cliente *</Label>
+            <Label>{t("invoices.form.client")} *</Label>
             <Select value={clientId} onValueChange={setClientId}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar cliente" />
+                <SelectValue placeholder={t("invoices.form.selectClient")} />
               </SelectTrigger>
               <SelectContent>
                 {clients.length === 0 ? (
                   <div className="px-3 py-2 text-xs text-muted-foreground">
-                    Cadastre um cliente primeiro.
+                    {t("invoices.form.registerClientFirst")}
                   </div>
                 ) : (
                   clients.map((c) => (
@@ -195,13 +193,13 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label>Contrato (opcional)</Label>
+            <Label>{t("invoices.form.contract")}</Label>
             <Select value={contractId} onValueChange={setContractId}>
               <SelectTrigger>
-                <SelectValue placeholder="Sem contrato vinculado" />
+                <SelectValue placeholder={t("invoices.form.noContract")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Sem contrato vinculado</SelectItem>
+                <SelectItem value="none">{t("invoices.form.noContract")}</SelectItem>
                 {filteredContracts.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.contract_number} — {c.title}
@@ -212,20 +210,20 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="desc">Descrição *</Label>
+            <Label htmlFor="desc">{t("invoices.form.descriptionLabel")} *</Label>
             <Textarea
               id="desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               maxLength={255}
-              placeholder="Ex: Mensalidade de manutenção — abril/2026"
+              placeholder={t("invoices.form.descriptionPlaceholder")}
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="amount">Valor (R$) *</Label>
+              <Label htmlFor="amount">{t("invoices.form.amount")} *</Label>
               <Input
                 id="amount"
                 inputMode="decimal"
@@ -235,7 +233,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due">Vencimento *</Label>
+              <Label htmlFor="due">{t("invoices.form.dueDate")} *</Label>
               <Input
                 id="due"
                 type="date"
@@ -246,17 +244,17 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label>Tipo</Label>
+            <Label>{t("invoices.form.type")}</Label>
             <RadioGroup
               value={frequency}
               onValueChange={(v) => setFrequency(v as Frequency)}
               className="grid gap-2 sm:grid-cols-2"
             >
               <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/70 bg-card/50 px-3 py-2 text-sm">
-                <RadioGroupItem value="one_time" /> Única
+                <RadioGroupItem value="one_time" /> {t("invoices.form.single")}
               </label>
               <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border/70 bg-card/50 px-3 py-2 text-sm">
-                <RadioGroupItem value="recurring" /> Recorrente mensal
+                <RadioGroupItem value="recurring" /> {t("invoices.form.recurring")}
               </label>
             </RadioGroup>
           </div>
@@ -270,11 +268,11 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
                   onChange={(e) => setIndefinite(e.target.checked)}
                   className="h-4 w-4 rounded border-border accent-primary"
                 />
-                Prazo indeterminado (gera 12 meses adiantados)
+                {t("invoices.form.indefinite")}
               </label>
               {!indefinite && (
                 <div className="space-y-2">
-                  <Label htmlFor="installments">Número de parcelas</Label>
+                  <Label htmlFor="installments">{t("invoices.form.installments")}</Label>
                   <Input
                     id="installments"
                     type="number"
@@ -295,11 +293,11 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={loading} className="gap-2">
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Gerar cobrança
+              {t("invoices.form.generate")}
             </Button>
           </DialogFooter>
         </form>

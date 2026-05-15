@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2, Send, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { sendContractEmail } from "@/lib/email.functions";
 import {
@@ -41,6 +42,7 @@ type PaymentMethod = "one_time" | "installments" | "recurring";
 
 export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const sendEmail = useServerFn(sendContractEmail);
   const [loading, setLoading] = useState(false);
   const [clientsList, setClientsList] = useState<ClientOption[]>([]);
@@ -81,13 +83,13 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   }, [open, user]);
 
   const validate = () => {
-    if (!clientId) return "Selecione um cliente";
-    if (!title.trim()) return "Informe o título do contrato";
-    if (!serviceType.trim()) return "Informe o tipo de serviço";
-    if (!startDate) return "Informe a data de início";
+    if (!clientId) return t("contracts.form.errSelectClient");
+    if (!title.trim()) return t("contracts.form.errTitle");
+    if (!serviceType.trim()) return t("contracts.form.errServiceType");
+    if (!startDate) return t("contracts.form.errStartDate");
     const value = parseFloat(totalValue.replace(",", "."));
-    if (isNaN(value) || value < 0) return "Valor total inválido";
-    if (endDate && endDate < startDate) return "Data de término anterior à de início";
+    if (isNaN(value) || value < 0) return t("contracts.form.errInvalidValue");
+    if (endDate && endDate < startDate) return t("contracts.form.errEndBeforeStart");
     return null;
   };
 
@@ -137,13 +139,13 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
             appOrigin: window.location.origin,
           },
         });
-        toast.success(`Contrato enviado por email para ${result.recipient}`);
+        toast.success(t("contracts.form.sentToEmail", { recipient: result.recipient }));
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Erro ao enviar email";
-        toast.error(`Contrato criado, mas o email falhou: ${msg}`);
+        const msg = err instanceof Error ? err.message : t("contracts.form.errSendEmail");
+        toast.error(t("contracts.form.emailFailed", { message: msg }));
       }
     } else if (!sendForSignature) {
-      toast.success("Rascunho salvo");
+      toast.success(t("contracts.form.draftSaved"));
     }
     onOpenChange(false);
     onSaved({
@@ -161,24 +163,21 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Novo contrato</DialogTitle>
-          <DialogDescription>
-            Preencha os dados do contrato. Você pode salvar como rascunho ou enviar para
-            assinatura.
-          </DialogDescription>
+          <DialogTitle>{t("contracts.form.createTitle")}</DialogTitle>
+          <DialogDescription>{t("contracts.form.description")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleFormSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="client">Cliente *</Label>
+            <Label htmlFor="client">{t("contracts.form.client")} *</Label>
             <Select value={clientId} onValueChange={setClientId}>
               <SelectTrigger id="client">
-                <SelectValue placeholder="Selecione o cliente" />
+                <SelectValue placeholder={t("contracts.form.selectClient")} />
               </SelectTrigger>
               <SelectContent>
                 {clientsList.length === 0 ? (
                   <div className="px-2 py-3 text-center text-sm text-muted-foreground">
-                    Nenhum cliente cadastrado
+                    {t("contracts.form.noClients")}
                   </div>
                 ) : (
                   clientsList.map((c) => (
@@ -192,44 +191,44 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="title">Título do contrato *</Label>
+            <Label htmlFor="title">{t("contracts.form.titleLabel")} *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex.: Desenvolvimento de website institucional"
+              placeholder={t("contracts.form.titlePlaceholder")}
               maxLength={150}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="service_type">Tipo de serviço *</Label>
+            <Label htmlFor="service_type">{t("contracts.form.serviceType")} *</Label>
             <Input
               id="service_type"
               value={serviceType}
               onChange={(e) => setServiceType(e.target.value)}
-              placeholder="Ex.: Consultoria, Design, Desenvolvimento"
+              placeholder={t("contracts.form.serviceTypePlaceholder")}
               maxLength={120}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="service_description">Descrição detalhada do serviço</Label>
+            <Label htmlFor="service_description">{t("contracts.form.serviceDescription")}</Label>
             <Textarea
               id="service_description"
               value={serviceDescription}
               onChange={(e) => setServiceDescription(e.target.value)}
               rows={3}
               maxLength={2000}
-              placeholder="Descreva o escopo, entregas e prazos do serviço."
+              placeholder={t("contracts.form.serviceDescriptionPlaceholder")}
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="total_value">Valor total (R$) *</Label>
+              <Label htmlFor="total_value">{t("contracts.form.totalValue")} *</Label>
               <Input
                 id="total_value"
                 type="number"
@@ -242,7 +241,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="payment_method">Forma de pagamento</Label>
+              <Label htmlFor="payment_method">{t("contracts.form.paymentMethod")}</Label>
               <Select
                 value={paymentMethod}
                 onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
@@ -251,9 +250,9 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="one_time">À vista</SelectItem>
-                  <SelectItem value="installments">Parcelado</SelectItem>
-                  <SelectItem value="recurring">Recorrente</SelectItem>
+                  <SelectItem value="one_time">{t("contracts.form.oneTime")}</SelectItem>
+                  <SelectItem value="installments">{t("contracts.form.installments")}</SelectItem>
+                  <SelectItem value="recurring">{t("contracts.form.recurring")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -261,7 +260,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Data de início *</Label>
+              <Label htmlFor="start_date">{t("contracts.form.startDate")} *</Label>
               <Input
                 id="start_date"
                 type="date"
@@ -271,7 +270,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end_date">Data de término (opcional)</Label>
+              <Label htmlFor="end_date">{t("contracts.form.endDate")}</Label>
               <Input
                 id="end_date"
                 type="date"
@@ -282,7 +281,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="clauses">Cláusulas do contrato</Label>
+            <Label htmlFor="clauses">{t("contracts.form.clauses")}</Label>
             <Textarea
               id="clauses"
               value={clauses}
@@ -290,9 +289,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
               rows={10}
               className="font-mono text-xs leading-relaxed"
             />
-            <p className="text-xs text-muted-foreground">
-              Template padrão pré-preenchido. Edite conforme necessário.
-            </p>
+            <p className="text-xs text-muted-foreground">{t("contracts.form.clausesHint")}</p>
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:gap-2">
@@ -302,7 +299,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button type="submit" variant="secondary" disabled={loading} className="gap-2">
               {loading ? (
@@ -310,7 +307,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              Salvar rascunho
+              {t("contracts.form.saveDraft")}
             </Button>
             <Button
               type="button"
@@ -323,7 +320,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              Enviar para assinatura
+              {t("contracts.form.sendForSignature")}
             </Button>
           </DialogFooter>
         </form>

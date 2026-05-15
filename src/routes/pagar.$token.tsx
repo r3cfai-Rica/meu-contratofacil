@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Check, CheckCircle2, Copy, FileText, QrCode } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +17,7 @@ import {
 export const Route = createFileRoute("/pagar/$token")({
   head: () => ({
     meta: [
-      { title: "Pagar cobrança — ContratoFácil" },
+      { title: "Pay invoice — EasyContract" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -42,6 +43,7 @@ interface PixSettings {
 
 function PublicInvoicePage() {
   const { token } = Route.useParams();
+  const { t } = useTranslation();
   const [invoice, setInvoice] = useState<PublicInvoice | null>(null);
   const [pix, setPix] = useState<PixSettings | null>(null);
   const [providerName, setProviderName] = useState("");
@@ -104,14 +106,14 @@ function PublicInvoicePage() {
   const copy = async (text: string, type: "key" | "code") => {
     await navigator.clipboard.writeText(text);
     setCopied(type);
-    toast.success(type === "key" ? "Chave PIX copiada" : "Código PIX copiado");
+    toast.success(type === "key" ? t("publicInvoice.keyCopied") : t("publicInvoice.codeCopied"));
     setTimeout(() => setCopied(null), 2000);
   };
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Carregando cobrança...</p>
+        <p className="text-sm text-muted-foreground">{t("publicInvoice.loading")}</p>
       </div>
     );
   }
@@ -120,10 +122,8 @@ function PublicInvoicePage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="rounded-2xl border border-border/70 bg-card p-8 text-center">
-          <h1 className="text-lg font-semibold">Cobrança não encontrada</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Verifique o link com quem te enviou.
-          </p>
+          <h1 className="text-lg font-semibold">{t("publicInvoice.notFound")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("publicInvoice.notFoundDesc")}</p>
         </div>
       </div>
     );
@@ -152,12 +152,13 @@ function PublicInvoicePage() {
               <FileText className="h-4 w-4" />
             </span>
             <span>
-              Contrato<span className="text-primary">Fácil</span>
+              {t("common.brandPrefix")}<span className="text-primary">{t("common.brandSuffix")}</span>
             </span>
           </div>
           {providerName && (
             <span className="text-xs text-muted-foreground">
-              Cobrança de <strong className="text-foreground">{providerName}</strong>
+              {t("publicInvoice.providerLabel")}{" "}
+              <strong className="text-foreground">{providerName}</strong>
             </span>
           )}
         </div>
@@ -168,12 +169,12 @@ function PublicInvoicePage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Cobrança PIX
+                {t("publicInvoice.pixBadge")}
               </p>
               <h1 className="mt-1 text-lg font-semibold">{invoice.description}</h1>
               {invoice.clients?.full_name && (
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Para: {invoice.clients.full_name}
+                  {t("publicInvoice.for", { name: invoice.clients.full_name })}
                 </p>
               )}
             </div>
@@ -182,16 +183,14 @@ function PublicInvoicePage() {
 
           <div className="mt-5 grid gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 sm:grid-cols-2">
             <div>
-              <p className="text-xs text-muted-foreground">Valor a pagar</p>
+              <p className="text-xs text-muted-foreground">{t("publicInvoice.amountDue")}</p>
               <p className="mt-1 text-3xl font-semibold text-primary">
                 {formatCurrencyBRL(Number(invoice.amount))}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Vencimento</p>
-              <p className="mt-1 text-base font-medium">
-                {formatDateBR(invoice.due_date)}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("publicInvoice.dueDate")}</p>
+              <p className="mt-1 text-base font-medium">{formatDateBR(invoice.due_date)}</p>
             </div>
           </div>
         </div>
@@ -200,58 +199,51 @@ function PublicInvoicePage() {
           <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-6 text-center">
             <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-400" />
             <h2 className="mt-3 text-lg font-semibold text-emerald-200">
-              Pagamento confirmado ✅
+              {t("publicInvoice.paidConfirmed")}
             </h2>
             {invoice.paid_at && (
               <p className="mt-1 text-sm text-emerald-200/80">
-                Recebido em {formatDateBR(invoice.paid_at)}
+                {t("publicInvoice.paidOn", { date: formatDateBR(invoice.paid_at) })}
               </p>
             )}
           </div>
         ) : isCancelled ? (
           <div className="rounded-2xl border border-border/70 bg-card p-6 text-center">
-            <h2 className="text-base font-semibold">Cobrança cancelada</h2>
+            <h2 className="text-base font-semibold">{t("publicInvoice.cancelled")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Entre em contato com {providerName || "o prestador"} para mais
-              informações.
+              {t("publicInvoice.cancelledDesc", {
+                provider: providerName || t("publicInvoice.providerFallback"),
+              })}
             </p>
           </div>
         ) : !pix || !pixPayload ? (
           <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center text-sm text-yellow-200">
-            O prestador ainda não configurou a chave PIX. Entre em contato para
-            obter os dados de pagamento.
+            {t("publicInvoice.noPix")}
           </div>
         ) : (
           <>
             <div className="rounded-2xl border border-border/70 bg-card p-6">
               <div className="flex items-center gap-2 border-b border-border/60 pb-3">
                 <QrCode className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-semibold">Pague com PIX</h2>
+                <h2 className="text-sm font-semibold">{t("publicInvoice.payWithPix")}</h2>
                 <span className="ml-auto text-xs text-yellow-300">
-                  Aguardando pagamento
+                  {t("publicInvoice.awaiting")}
                 </span>
               </div>
 
               <div className="mt-5 grid gap-6 sm:grid-cols-[auto,1fr] sm:items-center">
                 {qrUrl && (
                   <div className="mx-auto rounded-xl bg-white p-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={qrUrl}
-                      alt="QR Code PIX"
-                      className="h-48 w-48"
-                    />
+                    <img src={qrUrl} alt={t("publicInvoice.qrAlt")} className="h-48 w-48" />
                   </div>
                 )}
                 <div className="space-y-3">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      Chave PIX ({pix.beneficiary_name})
+                      {t("publicInvoice.pixKey", { name: pix.beneficiary_name })}
                     </p>
                     <div className="mt-1 flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
-                      <span className="flex-1 truncate font-mono text-sm">
-                        {pix.pix_key}
-                      </span>
+                      <span className="flex-1 truncate font-mono text-sm">{pix.pix_key}</span>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -263,14 +255,12 @@ function PublicInvoicePage() {
                         ) : (
                           <Copy className="h-3.5 w-3.5" />
                         )}
-                        Copiar
+                        {t("publicInvoice.copy")}
                       </Button>
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">
-                      PIX Copia e Cola
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("publicInvoice.copyAndPaste")}</p>
                     <div className="mt-1 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
                       <span className="flex-1 break-all font-mono text-[11px] leading-relaxed">
                         {pixPayload}
@@ -286,7 +276,7 @@ function PublicInvoicePage() {
                         ) : (
                           <Copy className="h-3.5 w-3.5" />
                         )}
-                        Copiar
+                        {t("publicInvoice.copy")}
                       </Button>
                     </div>
                   </div>
@@ -295,12 +285,12 @@ function PublicInvoicePage() {
             </div>
 
             <div className="rounded-2xl border border-border/70 bg-card p-6">
-              <h2 className="text-sm font-semibold">Como pagar</h2>
+              <h2 className="text-sm font-semibold">{t("publicInvoice.howTo")}</h2>
               <ol className="mt-4 space-y-3 text-sm text-muted-foreground">
                 {[
-                  "Abra o app do seu banco e selecione a opção PIX.",
-                  "Escaneie o QR Code acima ou cole o código PIX (Copia e Cola).",
-                  "Confira o valor, o beneficiário, e confirme o pagamento.",
+                  t("publicInvoice.step1"),
+                  t("publicInvoice.step2"),
+                  t("publicInvoice.step3"),
                 ].map((step, i) => (
                   <li key={i} className="flex gap-3">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
@@ -311,18 +301,16 @@ function PublicInvoicePage() {
                 ))}
               </ol>
               <p className="mt-5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                A confirmação é feita manualmente pelo prestador. Você verá o
-                status atualizado nesta página assim que o pagamento for
-                identificado.
+                {t("publicInvoice.manualNote")}
               </p>
             </div>
           </>
         )}
 
         <p className="pt-2 text-center text-xs text-muted-foreground">
-          Pagamento processado com segurança via{" "}
+          {t("publicInvoice.footer")}{" "}
           <span className="font-semibold text-foreground">
-            Contrato<span className="text-primary">Fácil</span>
+            {t("common.brandPrefix")}<span className="text-primary">{t("common.brandSuffix")}</span>
           </span>
         </p>
       </main>
