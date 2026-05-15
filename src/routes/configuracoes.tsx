@@ -118,7 +118,37 @@ function SettingsPage() {
   const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
   const [stripeStatusLoading, setStripeStatusLoading] = useState(false);
 
+  type ConnectStatus = Awaited<ReturnType<typeof getConnectAccountStatus>>;
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectStarting, setConnectStarting] = useState(false);
+  const connectLinkFn = useServerFn(createConnectAccountLink);
+  const connectStatusFn = useServerFn(getConnectAccountStatus);
+
   const planTierName = (tier: PlanTier) => t(`plans.tiers.${tier}.name`);
+
+  const loadConnectStatus = async () => {
+    setConnectLoading(true);
+    try {
+      const s = await connectStatusFn();
+      setConnectStatus(s);
+    } catch {
+      // ignore
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
+  const handleConnectStripe = async () => {
+    setConnectStarting(true);
+    try {
+      const { url } = await connectLinkFn();
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to start Stripe onboarding");
+      setConnectStarting(false);
+    }
+  };
 
   const loadStripeStatus = async () => {
     if (!isAdmin) return;
