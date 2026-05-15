@@ -30,10 +30,12 @@ interface PublicInvoice {
   id: string;
   description: string;
   amount: number;
+  currency: string | null;
   due_date: string;
   status: InvoiceStatus;
   paid_at: string | null;
   user_id: string;
+  public_token: string | null;
   clients: { full_name: string } | null;
 }
 
