@@ -119,6 +119,12 @@
       "autonomo": "Autônomo",
       "prestador": "Prestador de serviço",
       "liberal": "Profissional liberal"
+    },
+    "country": "País",
+    "countryHint": "Define o método de pagamento padrão: PIX (Brasil) ou cartão via Stripe (EUA).",
+    "countries": {
+      "br": "Brasil",
+      "us": "Estados Unidos"
     }
   },
   "dashboard": {
@@ -315,6 +321,7 @@
       "editTitle": "Editar cobrança",
       "description": "Gere uma cobrança PIX para enviar ao seu cliente.",
       "noPixWarning": "Você ainda não cadastrou sua chave PIX. Vá em Configurações para configurá-la antes de enviar cobranças ao cliente.",
+      "usdNotice": "Sua conta está configurada como Estados Unidos. Esta cobrança será feita em USD via cartão (Stripe).",
       "client": "Cliente",
       "selectClient": "Selecionar cliente",
       "registerClientFirst": "Cadastre um cliente primeiro.",
@@ -453,6 +460,8 @@
     "profileCard": "Dados do perfil",
     "fullName": "Nome completo",
     "accountType": "Tipo de conta",
+    "country": "País",
+    "countryHint": "Define o método de pagamento padrão: PIX (Brasil) ou cartão via Stripe (EUA).",
     "saveProfile": "Salvar perfil",
     "profileSaved": "Perfil atualizado",
     "stripeCard": "Stripe (admin)",
@@ -737,6 +746,12 @@
     "step2": "Escaneie o QR Code acima ou cole o código PIX (Copia e Cola).",
     "step3": "Confira o valor, o beneficiário, e confirme o pagamento.",
     "manualNote": "A confirmação é feita manualmente pelo prestador. Você verá o status atualizado nesta página assim que o pagamento for identificado.",
-    "footer": "Pagamento processado com segurança via"
+    "footer": "Pagamento processado com segurança via",
+    "payWithCard": "Pagar com cartão",
+    "payWithCardDesc": "Você será redirecionado a um checkout seguro do Stripe para concluir o pagamento com seu cartão de crédito ou débito.",
+    "payNow": "Pagar agora",
+    "processing": "Processando...",
+    "paymentSuccess": "Pagamento recebido! Pode levar alguns segundos para atualizar.",
+    "paymentCancelled": "O pagamento foi cancelado."
   }
 }

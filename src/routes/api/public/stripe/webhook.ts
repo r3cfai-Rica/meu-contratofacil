@@ -139,6 +139,55 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
               if (subId) {
                 const subscription = await stripe.subscriptions.retrieve(subId);
                 await upsertFromSubscription(stripe, subscription);
+                break;
+              }
+
+              // One-off invoice payment (USD via Stripe Checkout)
+              const invoiceId = session.metadata?.invoice_id;
+              if (invoiceId) {
+                const paymentIntentId =
+                  typeof session.payment_intent === "string"
+                    ? session.payment_intent
+                    : session.payment_intent?.id ?? null;
+
+                const { error: updErr } = await supabaseAdmin
+                  .from("invoices")
+                  .update({
+                    status: "paid",
+                    paid_at: new Date().toISOString(),
+                    stripe_payment_intent_id: paymentIntentId,
+                  })
+                  .eq("id", invoiceId);
+                if (updErr) console.error("[stripe-webhook] invoice update error", updErr);
+
+                await supabaseAdmin.from("payment_logs").insert({
+                  invoice_id: invoiceId,
+                  user_id: session.metadata?.user_id ?? null,
+                  provider: "stripe",
+                  event_type: "checkout.session.completed",
+                  amount_cents: session.amount_total ?? null,
+                  currency: (session.currency ?? "usd").toUpperCase(),
+                  raw: { session_id: session.id, payment_intent: paymentIntentId },
+                });
+              }
+              break;
+            }
+            case "payment_intent.payment_failed": {
+              const pi = event.data.object as Stripe.PaymentIntent;
+              const invoiceId = pi.metadata?.invoice_id;
+              if (invoiceId) {
+                await supabaseAdmin.from("payment_logs").insert({
+                  invoice_id: invoiceId,
+                  user_id: pi.metadata?.user_id ?? null,
+                  provider: "stripe",
+                  event_type: "payment_intent.payment_failed",
+                  amount_cents: pi.amount ?? null,
+                  currency: (pi.currency ?? "usd").toUpperCase(),
+                  raw: {
+                    payment_intent: pi.id,
+                    last_payment_error: pi.last_payment_error?.message ?? null,
+                  },
+                });
               }
               break;
             }

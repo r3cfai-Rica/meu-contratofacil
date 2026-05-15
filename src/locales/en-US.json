@@ -119,6 +119,12 @@
       "autonomo": "Freelancer",
       "prestador": "Service provider",
       "liberal": "Professional"
+    },
+    "country": "Country",
+    "countryHint": "Defines the default payment method: PIX (Brazil) or card via Stripe (US).",
+    "countries": {
+      "br": "Brazil",
+      "us": "United States"
     }
   },
   "dashboard": {
@@ -315,6 +321,7 @@
       "editTitle": "Edit invoice",
       "description": "Generate an invoice to send to your client.",
       "noPixWarning": "You haven't set up your payment method yet. Go to Settings to configure it before sending invoices.",
+      "usdNotice": "Your account is set to United States. This invoice will be charged in USD via card (Stripe).",
       "client": "Client",
       "selectClient": "Select client",
       "registerClientFirst": "Register a client first.",
@@ -453,6 +460,8 @@
     "profileCard": "Profile data",
     "fullName": "Full name",
     "accountType": "Account type",
+    "country": "Country",
+    "countryHint": "Defines the default payment method: PIX (Brazil) or card via Stripe (US).",
     "saveProfile": "Save profile",
     "profileSaved": "Profile updated",
     "stripeCard": "Stripe (admin)",
@@ -737,6 +746,12 @@
     "step2": "Scan the QR Code above or paste the payment code.",
     "step3": "Check the amount and beneficiary, then confirm payment.",
     "manualNote": "Confirmation is done manually by the provider. You'll see the status update on this page once the payment is identified.",
-    "footer": "Payment processed securely via"
+    "footer": "Payment processed securely via",
+    "payWithCard": "Pay with card",
+    "payWithCardDesc": "You'll be redirected to a secure Stripe checkout to complete the payment with your credit or debit card.",
+    "payNow": "Pay now",
+    "processing": "Processing...",
+    "paymentSuccess": "Payment received! It may take a few seconds to update.",
+    "paymentCancelled": "Payment was cancelled."
   }
 }

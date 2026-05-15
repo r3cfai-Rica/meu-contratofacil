@@ -1,56 +1,45 @@
-## Pagamentos internacionais (USA) — Plano
+## Varredura — o que já está pronto vs. o que falta
 
-Hoje o app cobra clientes brasileiros via PIX (`pagar.$token`). Para usuários dos EUA, precisamos cobrar em USD via Stripe Checkout (cartão), mantendo o PIX intacto para o BR.
+### ✅ Já implementado
+- Migration: `profiles.country`, `invoices.currency/stripe_checkout_session_id/stripe_payment_intent_id`, tabela `payment_logs` + RLS.
+- `formatMoney(amount, currency)` em `src/lib/format.ts`.
+- `createInvoiceCheckout` em `src/lib/invoice-payments.functions.ts` (cria sessão Stripe USD, grava `stripe_checkout_session_id`, loga em `payment_logs`).
+- Seletor de país no `signup.tsx` e `configuracoes.tsx`.
+- `InvoiceFormDialog` lê `profile.country` e força USD + esconde aviso de PIX para US.
+- `pagar.$token.tsx` já carrega `currency` e usa `formatMoney`.
 
-### 1. Banco de dados
-- Adicionar `country` (`text`, default `'BR'`, check `IN ('BR','US')`) em `profiles`.
-- Atualizar trigger `handle_new_user` para gravar `country` a partir de `raw_user_meta_data.country`.
-- Adicionar em `invoices`:
-  - `currency text not null default 'BRL'` (`BRL` | `USD`)
-  - `stripe_checkout_session_id text`
-  - `stripe_payment_intent_id text`
-- Criar tabela `payment_logs` (id, invoice_id, user_id, provider `'stripe'|'pix'`, event_type, amount_cents, currency, raw jsonb, created_at) com RLS: dono vê os seus; admin vê tudo; webhook insere via service role.
+### ❌ Falta terminar
 
-### 2. Signup / Perfil
-- `signup.tsx`: adicionar seletor **País** (Brasil / United States), salvar em `options.data.country`.
-- `configuracoes.tsx`: permitir trocar país (afeta moeda padrão das próximas faturas).
-- Idioma já é controlado pelo `LanguageSwitcher` — país é independente (define método de pagamento).
+1. **Página pública `pagar.$token.tsx` — UI de cartão (USD)**
+   - Hoje, se `currency === 'USD'` e não há PIX, cai no fallback amarelo "noPix". Precisa renderizar bloco "Pay with card" com botão que chama `createInvoiceCheckout({ data: { invoiceToken: token } })` e redireciona para `session.url`.
+   - Ler `?status=success` / `?status=cancelled` da query e mostrar toast/estado correspondente; revalidar invoice ao voltar com `status=success` para refletir paga.
+   - Condição de roteamento: `currency === 'USD'` → cartão; senão → PIX (atual).
 
-### 3. Faturas
-- `InvoiceFormDialog`: se `profile.country === 'US'` → moeda travada em USD, esconder PIX; se BR → BRL + PIX (comportamento atual).
-- Mostrar moeda correta em `cobrancas.tsx`, `pagar.$token.tsx`, badges e totais (helper `formatMoney(amount, currency)`).
+2. **Webhook `src/routes/api/public/stripe/webhook.ts`**
+   - Adicionar tratamento dentro do `case "checkout.session.completed"`: se `session.metadata.invoice_id` estiver presente (one-off de fatura, sem `subscription`), marcar `invoices.status='paid'`, `paid_at=now()`, salvar `stripe_payment_intent_id`, e inserir em `payment_logs` (`event_type: 'checkout.session.completed'`).
+   - Adicionar `case "payment_intent.payment_failed"`: se `metadata.invoice_id` presente, inserir log em `payment_logs` (sem mudar status). Não confundir com o `invoice.payment_failed` do Stripe Billing já tratado.
+   - Manter intacto o fluxo de assinaturas (subscription).
 
-### 4. Server functions (TanStack `createServerFn`)
-Novo arquivo `src/lib/invoice-payments.functions.ts`:
-- `createInvoiceCheckout({ invoiceToken })` — público (sem auth), busca a invoice via `supabaseAdmin` pelo `public_token`, cria `Stripe Checkout Session` em `mode: 'payment'`, USD, `success_url` → `/pagar/$token?status=success`, `cancel_url` → mesma página. Persiste `stripe_checkout_session_id` na invoice.
-- Reaproveita `getStripeForMode` / `getCurrentStripeMode` já existentes.
+3. **`cobrancas.tsx` — moeda dinâmica**
+   - Trocar `formatCurrencyBRL` por `formatMoney(value, currency)` nos cards de resumo e na coluna Valor. Selecionar `currency` no `.select(...)` e propagar pelo tipo `Invoice`.
+   - Os cards de resumo agregam por moeda? Decisão simples: somar tudo na moeda do perfil (BR=BRL, US=USD) — ler `profile.country` uma vez e formatar com essa moeda.
 
-### 5. Página pública de pagamento
-`pagar.$token.tsx`:
-- Se `invoice.currency === 'USD'` → renderizar UI "Pay with card" + botão que chama `createInvoiceCheckout` e redireciona pra `session.url`. Mostrar status "success" lendo `?status=success`.
-- Se `BRL` → fluxo PIX atual (sem mudanças).
+4. **Traduções (pt-BR + en-US)**
+   Adicionar chaves usadas e ainda inexistentes:
+   - `auth.country`, `auth.countryHint`, `auth.countries.br`, `auth.countries.us`
+   - `settings.country`, `settings.countryHint`
+   - `invoices.form.usdNotice`
+   - `publicInvoice.payWithCard`, `publicInvoice.payWithCardDesc`, `publicInvoice.payNow`, `publicInvoice.processing`, `publicInvoice.paymentSuccess`, `publicInvoice.paymentCancelled`
 
-### 6. Webhook
-Estender `src/routes/api/public/stripe/webhook.ts`:
-- Tratar `checkout.session.completed` quando `metadata.invoice_id` estiver presente:
-  - marcar invoice `status='paid'`, `paid_at=now()`, salvar `stripe_payment_intent_id`.
-  - inserir em `payment_logs`.
-- Tratar `payment_intent.payment_failed` → log em `payment_logs` (sem mudar status).
-
-### 7. Traduções
-Adicionar chaves em `pt-BR.json` / `en-US.json`: `publicInvoice.payWithCard`, `publicInvoice.processing`, `publicInvoice.paidSuccess`, `auth.country`, `auth.countries.br`, `auth.countries.us`, `settings.country`, etc.
-
-### 8. Detalhes técnicos
-- Manter PIX 100% funcional para BR — nenhuma regressão.
-- Stripe key já configurada (`STRIPE_SECRET_KEY` / `_TEST`); reutilizar `getCurrentStripe()`.
-- Webhook já existe e está verificando assinatura — só adicionamos novos `case`.
-- `payment_logs` é insert-only via service role (webhook); usuários só leem os seus.
+5. **Sanity check**
+   - Rodar build após edits para garantir que não restou nenhum `formatCurrencyBRL` esquecido em campos com moeda dinâmica.
+   - Confirmar que `attachSupabaseAuth` não é necessário aqui (a server fn é pública, sem `requireSupabaseAuth`) — ✅ ok.
 
 ### Ordem de execução
-1. Migration (profiles.country, invoices.currency + stripe ids, payment_logs).
-2. Signup + perfil (país).
-3. `invoice-payments.functions.ts` + webhook.
-4. UI de fatura (form + pública) com moeda dinâmica.
-5. Traduções finais e teste end-to-end em modo test.
+1. Webhook (backend primeiro, idempotente).
+2. UI USD em `pagar.$token.tsx` + handler de query string.
+3. `cobrancas.tsx` moeda dinâmica.
+4. Chaves de tradução pt/en.
+5. Build + smoke test.
 
 Posso seguir?

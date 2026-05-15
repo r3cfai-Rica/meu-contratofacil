@@ -16,7 +16,15 @@ import {
   type InvoiceStatus,
 } from "@/components/invoices/InvoiceStatusBadge";
 
+type PaymentSearch = { status?: "success" | "cancelled" };
+
 export const Route = createFileRoute("/pagar/$token")({
+  validateSearch: (search: Record<string, unknown>): PaymentSearch => ({
+    status:
+      search.status === "success" || search.status === "cancelled"
+        ? search.status
+        : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Pay invoice — EasyContract" },
@@ -54,18 +62,24 @@ function PublicInvoicePage() {
   const [qrUrl, setQrUrl] = useState("");
   const [copied, setCopied] = useState<"key" | "code" | null>(null);
   const [loading, setLoading] = useState(true);
+  const [payingCard, setPayingCard] = useState(false);
+  const search = Route.useSearch();
+  const createCheckout = useServerFn(createInvoiceCheckout);
+
+  const loadInvoice = async () => {
+    const { data: inv } = await supabase
+      .from("invoices")
+      .select(
+        "id, description, amount, currency, due_date, status, paid_at, user_id, public_token, clients(full_name)",
+      )
+      .eq("public_token", token)
+      .maybeSingle();
+    return inv as unknown as PublicInvoice | null;
+  };
 
   useEffect(() => {
     void (async () => {
-      const { data: inv } = await supabase
-        .from("invoices")
-        .select(
-          "id, description, amount, currency, due_date, status, paid_at, user_id, public_token, clients(full_name)",
-        )
-        .eq("public_token", token)
-        .maybeSingle();
-
-      const invoice = inv as unknown as PublicInvoice | null;
+      const invoice = await loadInvoice();
       setInvoice(invoice);
 
       if (invoice) {
@@ -106,6 +120,31 @@ function PublicInvoicePage() {
       setLoading(false);
     })();
   }, [token]);
+
+  useEffect(() => {
+    if (search.status === "success") {
+      toast.success(t("publicInvoice.paymentSuccess"));
+      void (async () => {
+        const fresh = await loadInvoice();
+        if (fresh) setInvoice(fresh);
+      })();
+    } else if (search.status === "cancelled") {
+      toast.error(t("publicInvoice.paymentCancelled"));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.status]);
+
+  const payWithCard = async () => {
+    setPayingCard(true);
+    try {
+      const { url } = await createCheckout({ data: { invoiceToken: token } });
+      window.location.href = url;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg);
+      setPayingCard(false);
+    }
+  };
 
   const copy = async (text: string, type: "key" | "code") => {
     await navigator.clipboard.writeText(text);
@@ -219,6 +258,37 @@ function PublicInvoicePage() {
                 provider: providerName || t("publicInvoice.providerFallback"),
               })}
             </p>
+          </div>
+        ) : invoice.currency === "USD" ? (
+          <div className="rounded-2xl border border-border/70 bg-card p-6">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+              <CreditCard className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold">{t("publicInvoice.payWithCard")}</h2>
+              <span className="ml-auto text-xs text-yellow-300">
+                {t("publicInvoice.awaiting")}
+              </span>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {t("publicInvoice.payWithCardDesc")}
+            </p>
+            <Button
+              className="mt-5 w-full gap-2"
+              size="lg"
+              onClick={payWithCard}
+              disabled={payingCard}
+            >
+              {payingCard ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("publicInvoice.processing")}
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4" />
+                  {t("publicInvoice.payNow")}
+                </>
+              )}
+            </Button>
           </div>
         ) : !pix || !pixPayload ? (
           <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center text-sm text-yellow-200">
