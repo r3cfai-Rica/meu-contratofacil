@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, QrCode, CheckCircle2, XCircle, Trash2, ExternalLink, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,7 @@ type Period = "all" | "30" | "60" | "overdue" | "month";
 function InvoicesPage() {
   const { user } = useAuth();
   const { planInfo } = usePlan();
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -172,7 +174,7 @@ function InvoicesPage() {
       .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Cobrança marcada como paga");
+    toast.success(t("invoices.markedPaid"));
     void load();
   };
 
@@ -182,14 +184,14 @@ function InvoicesPage() {
       .update({ status: "cancelled" })
       .eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Cobrança cancelada");
+    toast.success(t("invoices.cancelled"));
     void load();
   };
 
   const deleteInvoice = async (id: string) => {
     const { error } = await supabase.from("invoices").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Cobrança excluída");
+    toast.success(t("invoices.deleted"));
     setToDelete(null);
     void load();
   };
@@ -197,27 +199,27 @@ function InvoicesPage() {
   const copyLink = async (token: string) => {
     const url = `${window.location.origin}/pagar/${token}`;
     await navigator.clipboard.writeText(url);
-    toast.success("Link de pagamento copiado");
+    toast.success(t("invoices.linkCopied"));
   };
 
   const cards: Array<{ key: InvoiceStatus; label: string; value: number; tone: string }> = [
-    { key: "pending", label: "Pendente", value: summary.pending, tone: "text-yellow-300" },
-    { key: "paid", label: "Recebido", value: summary.paid, tone: "text-emerald-300" },
-    { key: "overdue", label: "Vencido", value: summary.overdue, tone: "text-red-300" },
-    { key: "cancelled", label: "Cancelado", value: summary.cancelled, tone: "text-slate-300" },
+    { key: "pending", label: t("invoices.summary.pending"), value: summary.pending, tone: "text-yellow-300" },
+    { key: "paid", label: t("invoices.summary.received"), value: summary.paid, tone: "text-emerald-300" },
+    { key: "overdue", label: t("invoices.summary.overdue"), value: summary.overdue, tone: "text-red-300" },
+    { key: "cancelled", label: t("invoices.summary.cancelled"), value: summary.cancelled, tone: "text-slate-300" },
   ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cobranças</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("invoices.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Gere cobranças PIX e acompanhe os pagamentos.
+            {t("invoices.subtitle")}
           </p>
         </div>
         <Button className="gap-2" onClick={handleNewInvoice}>
-          <Plus className="h-4 w-4" /> Nova cobrança
+          <Plus className="h-4 w-4" /> {t("invoices.new")}
         </Button>
       </div>
 
@@ -246,7 +248,7 @@ function InvoicesPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por cliente ou descrição"
+            placeholder={t("invoices.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -258,11 +260,11 @@ function InvoicesPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
-            <SelectItem value="paid">Pago</SelectItem>
-            <SelectItem value="overdue">Vencido</SelectItem>
-            <SelectItem value="cancelled">Cancelado</SelectItem>
+            <SelectItem value="all">{t("common.allStatuses")}</SelectItem>
+            <SelectItem value="pending">{t("invoices.status.pending")}</SelectItem>
+            <SelectItem value="paid">{t("invoices.status.paid")}</SelectItem>
+            <SelectItem value="overdue">{t("invoices.status.overdue")}</SelectItem>
+            <SelectItem value="cancelled">{t("invoices.status.cancelled")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
@@ -270,11 +272,11 @@ function InvoicesPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todo o período</SelectItem>
-            <SelectItem value="month">Este mês</SelectItem>
-            <SelectItem value="30">Próximos 30 dias</SelectItem>
-            <SelectItem value="60">Próximos 60 dias</SelectItem>
-            <SelectItem value="overdue">Apenas vencidos</SelectItem>
+            <SelectItem value="all">{t("invoices.period.all")}</SelectItem>
+            <SelectItem value="month">{t("invoices.period.month")}</SelectItem>
+            <SelectItem value="30">{t("invoices.period.next30")}</SelectItem>
+            <SelectItem value="60">{t("invoices.period.next60")}</SelectItem>
+            <SelectItem value="overdue">{t("invoices.period.overdueOnly")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -282,7 +284,7 @@ function InvoicesPage() {
       <div className="rounded-2xl border border-border/70 bg-card">
         {loading ? (
           <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            Carregando...
+            {t("common.loading")}
           </div>
         ) : filtered.length === 0 ? (
           <div className="px-6 py-16 text-center">
@@ -291,17 +293,17 @@ function InvoicesPage() {
             </span>
             <h2 className="text-base font-semibold">
               {invoices.length === 0
-                ? "Nenhuma cobrança ainda"
-                : "Nada encontrado"}
+                ? t("invoices.empty")
+                : t("common.nothingFound")}
             </h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
               {invoices.length === 0
-                ? "Gere sua primeira cobrança PIX para começar."
-                : "Tente ajustar os filtros ou a busca."}
+                ? t("invoices.emptyDesc")
+                : t("common.tryAdjustFilters")}
             </p>
             {invoices.length === 0 && (
               <Button className="mt-5 gap-2" onClick={handleNewInvoice}>
-                <Plus className="h-4 w-4" /> Nova cobrança
+                <Plus className="h-4 w-4" /> {t("invoices.new")}
               </Button>
             )}
           </div>
@@ -309,12 +311,12 @@ function InvoicesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t("common.client")}</TableHead>
+                <TableHead>{t("common.description")}</TableHead>
+                <TableHead>{t("common.value")}</TableHead>
+                <TableHead>{t("common.dueDate")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -340,7 +342,7 @@ function InvoicesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            title="Copiar link"
+                            title={t("invoices.actions.copyLink")}
                             onClick={() => copyLink(i.public_token!)}
                           >
                             <Copy className="h-4 w-4" />
@@ -348,7 +350,7 @@ function InvoicesPage() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            title="Abrir página de pagamento"
+                            title={t("invoices.actions.openPage")}
                             asChild
                           >
                             <Link
@@ -365,7 +367,7 @@ function InvoicesPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          title="Marcar como pago"
+                          title={t("invoices.actions.markPaid")}
                           onClick={() => markAsPaid(i.id)}
                         >
                           <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -375,7 +377,7 @@ function InvoicesPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          title="Cancelar"
+                          title={t("invoices.actions.cancel")}
                           onClick={() => cancelInvoice(i.id)}
                         >
                           <XCircle className="h-4 w-4 text-muted-foreground" />
@@ -384,7 +386,7 @@ function InvoicesPage() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        title="Excluir"
+                        title={t("invoices.actions.delete")}
                         onClick={() => setToDelete(i)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -416,17 +418,17 @@ function InvoicesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir cobrança?</AlertDialogTitle>
+            <AlertDialogTitle>{t("invoices.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Essa ação não pode ser desfeita.
+              {t("invoices.deleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => toDelete && deleteInvoice(toDelete.id)}
             >
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
