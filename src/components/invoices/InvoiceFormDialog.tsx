@@ -140,6 +140,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
         contract_id: contractId === "none" ? null : contractId,
         description: description.trim(),
         amount: amountNum,
+        currency: isUS ? "USD" : "BRL",
         due_date: iso,
         is_recurring: frequency === "recurring",
         installment_number: frequency === "recurring" ? i + 1 : null,
