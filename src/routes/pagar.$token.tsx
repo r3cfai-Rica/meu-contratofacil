@@ -16,7 +16,15 @@ import {
   type InvoiceStatus,
 } from "@/components/invoices/InvoiceStatusBadge";
 
+type PaymentSearch = { status?: "success" | "cancelled" };
+
 export const Route = createFileRoute("/pagar/$token")({
+  validateSearch: (search: Record<string, unknown>): PaymentSearch => ({
+    status:
+      search.status === "success" || search.status === "cancelled"
+        ? search.status
+        : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Pay invoice — EasyContract" },
