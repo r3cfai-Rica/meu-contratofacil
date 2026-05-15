@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { FileText, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,16 +32,17 @@ export const Route = createFileRoute("/signup")({
 });
 
 const ACCOUNT_TYPES = [
-  { value: "mei", label: "MEI" },
-  { value: "autonomo", label: "Autônomo" },
-  { value: "prestador", label: "Prestador de serviço" },
-  { value: "liberal", label: "Profissional liberal" },
+  { value: "mei", labelKey: "auth.accountTypes.mei" },
+  { value: "autonomo", labelKey: "auth.accountTypes.autonomo" },
+  { value: "prestador", labelKey: "auth.accountTypes.prestador" },
+  { value: "liberal", labelKey: "auth.accountTypes.liberal" },
 ] as const;
 
 function SignupPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { next } = Route.useSearch();
+  const { t } = useTranslation();
   const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
 
   const [fullName, setFullName] = useState("");
@@ -57,11 +59,11 @@ function SignupPage() {
     e.preventDefault();
 
     if (password.length < 8) {
-      toast.error("A senha deve ter no mínimo 8 caracteres");
+      toast.error(t("auth.passwordTooShort"));
       return;
     }
     if (!fullName.trim()) {
-      toast.error("Informe seu nome completo");
+      toast.error(t("auth.enterFullName"));
       return;
     }
 
@@ -81,14 +83,14 @@ function SignupPage() {
 
     if (error) {
       if (error.message.toLowerCase().includes("already")) {
-        toast.error("Este e-mail já está cadastrado. Tente fazer login.");
+        toast.error(t("auth.emailExists"));
       } else {
         toast.error(error.message);
       }
       return;
     }
 
-    toast.success("Conta criada com sucesso!");
+    toast.success(t("auth.accountCreated"));
     navigate({ to: redirectTo });
   };
 
@@ -106,18 +108,18 @@ function SignupPage() {
 
         <div className="rounded-2xl border border-border/70 bg-card p-8 shadow-[var(--shadow-card)]">
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Criar sua conta</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("auth.signupTitle")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Comece grátis. Sem cartão de crédito.
+              {t("auth.signupSubtitle")}
             </p>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
+              <Label htmlFor="name">{t("auth.fullName")}</Label>
               <Input
                 id="name"
-                placeholder="Seu nome"
+                placeholder={t("auth.fullNamePlaceholder")}
                 autoComplete="name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -125,7 +127,7 @@ function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -137,11 +139,11 @@ function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Mínimo 8 caracteres"
+                placeholder={t("auth.passwordMin")}
                 autoComplete="new-password"
                 minLength={8}
                 value={password}
@@ -150,15 +152,15 @@ function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="account-type">Tipo de conta</Label>
+              <Label htmlFor="account-type">{t("auth.accountType")}</Label>
               <Select value={accountType} onValueChange={setAccountType}>
                 <SelectTrigger id="account-type">
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={t("auth.select")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {ACCOUNT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {ACCOUNT_TYPES.map((typeOption) => (
+                    <SelectItem key={typeOption.value} value={typeOption.value}>
+                      {t(typeOption.labelKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -167,25 +169,25 @@ function SignupPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Criando conta...
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("auth.creatingAccount")}
                 </>
               ) : (
-                "Criar conta grátis"
+                t("auth.createAccountFree")
               )}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Ao continuar, você concorda com nossos termos de uso.
+              {t("auth.agreeTerms")}
             </p>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Já tem conta?{" "}
+            {t("auth.haveAccount")}{" "}
             <Link
               to="/login"
               search={next ? { next } : {}}
               className="text-primary hover:underline"
             >
-              Entrar
+              {t("auth.loginButton")}
             </Link>
           </p>
         </div>
