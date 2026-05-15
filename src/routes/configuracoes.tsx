@@ -38,6 +38,10 @@ import {
   changePlan,
 } from "@/lib/billing.functions";
 import {
+  createConnectAccountLink,
+  getConnectAccountStatus,
+} from "@/lib/stripe-connect.functions";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -50,7 +54,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PLAN_ORDER, PLANS, type PlanTier } from "@/lib/plans";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
-import { CheckCircle2, AlertTriangle, KeyRound } from "lucide-react";
+import { CheckCircle2, AlertTriangle, KeyRound, Globe } from "lucide-react";
 
 type KeyType = "cpf" | "cnpj" | "email" | "phone" | "random";
 
@@ -114,7 +118,37 @@ function SettingsPage() {
   const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
   const [stripeStatusLoading, setStripeStatusLoading] = useState(false);
 
+  type ConnectStatus = Awaited<ReturnType<typeof getConnectAccountStatus>>;
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectStarting, setConnectStarting] = useState(false);
+  const connectLinkFn = useServerFn(createConnectAccountLink);
+  const connectStatusFn = useServerFn(getConnectAccountStatus);
+
   const planTierName = (tier: PlanTier) => t(`plans.tiers.${tier}.name`);
+
+  const loadConnectStatus = async () => {
+    setConnectLoading(true);
+    try {
+      const s = await connectStatusFn();
+      setConnectStatus(s);
+    } catch {
+      // ignore
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
+  const handleConnectStripe = async () => {
+    setConnectStarting(true);
+    try {
+      const { url } = await connectLinkFn();
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to start Stripe onboarding");
+      setConnectStarting(false);
+    }
+  };
 
   const loadStripeStatus = async () => {
     if (!isAdmin) return;
@@ -172,7 +206,16 @@ function SettingsPage() {
       void refresh();
       window.history.replaceState({}, "", "/configuracoes");
     }
+    const connectParam = params.get("stripe_connect");
+    if (connectParam === "success") {
+      toast.success(t("settings.stripeConnect.returned"));
+      window.history.replaceState({}, "", "/configuracoes");
+    } else if (connectParam === "refresh") {
+      toast.info(t("settings.stripeConnect.refresh"));
+      window.history.replaceState({}, "", "/configuracoes");
+    }
     void loadInvoices();
+    void loadConnectStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -361,6 +404,155 @@ function SettingsPage() {
           </Button>
         </div>
       </form>
+
+      <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-6">
+        <div className="flex items-center gap-3 border-b border-border/60 pb-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <Globe className="h-5 w-5" />
+          </span>
+          <div className="flex-1">
+            <h2 className="text-base font-semibold">{t("settings.stripeConnect.title")}</h2>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.stripeConnect.description")}
+            </p>
+          </div>
+        </div>
+
+        {connectLoading && !connectStatus ? (
+          <div className="py-4 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+            {t("settings.stripeConnect.checking")}
+          </div>
+        ) : !connectStatus?.connected ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+              <Globe className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="font-medium">{t("settings.stripeConnect.notConnected")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.stripeConnect.notConnectedDesc")}
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              onClick={handleConnectStripe}
+              disabled={connectStarting}
+              className="gap-2"
+            >
+              {connectStarting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="h-4 w-4" />
+              )}
+              {t("settings.stripeConnect.connectButton")}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div
+              className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
+                connectStatus.chargesEnabled
+                  ? "border-emerald-500/40 bg-emerald-500/10"
+                  : "border-amber-500/40 bg-amber-500/10"
+              }`}
+            >
+              {connectStatus.chargesEnabled ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+              ) : (
+                <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+              )}
+              <div className="flex-1">
+                <p className="font-medium">
+                  {connectStatus.chargesEnabled
+                    ? t("settings.stripeConnect.connected")
+                    : t("settings.stripeConnect.pending")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {connectStatus.email ?? connectStatus.accountId}
+                  {connectStatus.country ? ` · ${connectStatus.country}` : ""}
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-lg border border-border/60 px-3 py-2 text-xs">
+                {t("settings.charges")}:{" "}
+                <span
+                  className={
+                    connectStatus.chargesEnabled
+                      ? "font-medium text-emerald-600"
+                      : "font-medium text-amber-600"
+                  }
+                >
+                  {connectStatus.chargesEnabled
+                    ? t("settings.enabled")
+                    : t("settings.pendingVerification")}
+                </span>
+              </div>
+              <div className="rounded-lg border border-border/60 px-3 py-2 text-xs">
+                {t("settings.payouts")}:{" "}
+                <span
+                  className={
+                    connectStatus.payoutsEnabled
+                      ? "font-medium text-emerald-600"
+                      : "font-medium text-amber-600"
+                  }
+                >
+                  {connectStatus.payoutsEnabled
+                    ? t("settings.enabledMasc")
+                    : t("settings.pendingVerification")}
+                </span>
+              </div>
+            </div>
+            {connectStatus.requirementsDue > 0 && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                {t("settings.stripeConnect.requirementsDue", {
+                  count: connectStatus.requirementsDue,
+                })}
+              </div>
+            )}
+            <div className="flex flex-wrap justify-end gap-2">
+              {!connectStatus.chargesEnabled && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleConnectStripe}
+                  disabled={connectStarting}
+                  className="gap-2"
+                >
+                  {connectStarting ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <ExternalLink className="h-3 w-3" />
+                  )}
+                  {t("settings.stripeConnect.continueOnboarding")}
+                </Button>
+              )}
+              <Button type="button" variant="outline" size="sm" asChild className="gap-2">
+                <a
+                  href="https://dashboard.stripe.com/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {t("settings.stripeConnect.openDashboard")}
+                </a>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={loadConnectStatus}
+                disabled={connectLoading}
+                className="gap-2"
+              >
+                {connectLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                {t("settings.stripeConnect.refresh")}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {isAdmin && (
         <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-6">

@@ -42,6 +42,22 @@ export const createInvoiceCheckout = createServerFn({ method: "POST" })
     if (invoice.status === "paid") throw new Error("Invoice already paid");
     if (invoice.status === "cancelled") throw new Error("Invoice cancelled");
 
+    // Look up the issuer's connected Stripe account.
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select(
+        "stripe_connect_account_id, stripe_connect_charges_enabled",
+      )
+      .eq("user_id", invoice.user_id)
+      .maybeSingle();
+
+    if (!profile?.stripe_connect_account_id || !profile.stripe_connect_charges_enabled) {
+      throw new Error(
+        "The issuer hasn't finished setting up international card payments yet. Please contact them.",
+      );
+    }
+    const connectedAccountId = profile.stripe_connect_account_id;
+
     const currency = (invoice.currency || "USD").toLowerCase();
     const amountCents = Math.round(Number(invoice.amount) * 100);
     if (!amountCents || amountCents <= 0) throw new Error("Invalid amount");
@@ -49,35 +65,41 @@ export const createInvoiceCheckout = createServerFn({ method: "POST" })
     const origin = getOrigin();
     const returnUrl = `${origin}/pagar/${invoice.public_token}`;
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency,
-            unit_amount: amountCents,
-            product_data: {
-              name: invoice.description.slice(0, 200) || "Invoice",
+    // Direct charge: the Checkout Session is created ON the connected account.
+    // Funds settle directly into the user's Stripe balance.
+    const session = await stripe.checkout.sessions.create(
+      {
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency,
+              unit_amount: amountCents,
+              product_data: {
+                name: invoice.description.slice(0, 200) || "Invoice",
+              },
             },
           },
-        },
-      ],
-      success_url: `${returnUrl}?status=success`,
-      cancel_url: `${returnUrl}?status=cancelled`,
-      metadata: {
-        invoice_id: invoice.id,
-        invoice_token: invoice.public_token ?? "",
-        user_id: invoice.user_id,
-      },
-      payment_intent_data: {
+        ],
+        success_url: `${returnUrl}?status=success`,
+        cancel_url: `${returnUrl}?status=cancelled`,
         metadata: {
           invoice_id: invoice.id,
+          invoice_token: invoice.public_token ?? "",
           user_id: invoice.user_id,
         },
+        payment_intent_data: {
+          // application_fee_amount: 0, // platform fee disabled for now
+          metadata: {
+            invoice_id: invoice.id,
+            user_id: invoice.user_id,
+          },
+        },
       },
-    });
+      { stripeAccount: connectedAccountId },
+    );
 
     await supabaseAdmin
       .from("invoices")
@@ -91,7 +113,7 @@ export const createInvoiceCheckout = createServerFn({ method: "POST" })
       event_type: "checkout.session.created",
       amount_cents: amountCents,
       currency: currency.toUpperCase(),
-      raw: { session_id: session.id },
+      raw: { session_id: session.id, connected_account: connectedAccountId },
     });
 
     if (!session.url) throw new Error("Stripe did not return a checkout URL");
