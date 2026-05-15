@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Copy, Loader2, Lock, Mail, Sparkles, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ interface TeamMemberRow {
 }
 
 function TeamPage() {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { planInfo, loading: planLoading } = usePlan();
   const { isAdmin } = useIsAdmin();
@@ -84,17 +86,17 @@ function TeamPage() {
   const handleInvite = async (e: FormEvent) => {
     e.preventDefault();
     if (!isBusiness) {
-      toast.error("Convidar membros está disponível apenas no plano Business");
+      toast.error(t("team.businessOnly"));
       return;
     }
     setSubmitting(true);
     try {
       await inviteFn({ data: { email } });
-      toast.success("Convite enviado!");
+      toast.success(t("team.inviteSent"));
       setEmail("");
       void load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao convidar");
+      toast.error(err instanceof Error ? err.message : t("team.inviteError"));
     } finally {
       setSubmitting(false);
     }
@@ -109,33 +111,35 @@ function TeamPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Acesso revogado");
+    toast.success(t("team.accessRevoked"));
     void load();
   };
 
   const copyInviteLink = (token: string) => {
     const url = `${window.location.origin}/aceitar-convite/${token}`;
     void navigator.clipboard.writeText(url);
-    toast.success("Link de convite copiado");
+    toast.success(t("team.linkCopied"));
   };
+
+  const limitDisplay = limit || 3;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Equipe</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("team.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Convide até {limit || 3} colaboradores para acessar o mesmo painel.
+            {t("team.subtitle", { limit: limitDisplay })}
           </p>
         </div>
         <Badge variant={isBusiness ? "default" : "secondary"} className="gap-1">
           {isBusiness ? (
             <>
-              <Users className="h-3 w-3" /> Plano Business
+              <Users className="h-3 w-3" /> {t("team.businessPlan")}
             </>
           ) : (
             <>
-              <Lock className="h-3 w-3" /> Plano Business
+              <Lock className="h-3 w-3" /> {t("team.businessPlan")}
             </>
           )}
         </Badge>
@@ -148,16 +152,11 @@ function TeamPage() {
               <Sparkles className="h-5 w-5" />
             </span>
             <div className="flex-1">
-              <h2 className="text-base font-semibold">
-                Recurso disponível no plano Business
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Faça upgrade para o plano Business e convide até 3 colaboradores
-                para gerenciarem clientes, contratos e cobranças com você.
-              </p>
+              <h2 className="text-base font-semibold">{t("team.featureTitle")}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("team.featureDesc")}</p>
               <Button asChild className="mt-4 gap-2">
                 <Link to="/planos">
-                  <Sparkles className="h-4 w-4" /> Ver planos
+                  <Sparkles className="h-4 w-4" /> {t("team.viewPlans")}
                 </Link>
               </Button>
             </div>
@@ -174,19 +173,19 @@ function TeamPage() {
             <Mail className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-base font-semibold">Convidar colaborador</h2>
+            <h2 className="text-base font-semibold">{t("team.inviteCard")}</h2>
             <p className="text-xs text-muted-foreground">
-              {activeCount} de {limit || 3} convites usados.
+              {t("team.inviteUsage", { used: activeCount, limit: limitDisplay })}
             </p>
           </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
-            <Label htmlFor="email">E-mail do colaborador</Label>
+            <Label htmlFor="email">{t("team.emailLabel")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="colaborador@empresa.com"
+              placeholder={t("team.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={!isBusiness || submitting}
@@ -204,7 +203,7 @@ function TeamPage() {
             ) : (
               <Mail className="h-4 w-4" />
             )}
-            Convidar
+            {t("team.inviteButton")}
           </Button>
         </div>
       </form>
@@ -215,29 +214,27 @@ function TeamPage() {
             <Users className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-base font-semibold">Membros</h2>
-            <p className="text-xs text-muted-foreground">
-              Cada colaborador vê os mesmos clientes, contratos e cobranças que você.
-            </p>
+            <h2 className="text-base font-semibold">{t("team.members")}</h2>
+            <p className="text-xs text-muted-foreground">{t("team.membersDesc")}</p>
           </div>
         </div>
 
         {loading ? (
           <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            Carregando...
+            {t("team.loading")}
           </div>
         ) : members.length === 0 ? (
           <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            Nenhum membro ainda. Convide alguém usando o formulário acima.
+            {t("team.noMembers")}
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Convidado em</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t("team.emailHeader")}</TableHead>
+                <TableHead>{t("team.statusHeader")}</TableHead>
+                <TableHead>{t("team.invitedAtHeader")}</TableHead>
+                <TableHead className="text-right">{t("team.actionsHeader")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -246,15 +243,15 @@ function TeamPage() {
                   <TableCell className="font-medium">{m.email}</TableCell>
                   <TableCell>
                     {m.status === "accepted" ? (
-                      <Badge>Ativo</Badge>
+                      <Badge>{t("team.statusActive")}</Badge>
                     ) : m.status === "pending" ? (
-                      <Badge variant="secondary">Pendente</Badge>
+                      <Badge variant="secondary">{t("team.statusPending")}</Badge>
                     ) : (
-                      <Badge variant="outline">Revogado</Badge>
+                      <Badge variant="outline">{t("team.statusRevoked")}</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(m.invited_at).toLocaleDateString("pt-BR")}
+                    {new Date(m.invited_at).toLocaleDateString(i18n.language)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
