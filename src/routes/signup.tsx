@@ -38,6 +38,11 @@ const ACCOUNT_TYPES = [
   { value: "liberal", labelKey: "auth.accountTypes.liberal" },
 ] as const;
 
+const COUNTRIES = [
+  { value: "BR", labelKey: "auth.countries.br" },
+  { value: "US", labelKey: "auth.countries.us" },
+] as const;
+
 function SignupPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
