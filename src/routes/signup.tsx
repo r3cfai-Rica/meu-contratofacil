@@ -173,6 +173,21 @@ function SignupPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="country">{t("auth.country")}</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger id="country">
+                  <SelectValue placeholder={t("auth.select")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {t(c.labelKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t("auth.countryHint")}</p>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
