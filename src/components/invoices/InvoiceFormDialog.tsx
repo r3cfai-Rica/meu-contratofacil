@@ -173,9 +173,14 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           <DialogDescription>{t("invoices.form.description")}</DialogDescription>
         </DialogHeader>
 
-        {hasPix === false && (
+        {!isUS && hasPix === false && (
           <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-200">
             {t("invoices.form.noPixWarning")}
+          </div>
+        )}
+        {isUS && (
+          <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+            {t("invoices.form.usdNotice")}
           </div>
         )}
 
