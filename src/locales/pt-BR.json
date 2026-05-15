@@ -323,9 +323,18 @@
     "noUsers": "Nenhum usuário encontrado."
   },
   "upgrade": {
-    "title": "Limite do plano atingido",
-    "description": "Você atingiu o limite de {{limit}} {{resource}} do seu plano atual.",
+    "title": "Limite do plano grátis atingido",
+    "description": "Você atingiu o limite de {{limit}} {{resource}} do plano grátis. Faça upgrade para continuar criando sem limites.",
+    "proTitle": "Plano Pro — R$49/mês",
+    "benefit1": "Clientes, contratos e cobranças ilimitados",
+    "benefit2": "Logo personalizado nos contratos",
+    "benefit3": "Lembretes automáticos de vencimento",
     "viewPlans": "Ver planos",
-    "later": "Mais tarde"
+    "later": "Agora não",
+    "resources": {
+      "clientes": "clientes",
+      "contratos": "contratos",
+      "cobrancas": "cobranças"
+    }
   }
 }
