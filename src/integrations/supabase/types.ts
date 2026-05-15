@@ -249,6 +249,7 @@ export type Database = {
           client_id: string
           contract_id: string | null
           created_at: string
+          currency: string
           description: string
           due_date: string
           id: string
@@ -260,6 +261,8 @@ export type Database = {
           public_token: string | null
           recurrence_group: string | null
           status: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
           updated_at: string
           user_id: string
         }
@@ -268,6 +271,7 @@ export type Database = {
           client_id: string
           contract_id?: string | null
           created_at?: string
+          currency?: string
           description: string
           due_date: string
           id?: string
@@ -279,6 +283,8 @@ export type Database = {
           public_token?: string | null
           recurrence_group?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -287,6 +293,7 @@ export type Database = {
           client_id?: string
           contract_id?: string | null
           created_at?: string
+          currency?: string
           description?: string
           due_date?: string
           id?: string
@@ -298,6 +305,8 @@ export type Database = {
           public_token?: string | null
           recurrence_group?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -317,6 +326,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_logs: {
+        Row: {
+          amount_cents: number | null
+          created_at: string
+          currency: string | null
+          event_type: string
+          id: string
+          invoice_id: string | null
+          provider: string
+          raw: Json
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          event_type: string
+          id?: string
+          invoice_id?: string | null
+          provider: string
+          raw?: Json
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          event_type?: string
+          id?: string
+          invoice_id?: string | null
+          provider?: string
+          raw?: Json
+          user_id?: string | null
+        }
+        Relationships: []
       }
       pix_settings: {
         Row: {
@@ -354,6 +399,7 @@ export type Database = {
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
+          country: string
           created_at: string
           full_name: string
           id: string
@@ -363,6 +409,7 @@ export type Database = {
         }
         Insert: {
           account_type?: Database["public"]["Enums"]["account_type"]
+          country?: string
           created_at?: string
           full_name: string
           id?: string
@@ -372,6 +419,7 @@ export type Database = {
         }
         Update: {
           account_type?: Database["public"]["Enums"]["account_type"]
+          country?: string
           created_at?: string
           full_name?: string
           id?: string

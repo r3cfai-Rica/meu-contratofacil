@@ -49,6 +49,8 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [hasPix, setHasPix] = useState<boolean | null>(null);
+  const [country, setCountry] = useState<"BR" | "US">("BR");
+  const isUS = country === "US";
 
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
@@ -74,7 +76,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     setIndefinite(false);
 
     void (async () => {
-      const [clientsRes, contractsRes, pixRes] = await Promise.all([
+      const [clientsRes, contractsRes, pixRes, profRes] = await Promise.all([
         supabase
           .from("clients")
           .select("id, full_name")
@@ -90,10 +92,17 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           .select("id")
           .eq("user_id", user.id)
           .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("country")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
       setClients((clientsRes.data ?? []) as ClientRow[]);
       setContracts((contractsRes.data ?? []) as ContractRow[]);
       setHasPix(!!pixRes.data);
+      const c = (profRes.data as { country?: string } | null)?.country;
+      setCountry(c === "US" ? "US" : "BR");
     })();
   }, [open, user]);
 
@@ -131,6 +140,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
         contract_id: contractId === "none" ? null : contractId,
         description: description.trim(),
         amount: amountNum,
+        currency: isUS ? "USD" : "BRL",
         due_date: iso,
         is_recurring: frequency === "recurring",
         installment_number: frequency === "recurring" ? i + 1 : null,
@@ -163,9 +173,14 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           <DialogDescription>{t("invoices.form.description")}</DialogDescription>
         </DialogHeader>
 
-        {hasPix === false && (
+        {!isUS && hasPix === false && (
           <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-200">
             {t("invoices.form.noPixWarning")}
+          </div>
+        )}
+        {isUS && (
+          <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+            {t("invoices.form.usdNotice")}
           </div>
         )}
 

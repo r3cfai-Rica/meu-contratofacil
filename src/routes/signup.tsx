@@ -38,6 +38,11 @@ const ACCOUNT_TYPES = [
   { value: "liberal", labelKey: "auth.accountTypes.liberal" },
 ] as const;
 
+const COUNTRIES = [
+  { value: "BR", labelKey: "auth.countries.br" },
+  { value: "US", labelKey: "auth.countries.us" },
+] as const;
+
 function SignupPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -49,6 +54,7 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accountType, setAccountType] = useState<string>("autonomo");
+  const [country, setCountry] = useState<string>("BR");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -76,6 +82,7 @@ function SignupPage() {
         data: {
           full_name: fullName.trim(),
           account_type: accountType,
+          country,
         },
       },
     });
@@ -165,6 +172,22 @@ function SignupPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="country">{t("auth.country")}</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger id="country">
+                  <SelectValue placeholder={t("auth.select")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {t(c.labelKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t("auth.countryHint")}</p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (

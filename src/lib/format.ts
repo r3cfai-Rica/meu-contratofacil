@@ -67,6 +67,14 @@ export function formatCurrencyBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+export function formatCurrencyUSD(value: number): string {
+  return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+export function formatMoney(value: number, currency: string | null | undefined): string {
+  return currency === "USD" ? formatCurrencyUSD(value) : formatCurrencyBRL(value);
+}
+
 export function formatDateBR(value: string | Date): string {
   const d = typeof value === "string" ? new Date(value) : value;
   return d.toLocaleDateString("pt-BR");

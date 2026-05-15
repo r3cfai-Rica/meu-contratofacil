@@ -1,37 +1,56 @@
-## Objetivo
+## Pagamentos internacionais (USA) — Plano
 
-Traduzir o nome da marca "ContratoFácil" para "EasyContract" (ou similar) quando o usuário selecionar inglês.
+Hoje o app cobra clientes brasileiros via PIX (`pagar.$token`). Para usuários dos EUA, precisamos cobrar em USD via Stripe Checkout (cartão), mantendo o PIX intacto para o BR.
 
-## Decisão necessária
+### 1. Banco de dados
+- Adicionar `country` (`text`, default `'BR'`, check `IN ('BR','US')`) em `profiles`.
+- Atualizar trigger `handle_new_user` para gravar `country` a partir de `raw_user_meta_data.country`.
+- Adicionar em `invoices`:
+  - `currency text not null default 'BRL'` (`BRL` | `USD`)
+  - `stripe_checkout_session_id text`
+  - `stripe_payment_intent_id text`
+- Criar tabela `payment_logs` (id, invoice_id, user_id, provider `'stripe'|'pix'`, event_type, amount_cents, currency, raw jsonb, created_at) com RLS: dono vê os seus; admin vê tudo; webhook insere via service role.
 
-Qual nome usar em inglês? Sugestões:
+### 2. Signup / Perfil
+- `signup.tsx`: adicionar seletor **País** (Brasil / United States), salvar em `options.data.country`.
+- `configuracoes.tsx`: permitir trocar país (afeta moeda padrão das próximas faturas).
+- Idioma já é controlado pelo `LanguageSwitcher` — país é independente (define método de pagamento).
 
-- **EasyContract** (tradução direta, mantém o conceito)
-- **ContractEase**
-- **Manter "ContratoFácil"** (marca permanece igual em qualquer idioma — padrão para muitas marcas globais)
+### 3. Faturas
+- `InvoiceFormDialog`: se `profile.country === 'US'` → moeda travada em USD, esconder PIX; se BR → BRL + PIX (comportamento atual).
+- Mostrar moeda correta em `cobrancas.tsx`, `pagar.$token.tsx`, badges e totais (helper `formatMoney(amount, currency)`).
 
-## Mudanças
+### 4. Server functions (TanStack `createServerFn`)
+Novo arquivo `src/lib/invoice-payments.functions.ts`:
+- `createInvoiceCheckout({ invoiceToken })` — público (sem auth), busca a invoice via `supabaseAdmin` pelo `public_token`, cria `Stripe Checkout Session` em `mode: 'payment'`, USD, `success_url` → `/pagar/$token?status=success`, `cancel_url` → mesma página. Persiste `stripe_checkout_session_id` na invoice.
+- Reaproveita `getStripeForMode` / `getCurrentStripeMode` já existentes.
 
-### 1. Adicionar chaves de tradução
+### 5. Página pública de pagamento
+`pagar.$token.tsx`:
+- Se `invoice.currency === 'USD'` → renderizar UI "Pay with card" + botão que chama `createInvoiceCheckout` e redireciona pra `session.url`. Mostrar status "success" lendo `?status=success`.
+- Se `BRL` → fluxo PIX atual (sem mudanças).
 
-Em `src/locales/pt-BR.json` e `src/locales/en-US.json`, adicionar dentro de `common`:
+### 6. Webhook
+Estender `src/routes/api/public/stripe/webhook.ts`:
+- Tratar `checkout.session.completed` quando `metadata.invoice_id` estiver presente:
+  - marcar invoice `status='paid'`, `paid_at=now()`, salvar `stripe_payment_intent_id`.
+  - inserir em `payment_logs`.
+- Tratar `payment_intent.payment_failed` → log em `payment_logs` (sem mudar status).
 
-- `brandPrefix`: "Contrato" / "Easy"
-- `brandSuffix`: "Fácil" / "Contract"
+### 7. Traduções
+Adicionar chaves em `pt-BR.json` / `en-US.json`: `publicInvoice.payWithCard`, `publicInvoice.processing`, `publicInvoice.paidSuccess`, `auth.country`, `auth.countries.br`, `auth.countries.us`, `settings.country`, etc.
 
-(divisão em duas partes para preservar o estilo visual atual onde o sufixo aparece em destaque na cor primária)
+### 8. Detalhes técnicos
+- Manter PIX 100% funcional para BR — nenhuma regressão.
+- Stripe key já configurada (`STRIPE_SECRET_KEY` / `_TEST`); reutilizar `getCurrentStripe()`.
+- Webhook já existe e está verificando assinatura — só adicionamos novos `case`.
+- `payment_logs` é insert-only via service role (webhook); usuários só leem os seus.
 
-### 2. Atualizar componentes que mostram o nome
+### Ordem de execução
+1. Migration (profiles.country, invoices.currency + stripe ids, payment_logs).
+2. Signup + perfil (país).
+3. `invoice-payments.functions.ts` + webhook.
+4. UI de fatura (form + pública) com moeda dinâmica.
+5. Traduções finais e teste end-to-end em modo test.
 
-- `src/components/Navbar.tsx` (linha do logo) — usar `t("common.brandPrefix")` + `t("common.brandSuffix")`
-- `src/routes/index.tsx` — footer com "© ... ContratoFácil" → usar as mesmas chaves
-- Verificar `src/routes/login.tsx`, `src/routes/signup.tsx` e `AppSidebar.tsx` se exibem o nome — atualizar todos
-
-### 3. Não alterar
-
-- Meta tags / `<title>` no `__root.tsx` (SEO usa nome fixo "Aprova ai")
-- Nome técnico em e-mails transacionais e identidade externa (manter consistente até decisão de branding)
-
-## Pergunta
-
-Qual nome você quer em inglês?
+Posso seguir?

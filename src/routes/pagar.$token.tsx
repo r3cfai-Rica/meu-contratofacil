@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Check, CheckCircle2, Copy, FileText, QrCode } from "lucide-react";
+import { Check, CheckCircle2, Copy, CreditCard, FileText, Loader2, QrCode } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPixPayload } from "@/lib/pix";
-import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { formatDateBR, formatMoney } from "@/lib/format";
+import { createInvoiceCheckout } from "@/lib/invoice-payments.functions";
 import {
   InvoiceStatusBadge,
   getEffectiveStatus,
@@ -28,10 +30,12 @@ interface PublicInvoice {
   id: string;
   description: string;
   amount: number;
+  currency: string | null;
   due_date: string;
   status: InvoiceStatus;
   paid_at: string | null;
   user_id: string;
+  public_token: string | null;
   clients: { full_name: string } | null;
 }
 
@@ -56,7 +60,7 @@ function PublicInvoicePage() {
       const { data: inv } = await supabase
         .from("invoices")
         .select(
-          "id, description, amount, due_date, status, paid_at, user_id, clients(full_name)",
+          "id, description, amount, currency, due_date, status, paid_at, user_id, public_token, clients(full_name)",
         )
         .eq("public_token", token)
         .maybeSingle();

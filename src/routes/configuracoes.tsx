@@ -92,6 +92,7 @@ function SettingsPage() {
 
   const [profileName, setProfileName] = useState("");
   const [accountType, setAccountType] = useState<string>("autonomo");
+  const [country, setCountry] = useState<string>("BR");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -138,13 +139,14 @@ function SettingsPage() {
     void (async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, account_type, logo_url")
+        .select("full_name, account_type, logo_url, country")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
         setProfileName(profile.full_name ?? "");
         setAccountType(profile.account_type ?? "autonomo");
         setLogoUrl(profile.logo_url ?? null);
+        setCountry((profile as { country?: string }).country ?? "BR");
       }
       setPixLoading(true);
       const { data: pix } = await supabase
@@ -195,6 +197,7 @@ function SettingsPage() {
       .update({
         full_name: profileName.trim(),
         account_type: accountType as "mei" | "autonomo" | "prestador" | "liberal",
+        country,
       })
       .eq("user_id", user.id);
     setSavingProfile(false);
@@ -336,6 +339,19 @@ function SettingsPage() {
                 <SelectItem value="liberal">{t("settings.accountTypes.liberal")}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>{t("settings.country")}</Label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BR">{t("auth.countries.br")}</SelectItem>
+                <SelectItem value="US">{t("auth.countries.us")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t("settings.countryHint")}</p>
           </div>
         </div>
         <div className="flex justify-end">
