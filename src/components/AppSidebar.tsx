@@ -51,7 +51,7 @@ export function AppSidebar() {
           </span>
           {!collapsed && (
             <span className="truncate">
-              Contrato<span className="text-primary">Fácil</span>
+              {t("common.brandPrefix")}<span className="text-primary">{t("common.brandSuffix")}</span>
             </span>
           )}
         </Link>
