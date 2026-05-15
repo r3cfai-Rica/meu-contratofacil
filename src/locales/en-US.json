@@ -157,9 +157,22 @@
     "form": {
       "createTitle": "New client",
       "editTitle": "Edit client",
+      "description": "Fill in the details to register a new client.",
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "phonePlaceholder": "(555) 555-1234",
+      "document": "Tax ID",
+      "documentPlaceholder": "000-00-0000",
+      "address": "Full address",
+      "addressPlaceholder": "Street, number, city — State",
+      "notes": "Notes",
       "namePlaceholder": "Client full name",
-      "saved": "Client saved",
-      "errorSaving": "Failed to save client"
+      "saveButton": "Save client",
+      "saved": "Client created successfully!",
+      "errorSaving": "Failed to save client",
+      "errorName": "Enter the client name",
+      "errorDocument": "Invalid Tax ID"
     }
   },
   "contracts": {
