@@ -24,6 +24,8 @@ void i18n.use(initReactI18next).init({
     "pt-BR": { translation: ptBR },
     "en-US": { translation: enUS },
   },
+  ns: ["translation"],
+  defaultNS: "translation",
   lng: DEFAULT_LANGUAGE,
   fallbackLng: DEFAULT_LANGUAGE,
   supportedLngs: ["pt-BR", "en-US"],
