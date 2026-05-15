@@ -54,6 +54,7 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accountType, setAccountType] = useState<string>("autonomo");
+  const [country, setCountry] = useState<string>("BR");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
