@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -8,14 +9,6 @@ export type ContractStatus =
   | "signed"
   | "cancelled";
 
-const LABELS: Record<ContractStatus, string> = {
-  draft: "Rascunho",
-  sent: "Enviado",
-  awaiting_signature: "Aguardando assinatura",
-  signed: "Assinado",
-  cancelled: "Cancelado",
-};
-
 const STYLES: Record<ContractStatus, string> = {
   draft: "bg-muted text-muted-foreground border border-border/60",
   sent: "bg-blue-500/15 text-blue-300 border border-blue-500/30",
@@ -25,11 +18,30 @@ const STYLES: Record<ContractStatus, string> = {
 };
 
 export function ContractStatusBadge({ status }: { status: ContractStatus }) {
+  const { t } = useTranslation();
   return (
     <Badge variant="outline" className={cn("font-medium", STYLES[status])}>
-      {LABELS[status]}
+      {t(`contracts.status.${status}`)}
     </Badge>
   );
 }
 
-export const CONTRACT_STATUS_LABELS = LABELS;
+export function useContractStatusLabels(): Record<ContractStatus, string> {
+  const { t } = useTranslation();
+  return {
+    draft: t("contracts.status.draft"),
+    sent: t("contracts.status.sent"),
+    awaiting_signature: t("contracts.status.awaiting_signature"),
+    signed: t("contracts.status.signed"),
+    cancelled: t("contracts.status.cancelled"),
+  };
+}
+
+// Backwards-compatible static labels (Portuguese fallback).
+export const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
+  draft: "Rascunho",
+  sent: "Enviado",
+  awaiting_signature: "Aguardando assinatura",
+  signed: "Assinado",
+  cancelled: "Cancelado",
+};
