@@ -38,6 +38,10 @@ import {
   changePlan,
 } from "@/lib/billing.functions";
 import {
+  createConnectAccountLink,
+  getConnectAccountStatus,
+} from "@/lib/stripe-connect.functions";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -50,7 +54,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PLAN_ORDER, PLANS, type PlanTier } from "@/lib/plans";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
-import { CheckCircle2, AlertTriangle, KeyRound } from "lucide-react";
+import { CheckCircle2, AlertTriangle, KeyRound, Globe } from "lucide-react";
 
 type KeyType = "cpf" | "cnpj" | "email" | "phone" | "random";
 
