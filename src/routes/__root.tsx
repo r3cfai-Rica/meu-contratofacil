@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
-import "@/lib/i18n";
+import i18n, { getBrowserLanguage } from "@/lib/i18n";
 
 import appCss from "../styles.css?url";
 
@@ -71,6 +72,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  useEffect(() => {
+    const nextLanguage = getBrowserLanguage();
+
+    document.documentElement.lang = nextLanguage;
+
+    if (i18n.resolvedLanguage !== nextLanguage) {
+      void i18n.changeLanguage(nextLanguage);
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Outlet />
