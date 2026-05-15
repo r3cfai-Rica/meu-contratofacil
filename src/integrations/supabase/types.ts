@@ -404,6 +404,10 @@ export type Database = {
           full_name: string
           id: string
           logo_url: string | null
+          stripe_connect_account_id: string | null
+          stripe_connect_charges_enabled: boolean
+          stripe_connect_onboarded_at: string | null
+          stripe_connect_payouts_enabled: boolean
           updated_at: string
           user_id: string
         }
@@ -414,6 +418,10 @@ export type Database = {
           full_name: string
           id?: string
           logo_url?: string | null
+          stripe_connect_account_id?: string | null
+          stripe_connect_charges_enabled?: boolean
+          stripe_connect_onboarded_at?: string | null
+          stripe_connect_payouts_enabled?: boolean
           updated_at?: string
           user_id: string
         }
@@ -424,6 +432,10 @@ export type Database = {
           full_name?: string
           id?: string
           logo_url?: string | null
+          stripe_connect_account_id?: string | null
+          stripe_connect_charges_enabled?: boolean
+          stripe_connect_onboarded_at?: string | null
+          stripe_connect_payouts_enabled?: boolean
           updated_at?: string
           user_id?: string
         }
