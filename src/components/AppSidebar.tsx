@@ -40,6 +40,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isAdmin } = useIsAdmin();
+  const { t } = useTranslation();
 
   return (
     <Sidebar collapsible="icon">
