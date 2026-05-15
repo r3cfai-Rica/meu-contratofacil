@@ -22,7 +22,6 @@ void instance.init({
   load: "currentOnly",
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
-  initImmediate: false,
   detection: {
     order: ["localStorage", "navigator"],
     lookupLocalStorage: STORAGE_KEY,
