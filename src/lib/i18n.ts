@@ -29,6 +29,7 @@ void i18n.use(initReactI18next).init({
   supportedLngs: ["pt-BR", "en-US"],
   nonExplicitSupportedLngs: true,
   load: "currentOnly",
+  initAsync: false,
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
 });
