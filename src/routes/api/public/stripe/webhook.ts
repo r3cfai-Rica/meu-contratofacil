@@ -227,6 +227,37 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
               }
               break;
             }
+            case "account.updated": {
+              // Connect: a connected account changed onboarding/capability state.
+              const account = event.data.object as Stripe.Account;
+              const userId = account.metadata?.user_id ?? null;
+              if (userId) {
+                await supabaseAdmin
+                  .from("profiles")
+                  .update({
+                    stripe_connect_charges_enabled: account.charges_enabled ?? false,
+                    stripe_connect_payouts_enabled: account.payouts_enabled ?? false,
+                    stripe_connect_onboarded_at: account.details_submitted
+                      ? new Date().toISOString()
+                      : null,
+                  })
+                  .eq("user_id", userId)
+                  .eq("stripe_connect_account_id", account.id);
+              } else {
+                // Fallback: match by account id alone.
+                await supabaseAdmin
+                  .from("profiles")
+                  .update({
+                    stripe_connect_charges_enabled: account.charges_enabled ?? false,
+                    stripe_connect_payouts_enabled: account.payouts_enabled ?? false,
+                    stripe_connect_onboarded_at: account.details_submitted
+                      ? new Date().toISOString()
+                      : null,
+                  })
+                  .eq("stripe_connect_account_id", account.id);
+              }
+              break;
+            }
             default:
               console.log("[stripe-webhook] ignored event type", event.type);
           }
