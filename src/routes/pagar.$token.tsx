@@ -189,7 +189,7 @@ function PublicInvoicePage() {
             <div>
               <p className="text-xs text-muted-foreground">{t("publicInvoice.amountDue")}</p>
               <p className="mt-1 text-3xl font-semibold text-primary">
-                {formatCurrencyBRL(Number(invoice.amount))}
+                {formatMoney(Number(invoice.amount), invoice.currency)}
               </p>
             </div>
             <div>
