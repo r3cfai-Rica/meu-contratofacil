@@ -41,7 +41,7 @@ import { UpgradeDialog } from "@/components/billing/UpgradeDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { formatMoney, formatDateBR } from "@/lib/format";
 
 export const Route = createFileRoute("/cobrancas")({
   head: () => ({ meta: [{ title: "Cobranças — ContratoFácil" }] }),
@@ -60,6 +60,7 @@ interface Invoice {
   id: string;
   description: string;
   amount: number;
+  currency: string | null;
   due_date: string;
   status: InvoiceStatus;
   public_token: string | null;
@@ -76,6 +77,7 @@ function InvoicesPage() {
   const { t } = useTranslation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [defaultCurrency, setDefaultCurrency] = useState<string>("BRL");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
   const [period, setPeriod] = useState<Period>("all");
@@ -103,19 +105,28 @@ function InvoicesPage() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("invoices")
-      .select(
-        "id, description, amount, due_date, status, public_token, paid_at, client_id, clients(full_name)",
-      )
-      .eq("user_id", user.id)
-      .order("due_date", { ascending: true });
+    const [{ data, error }, profRes] = await Promise.all([
+      supabase
+        .from("invoices")
+        .select(
+          "id, description, amount, currency, due_date, status, public_token, paid_at, client_id, clients(full_name)",
+        )
+        .eq("user_id", user.id)
+        .order("due_date", { ascending: true }),
+      supabase
+        .from("profiles")
+        .select("country")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
     setLoading(false);
     if (error) {
       toast.error(error.message);
       return;
     }
     setInvoices((data ?? []) as unknown as Invoice[]);
+    const c = (profRes.data as { country?: string } | null)?.country;
+    setDefaultCurrency(c === "US" ? "USD" : "BRL");
   };
 
   useEffect(() => {
