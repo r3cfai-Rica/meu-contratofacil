@@ -206,7 +206,16 @@ function SettingsPage() {
       void refresh();
       window.history.replaceState({}, "", "/configuracoes");
     }
+    const connectParam = params.get("stripe_connect");
+    if (connectParam === "success") {
+      toast.success(t("settings.stripeConnect.returned"));
+      window.history.replaceState({}, "", "/configuracoes");
+    } else if (connectParam === "refresh") {
+      toast.info(t("settings.stripeConnect.refresh"));
+      window.history.replaceState({}, "", "/configuracoes");
+    }
     void loadInvoices();
+    void loadConnectStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
