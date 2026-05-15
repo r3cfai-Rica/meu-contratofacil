@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { FileText, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,20 +10,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
-    meta: [{ title: "Redefinir senha — ContratoFácil" }],
+    meta: [{ title: "Reset password — EasyContract" }],
   }),
   component: ResetPasswordPage,
 });
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (password.length < 8) {
-      toast.error("A senha deve ter no mínimo 8 caracteres");
+      toast.error(t("auth.passwordTooShort"));
       return;
     }
     setLoading(true);
@@ -33,7 +35,7 @@ function ResetPasswordPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Senha atualizada com sucesso!");
+    toast.success(t("auth.passwordUpdated"));
     navigate({ to: "/dashboard" });
   };
 
@@ -45,25 +47,25 @@ function ResetPasswordPage() {
             <FileText className="h-4 w-4" />
           </span>
           <span>
-            Contrato<span className="text-primary">Fácil</span>
+            {t("common.brandPrefix")}<span className="text-primary">{t("common.brandSuffix")}</span>
           </span>
         </Link>
 
         <div className="rounded-2xl border border-border/70 bg-card p-8 shadow-[var(--shadow-card)]">
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Redefinir senha</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("auth.resetTitle")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Escolha uma nova senha para sua conta
+              {t("auth.resetSubtitle")}
             </p>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="password">Nova senha</Label>
+              <Label htmlFor="password">{t("auth.newPassword")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Mínimo 8 caracteres"
+                placeholder={t("auth.passwordMin")}
                 minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -73,10 +75,10 @@ function ResetPasswordPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Salvando...
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("common.saving")}
                 </>
               ) : (
-                "Salvar nova senha"
+                t("auth.saveNewPassword")
               )}
             </Button>
           </form>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Copy, Download, History, Link as LinkIcon, Loader2, Mail, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { sendContractEmail } from "@/lib/email.functions";
 import {
@@ -19,7 +20,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   ContractStatusBadge,
   type ContractStatus,
-  CONTRACT_STATUS_LABELS,
 } from "./ContractStatusBadge";
 
 interface ContractRow {
@@ -52,14 +52,9 @@ interface Props {
   onChanged: () => void;
 }
 
-const PAYMENT_LABELS: Record<string, string> = {
-  one_time: "À vista",
-  installments: "Parcelado",
-  recurring: "Recorrente",
-};
-
 export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Props) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const sendEmail = useServerFn(sendContractEmail);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
@@ -97,16 +92,15 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       toast.error(error.message);
       return;
     }
-    toast.success("Link de assinatura gerado");
-    // Envia email automaticamente
+    toast.success(t("contracts.detail.linkGenerated"));
     try {
       const result = await sendEmail({
         data: { contractId: contract.id, appOrigin: window.location.origin },
       });
-      toast.success(`Email enviado para ${result.recipient}`);
+      toast.success(t("contracts.detail.emailSent", { recipient: result.recipient }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao enviar email";
-      toast.error(`Link gerado, mas o email falhou: ${msg}`);
+      const msg = err instanceof Error ? err.message : t("contracts.form.errSendEmail");
+      toast.error(t("contracts.detail.linkOkEmailFailed", { message: msg }));
     }
     setLoadingAction(false);
     onChanged();
@@ -118,10 +112,10 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       const result = await sendEmail({
         data: { contractId: contract.id, appOrigin: window.location.origin },
       });
-      toast.success(`Email reenviado para ${result.recipient}`);
+      toast.success(t("contracts.detail.emailResent", { recipient: result.recipient }));
       onChanged();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao reenviar email";
+      const msg = err instanceof Error ? err.message : t("contracts.form.errSendEmail");
       toast.error(msg);
     } finally {
       setSendingEmail(false);
@@ -131,7 +125,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
   const copyLink = async () => {
     if (!publicUrl) return;
     await navigator.clipboard.writeText(publicUrl);
-    toast.success("Link copiado");
+    toast.success(t("contracts.detail.linkCopied"));
   };
 
   const cancelContract = async () => {
@@ -145,7 +139,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       toast.error(error.message);
       return;
     }
-    toast.success("Contrato cancelado");
+    toast.success(t("contracts.detail.contractCancelled"));
     onChanged();
   };
 
@@ -153,7 +147,6 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
     if (!user) return;
     setDownloading(true);
     try {
-      // Fetch full contract + provider profile in parallel
       const [{ data: full }, { data: profile }] = await Promise.all([
         supabase
           .from("contracts")
@@ -169,7 +162,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
           .maybeSingle(),
       ]);
       if (!full) {
-        toast.error("Não foi possível carregar o contrato");
+        toast.error(t("contracts.detail.loadFailed"));
         return;
       }
       const pdf = await generateContractPdf({
@@ -180,7 +173,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       });
       pdf.save(`${full.contract_number}.pdf`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao gerar PDF";
+      const msg = err instanceof Error ? err.message : t("contracts.detail.pdfFailed");
       toast.error(msg);
     } finally {
       setDownloading(false);
@@ -188,18 +181,30 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
   };
 
   const describeAction = (h: HistoryEntry): string => {
-    if (h.action === "created") return "Contrato criado";
+    if (h.action === "created") return t("contracts.detail.actions.created");
     if (h.action === "status_changed") {
       const from = h.details?.from as ContractStatus | undefined;
       const to = h.details?.to as ContractStatus | undefined;
-      return `Status alterado: ${from ? CONTRACT_STATUS_LABELS[from] : "?"} → ${to ? CONTRACT_STATUS_LABELS[to] : "?"}`;
+      return t("contracts.detail.actions.statusChanged", {
+        from: from ? t(`contracts.status.${from}`) : "?",
+        to: to ? t(`contracts.status.${to}`) : "?",
+      });
     }
-    if (h.action === "updated") return "Contrato atualizado";
+    if (h.action === "updated") return t("contracts.detail.actions.updated");
     if (h.action === "email_sent") {
       const recipient = h.details?.recipient as string | undefined;
-      return recipient ? `Email enviado para ${recipient}` : "Email enviado";
+      return recipient
+        ? t("contracts.detail.actions.emailSent", { recipient })
+        : t("contracts.detail.actions.emailSentNoRecipient");
     }
     return h.action;
+  };
+
+  const paymentLabel = (method: string) => {
+    if (method === "one_time") return t("contracts.form.oneTime");
+    if (method === "installments") return t("contracts.form.installments");
+    if (method === "recurring") return t("contracts.form.recurring");
+    return method;
   };
 
   return (
@@ -211,31 +216,31 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
             <ContractStatusBadge status={contract.status} />
           </div>
           <DialogDescription>
-            {contract.contract_number} · {contract.clients?.full_name ?? "Cliente"}
+            {contract.contract_number} · {contract.clients?.full_name ?? t("common.client")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
           <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-            <Field label="Serviço" value={contract.service_type} />
+            <Field label={t("contracts.detail.service")} value={contract.service_type} />
             <Field
-              label="Valor"
+              label={t("contracts.detail.amount")}
               value={formatCurrencyBRL(Number(contract.total_value))}
             />
             <Field
-              label="Pagamento"
-              value={PAYMENT_LABELS[contract.payment_method] ?? contract.payment_method}
+              label={t("contracts.detail.payment")}
+              value={paymentLabel(contract.payment_method)}
             />
-            <Field label="Início" value={formatDateBR(contract.start_date)} />
+            <Field label={t("contracts.detail.start")} value={formatDateBR(contract.start_date)} />
             {contract.end_date && (
-              <Field label="Término" value={formatDateBR(contract.end_date)} />
+              <Field label={t("contracts.detail.end")} value={formatDateBR(contract.end_date)} />
             )}
           </div>
 
           {contract.service_description && (
             <div>
               <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Descrição
+                {t("contracts.detail.description")}
               </div>
               <p className="whitespace-pre-wrap text-sm">{contract.service_description}</p>
             </div>
@@ -254,7 +259,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
               ) : (
                 <Download className="h-3.5 w-3.5" />
               )}
-              Baixar PDF
+              {t("common.downloadPdf")}
             </Button>
           </div>
 
@@ -262,7 +267,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
 
           <div className="space-y-3 rounded-xl border border-border/70 bg-muted/30 p-4">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <LinkIcon className="h-4 w-4 text-primary" /> Link público de assinatura
+              <LinkIcon className="h-4 w-4 text-primary" /> {t("contracts.detail.publicLink")}
             </div>
             {publicUrl ? (
               <div className="space-y-2">
@@ -271,7 +276,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
                     {publicUrl}
                   </code>
                   <Button size="sm" variant="secondary" onClick={copyLink} className="gap-2">
-                    <Copy className="h-3.5 w-3.5" /> Copiar
+                    <Copy className="h-3.5 w-3.5" /> {t("contracts.detail.copy")}
                   </Button>
                 </div>
                 <Button
@@ -286,7 +291,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
                   ) : (
                     <Mail className="h-3.5 w-3.5" />
                   )}
-                  Reenviar email para o cliente
+                  {t("contracts.detail.resendEmail")}
                 </Button>
               </div>
             ) : (
@@ -301,7 +306,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
-                Gerar link e enviar para assinatura
+                {t("contracts.detail.generateAndSend")}
               </Button>
             )}
           </div>
@@ -309,7 +314,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
           {contract.clauses && (
             <details className="rounded-xl border border-border/70 bg-card/50 p-4">
               <summary className="cursor-pointer text-sm font-medium">
-                Cláusulas do contrato
+                {t("contracts.detail.clausesTitle")}
               </summary>
               <pre className="mt-3 max-h-72 overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-muted-foreground">
                 {contract.clauses}
@@ -319,11 +324,11 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
 
           <div>
             <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-              <History className="h-4 w-4 text-primary" /> Histórico de alterações
+              <History className="h-4 w-4 text-primary" /> {t("contracts.detail.history")}
             </div>
             <div className="space-y-2">
               {history.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
+                <p className="text-sm text-muted-foreground">{t("contracts.detail.noHistory")}</p>
               ) : (
                 history.map((h) => (
                   <div
@@ -332,7 +337,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
                   >
                     <span>{describeAction(h)}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {new Date(h.created_at).toLocaleString("pt-BR")}
+                      {new Date(h.created_at).toLocaleString()}
                     </span>
                   </div>
                 ))
@@ -349,7 +354,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
                 disabled={loadingAction}
                 className="text-destructive hover:text-destructive"
               >
-                Cancelar contrato
+                {t("contracts.detail.cancelContract")}
               </Button>
             </div>
           )}

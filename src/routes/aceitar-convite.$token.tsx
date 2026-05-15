@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, FileSignature, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +12,7 @@ import { acceptInvite } from "@/lib/team.functions";
 export const Route = createFileRoute("/aceitar-convite/$token")({
   head: () => ({
     meta: [
-      { title: "Aceitar convite — ContratoFácil" },
+      { title: "Accept invite — EasyContract" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -30,6 +31,7 @@ function AcceptInvitePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const acceptFn = useServerFn(acceptInvite);
+  const { t } = useTranslation();
 
   const [invite, setInvite] = useState<InviteRow | null>(null);
   const [ownerName, setOwnerName] = useState<string>("");
@@ -60,10 +62,10 @@ function AcceptInvitePage() {
     setAccepting(true);
     try {
       await acceptFn({ data: { token } });
-      toast.success("Convite aceito! Você agora tem acesso ao painel.");
+      toast.success(t("invite.accepted"));
       void navigate({ to: "/dashboard" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao aceitar convite");
+      toast.error(err instanceof Error ? err.message : t("invite.errorAccept"));
     } finally {
       setAccepting(false);
     }
@@ -80,10 +82,8 @@ function AcceptInvitePage() {
   if (!invite) {
     return (
       <CenteredCard>
-        <h1 className="text-lg font-semibold">Convite inválido</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          O link pode ter expirado ou ser inválido.
-        </p>
+        <h1 className="text-lg font-semibold">{t("invite.invalid")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("invite.invalidDesc")}</p>
       </CenteredCard>
     );
   }
@@ -91,10 +91,8 @@ function AcceptInvitePage() {
   if (invite.status === "revoked") {
     return (
       <CenteredCard>
-        <h1 className="text-lg font-semibold">Convite revogado</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          O administrador revogou este convite.
-        </p>
+        <h1 className="text-lg font-semibold">{t("invite.revoked")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("invite.revokedDesc")}</p>
       </CenteredCard>
     );
   }
@@ -103,12 +101,12 @@ function AcceptInvitePage() {
     return (
       <CenteredCard>
         <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-400" />
-        <h1 className="text-lg font-semibold">Convite já aceito</h1>
+        <h1 className="text-lg font-semibold">{t("invite.alreadyAccepted")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Você já faz parte da equipe de {ownerName || "este prestador"}.
+          {t("invite.alreadyAcceptedDesc", { owner: ownerName || t("invite.thisProvider") })}
         </p>
         <Button asChild className="mt-5">
-          <Link to="/dashboard">Ir para o painel</Link>
+          <Link to="/dashboard">{t("invite.goToDashboard")}</Link>
         </Button>
       </CenteredCard>
     );
@@ -117,24 +115,25 @@ function AcceptInvitePage() {
   if (!user) {
     return (
       <CenteredCard>
-        <h1 className="text-lg font-semibold">Você foi convidado!</h1>
+        <h1 className="text-lg font-semibold">{t("invite.youWereInvited")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {ownerName || "Um prestador"} convidou{" "}
-          <span className="font-medium text-foreground">{invite.email}</span> para
-          colaborar no painel do ContratoFácil.
+          {t("invite.invitedBy", {
+            owner: ownerName || t("invite.anyProvider"),
+            email: invite.email,
+          })}
         </p>
         <p className="mt-3 text-sm text-muted-foreground">
-          Faça login ou crie uma conta com este e-mail para aceitar o convite.
+          {t("invite.loginOrCreate")}
         </p>
         <div className="mt-5 flex justify-center gap-2">
           <Button asChild variant="outline">
             <Link to="/login" search={{ next: `/aceitar-convite/${token}` }}>
-              Entrar
+              {t("invite.login")}
             </Link>
           </Button>
           <Button asChild>
             <Link to="/signup" search={{ next: `/aceitar-convite/${token}` }}>
-              Criar conta
+              {t("invite.createAccount")}
             </Link>
           </Button>
         </div>
@@ -147,20 +146,19 @@ function AcceptInvitePage() {
 
   return (
     <CenteredCard>
-      <h1 className="text-lg font-semibold">Aceitar convite de equipe</h1>
+      <h1 className="text-lg font-semibold">{t("invite.title")}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {ownerName || "Um prestador"} convidou você para colaborar no painel.
+        {t("invite.invitedYou", { owner: ownerName || t("invite.anyProvider") })}
       </p>
       <div className="mt-4 rounded-lg border border-border/70 bg-muted/30 p-3 text-left text-sm">
         <div className="text-xs uppercase tracking-wide text-muted-foreground">
-          Convite para
+          {t("invite.inviteFor")}
         </div>
         <div className="mt-1 font-medium">{invite.email}</div>
       </div>
       {emailMismatch && (
         <p className="mt-3 text-xs text-destructive">
-          Você está logado como <strong>{user.email}</strong>. Faça login com{" "}
-          <strong>{invite.email}</strong> para aceitar.
+          {t("invite.loggedAsMismatch", { current: user.email, required: invite.email })}
         </p>
       )}
       <Button
@@ -168,7 +166,7 @@ function AcceptInvitePage() {
         disabled={accepting || !!emailMismatch}
         className="mt-5 w-full"
       >
-        {accepting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aceitar convite"}
+        {accepting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("invite.accept")}
       </Button>
     </CenteredCard>
   );
