@@ -30,8 +30,8 @@ if (!i18n.isInitialized) {
     lng: DEFAULT_LANGUAGE,
     fallbackLng: DEFAULT_LANGUAGE,
     interpolation: { escapeValue: false },
-    initImmediate: false,
     react: { useSuspense: false },
+    ...({ initImmediate: false } as Record<string, unknown>),
   });
 }
 
