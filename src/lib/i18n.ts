@@ -29,9 +29,9 @@ if (!i18n.isInitialized) {
     defaultNS: "translation",
     lng: DEFAULT_LANGUAGE,
     fallbackLng: DEFAULT_LANGUAGE,
-    initAsync: false,
+    initImmediate: false,
     interpolation: { escapeValue: false },
-    react: { useSuspense: false },
+    react: { useSuspense: false, bindI18n: "languageChanged loaded" },
   });
 }
 
