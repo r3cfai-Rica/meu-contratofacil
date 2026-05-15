@@ -14,7 +14,7 @@ export function Navbar() {
             <FileText className="h-4 w-4" />
           </span>
           <span className="text-foreground">
-            Contrato<span className="text-primary">Fácil</span>
+            {t("common.brandPrefix")}<span className="text-primary">{t("common.brandSuffix")}</span>
           </span>
         </Link>
 

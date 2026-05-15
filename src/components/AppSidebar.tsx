@@ -23,6 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useTranslation } from "react-i18next";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -39,6 +40,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isAdmin } = useIsAdmin();
+  const { t } = useTranslation();
 
   return (
     <Sidebar collapsible="icon">
@@ -49,7 +51,7 @@ export function AppSidebar() {
           </span>
           {!collapsed && (
             <span className="truncate">
-              Contrato<span className="text-primary">Fácil</span>
+              {t("common.brandPrefix")}<span className="text-primary">{t("common.brandSuffix")}</span>
             </span>
           )}
         </Link>
