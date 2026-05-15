@@ -340,6 +340,19 @@ function SettingsPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>{t("settings.country")}</Label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BR">{t("auth.countries.br")}</SelectItem>
+                <SelectItem value="US">{t("auth.countries.us")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t("settings.countryHint")}</p>
+          </div>
         </div>
         <div className="flex justify-end">
           <Button type="submit" disabled={savingProfile} className="gap-2">
