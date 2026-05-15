@@ -139,13 +139,14 @@ function SettingsPage() {
     void (async () => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, account_type, logo_url")
+        .select("full_name, account_type, logo_url, country")
         .eq("user_id", user.id)
         .maybeSingle();
       if (profile) {
         setProfileName(profile.full_name ?? "");
         setAccountType(profile.account_type ?? "autonomo");
         setLogoUrl(profile.logo_url ?? null);
+        setCountry((profile as { country?: string }).country ?? "BR");
       }
       setPixLoading(true);
       const { data: pix } = await supabase
