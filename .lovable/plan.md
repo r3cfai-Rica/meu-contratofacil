@@ -1,33 +1,64 @@
-## Problema
 
-A página **Cobranças** falha com:
-> Could not find a relationship between 'invoices' and 'clients' in the schema cache
+Vou implementar nas duas frentes que você pediu, mas antes de começar preciso alinhar alguns pontos importantes — esse escopo é grande e tem decisões que mudam bastante o resultado.
 
-A query em `src/routes/cobrancas.tsx` (linha 105-107) usa embed do PostgREST:
-```ts
-.from("invoices").select("..., client_id, clients(full_name)")
-```
+## Parte 1 — i18n (PT-BR / EN-US)
 
-Isso exige uma **foreign key declarada** entre `invoices.client_id` e `clients.id`. Inspecionando o schema da tabela `public.invoices`, a coluna `client_id uuid NOT NULL` existe e tem índice, mas **não há FK constraint** apontando para `public.clients(id)`. Sem a FK, o PostgREST não consegue resolver o embed `clients(...)` e retorna esse erro — por isso nenhuma cobrança carrega na lista (e o teste com cliente cadastrado fica bloqueado antes mesmo de gerar/enviar PIX).
+**O que farei:**
+1. Instalar `react-i18next` + `i18next` + `i18next-browser-languagedetector`.
+2. Criar `src/lib/i18n.ts` com config (detecta navegador → fallback PT, persiste em `localStorage`).
+3. Criar `src/locales/pt-BR.json` e `src/locales/en-US.json` com chaves organizadas por namespace (`common`, `landing`, `auth`, `dashboard`, `contracts`, `invoices`, `clients`, `billing`, `errors`).
+4. Adicionar `<LanguageSwitcher />` (🇧🇷 PT / 🇺🇸 EN) na `Navbar` pública e no header do `AppLayout`.
+5. Substituir strings hard-coded por `t('chave')` em: landing (`routes/index.tsx`), `login`, `signup`, `dashboard`, `clientes`, `contratos`, `cobrancas`, `configuracoes`, `planos`, `equipe`, `admin`, e dialogs principais. Toasts incluídos.
+6. PDFs/contratos gerados: usar idioma do usuário logado (campo `preferred_language` do profile) no `contractTemplate.ts` e `contractPdf.ts`.
 
-A tabela `contracts` provavelmente já tem essa FK configurada corretamente (por isso contratos com cliente funcionam), mas `invoices` foi criada sem ela.
+**Fora deste turno:** e-mails transacionais — já enviamos por Resend; vou deixar o template em PT por enquanto e abrir TODO, salvo se você quiser que eu já duplique os templates.
 
-## Correção
+## Parte 2 — Pagamentos USA
 
-Migration única adicionando a foreign key faltante:
+Aqui preciso parar e perguntar antes de codar. Hoje o app **não tem Stripe Checkout/PaymentIntents implementados para cobranças de clientes finais** — o Stripe atual é só para a assinatura SaaS do dono da conta (planos Pro/Business). As cobranças aos clientes do usuário hoje são **PIX manual** (QR Code estático gerado localmente, sem confirmação automática).
+
+Isso muda muito o escopo do "ACH para USA":
+
+- ACH Direct Debit exige **Stripe Connect** (cada usuário do ContratoFácil precisa ter uma conta Stripe conectada para receber em nome dele) **OU** funcionar como marketplace (você recebe e repassa). Hoje não temos nem um nem outro.
+- PayPal idem: precisa de credenciais por-usuário (Partner Referrals) ou centralizado na sua conta.
+- Sem isso, o dinheiro do cliente americano cairia na **sua** conta Stripe/PayPal, não na do usuário do app.
+
+**Preciso da sua decisão antes de continuar:**
+
+1. **Modelo financeiro USA:** Stripe Connect (cada cliente do app conecta a própria conta — recomendado para SaaS de cobrança) ou tudo cai na sua conta central e você repassa manualmente?
+2. **Escopo mínimo agora:** quer que eu já implemente Connect + ACH + PayPal completo (trabalho grande, várias rodadas), ou faço só:
+   - i18n completo ✅
+   - Campo `country` + `preferred_language` no profile + select no cadastro ✅
+   - Tabela `payment_methods_log` ✅
+   - UI de checkout que **mostra** as opções ACH/PayPal por país (mock/placeholder) e deixa a integração real para um próximo turno?
+3. **PayPal:** tem conta PayPal Business já? Preciso do `VITE_PAYPAL_CLIENT_ID` (sandbox por enquanto serve).
+
+## Banco de dados (vou aplicar assim que confirmar)
 
 ```sql
-ALTER TABLE public.invoices
-  ADD CONSTRAINT invoices_client_id_fkey
-  FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE RESTRICT;
+ALTER TABLE profiles
+  ADD COLUMN country varchar(2) NOT NULL DEFAULT 'BR',
+  ADD COLUMN preferred_language varchar(5) NOT NULL DEFAULT 'pt-BR';
+
+CREATE TABLE payment_methods_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  invoice_id uuid,
+  payment_method text NOT NULL CHECK (payment_method IN ('stripe_card','pix','ach','paypal')),
+  amount numeric NOT NULL,
+  currency text NOT NULL CHECK (currency IN ('BRL','USD')),
+  status text NOT NULL,
+  transaction_id text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+-- + RLS: dono vê os próprios; admin vê tudo.
 ```
 
-Após a migration, o PostgREST recarrega o schema cache automaticamente e o embed `clients(full_name)` passa a funcionar — a lista de cobranças carrega e o fluxo de envio da cobrança de teste destrava.
+---
 
-Não há mudanças de código necessárias — apenas a migration de banco.
+**Me responde:**
+- (A) Modelo financeiro USA: **Connect** ou **conta central**?
+- (B) Quer o escopo **mínimo agora** (i18n + estrutura de país + UI placeholder dos métodos USA + tabela de log) e integração real ACH/PayPal num próximo turno? Ou vai fundo já?
+- (C) Tem `PAYPAL_CLIENT_ID` (sandbox) para eu pedir como secret?
 
-## Validação
-
-1. Recarregar `/cobrancas` — a lista deve carregar sem o toast de erro.
-2. Abrir uma cobrança existente / criar uma nova vinculada ao cliente cadastrado.
-3. Enviar a cobrança (PIX) e confirmar que o fluxo segue normalmente.
+Com essas três respostas eu sigo direto para a implementação.
