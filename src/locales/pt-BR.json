@@ -1,6 +1,8 @@
 {
   "common": {
     "appName": "ContratoFácil",
+    "brandPrefix": "Contrato",
+    "brandSuffix": "Fácil",
     "loading": "Carregando...",
     "save": "Salvar",
     "cancel": "Cancelar",
