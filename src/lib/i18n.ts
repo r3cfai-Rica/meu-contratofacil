@@ -19,19 +19,30 @@ function getBrowserLanguage() {
   return normalizeLanguage(window.navigator.language);
 }
 
-void i18n.use(initReactI18next).init({
-  resources: {
-    "pt-BR": { translation: ptBR },
-    "en-US": { translation: enUS },
-  },
-  ns: ["translation"],
-  defaultNS: "translation",
-  lng: DEFAULT_LANGUAGE,
-  fallbackLng: DEFAULT_LANGUAGE,
-  initAsync: false,
-  interpolation: { escapeValue: false },
-  react: { useSuspense: false },
-});
+if (!i18n.isInitialized) {
+  void i18n.use(initReactI18next).init({
+    resources: {
+      "pt-BR": { translation: ptBR },
+      "en-US": { translation: enUS },
+    },
+    ns: ["translation"],
+    defaultNS: "translation",
+    lng: DEFAULT_LANGUAGE,
+    fallbackLng: DEFAULT_LANGUAGE,
+    initAsync: false,
+    interpolation: { escapeValue: false },
+    react: { useSuspense: false },
+  });
+}
+
+// On the server, the i18n singleton is shared across requests in the Worker
+// isolate. Force-reset to the default language on every server-side import
+// access so SSR is deterministic and matches the first client render.
+export function resetServerLanguage() {
+  if (typeof window === "undefined" && i18n.language !== DEFAULT_LANGUAGE) {
+    void i18n.changeLanguage(DEFAULT_LANGUAGE);
+  }
+}
 
 if (typeof window !== "undefined") {
   i18n.on("languageChanged", (language) => {
