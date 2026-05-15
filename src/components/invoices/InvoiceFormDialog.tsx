@@ -49,6 +49,8 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [hasPix, setHasPix] = useState<boolean | null>(null);
+  const [country, setCountry] = useState<"BR" | "US">("BR");
+  const isUS = country === "US";
 
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
