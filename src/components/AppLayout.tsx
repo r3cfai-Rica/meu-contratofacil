@@ -2,10 +2,12 @@ import type { ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +30,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [name, setName] = useState<string>("");
 
   useEffect(() => {
@@ -59,9 +62,10 @@ function Header() {
           <div className="text-sm font-medium leading-tight">{displayName}</div>
           <div className="text-xs text-muted-foreground">{user?.email}</div>
         </div>
+        <LanguageSwitcher />
         <Button size="sm" variant="ghost" onClick={handleSignOut} className="gap-2">
           <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Sair</span>
+          <span className="hidden sm:inline">{t("appHeader.signOut")}</span>
         </Button>
       </div>
     </header>
