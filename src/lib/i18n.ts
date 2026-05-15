@@ -29,22 +29,11 @@ void i18n.use(initReactI18next).init({
   supportedLngs: ["pt-BR", "en-US"],
   nonExplicitSupportedLngs: true,
   load: "currentOnly",
-  initImmediate: false,
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
 });
 
 if (typeof window !== "undefined") {
-  queueMicrotask(() => {
-    const nextLanguage = getBrowserLanguage();
-
-    document.documentElement.lang = nextLanguage;
-
-    if (i18n.resolvedLanguage !== nextLanguage) {
-      void i18n.changeLanguage(nextLanguage);
-    }
-  });
-
   i18n.on("languageChanged", (language) => {
     const normalized = normalizeLanguage(language);
     window.localStorage.setItem(STORAGE_KEY, normalized);
