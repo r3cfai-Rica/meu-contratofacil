@@ -76,7 +76,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     setIndefinite(false);
 
     void (async () => {
-      const [clientsRes, contractsRes, pixRes] = await Promise.all([
+      const [clientsRes, contractsRes, pixRes, profRes] = await Promise.all([
         supabase
           .from("clients")
           .select("id, full_name")
@@ -92,10 +92,17 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           .select("id")
           .eq("user_id", user.id)
           .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("country")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
       setClients((clientsRes.data ?? []) as ClientRow[]);
       setContracts((contractsRes.data ?? []) as ContractRow[]);
       setHasPix(!!pixRes.data);
+      const c = (profRes.data as { country?: string } | null)?.country;
+      setCountry(c === "US" ? "US" : "BR");
     })();
   }, [open, user]);
 
