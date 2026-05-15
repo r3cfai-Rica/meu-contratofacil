@@ -259,6 +259,37 @@ function PublicInvoicePage() {
               })}
             </p>
           </div>
+        ) : invoice.currency === "USD" ? (
+          <div className="rounded-2xl border border-border/70 bg-card p-6">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+              <CreditCard className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold">{t("publicInvoice.payWithCard")}</h2>
+              <span className="ml-auto text-xs text-yellow-300">
+                {t("publicInvoice.awaiting")}
+              </span>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {t("publicInvoice.payWithCardDesc")}
+            </p>
+            <Button
+              className="mt-5 w-full gap-2"
+              size="lg"
+              onClick={payWithCard}
+              disabled={payingCard}
+            >
+              {payingCard ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("publicInvoice.processing")}
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4" />
+                  {t("publicInvoice.payNow")}
+                </>
+              )}
+            </Button>
+          </div>
         ) : !pix || !pixPayload ? (
           <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center text-sm text-yellow-200">
             {t("publicInvoice.noPix")}
