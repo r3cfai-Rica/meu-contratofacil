@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
-import i18n, { getBrowserLanguage } from "@/lib/i18n";
+import i18n, { getBrowserLanguage, resetServerLanguage } from "@/lib/i18n";
 
 import appCss from "../styles.css?url";
 
@@ -64,6 +64,9 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  // Reset i18n to default on every server render — the singleton state
+  // can leak across requests in the Worker isolate and cause hydration mismatches.
+  resetServerLanguage();
   return (
     <html lang="pt-BR">
       <head>

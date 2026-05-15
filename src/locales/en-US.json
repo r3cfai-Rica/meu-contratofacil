@@ -5,6 +5,7 @@
     "brandSuffix": "Contract",
     "loading": "Loading...",
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -20,7 +21,35 @@
     "language": "Language",
     "viewAll": "View all",
     "new": "New",
-    "send": "Send"
+    "send": "Send",
+    "actions": "Actions",
+    "status": "Status",
+    "all": "All",
+    "allStatuses": "All statuses",
+    "active": "Active",
+    "inactive": "Inactive",
+    "nothingFound": "Nothing found",
+    "tryAdjustFilters": "Try adjusting filters or search.",
+    "confirm": "Confirm",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied",
+    "open": "Open",
+    "optional": "(optional)",
+    "required": "Required",
+    "from": "From",
+    "to": "To",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "document": "Tax ID",
+    "address": "Address",
+    "notes": "Notes",
+    "value": "Amount",
+    "client": "Client",
+    "description": "Description",
+    "dueDate": "Due date",
+    "createdAt": "Joined"
   },
   "nav": {
     "login": "Sign in",
@@ -31,7 +60,7 @@
     "badge": "Built for freelancers, contractors and service providers",
     "headline1": "Your contracts, invoices and clients.",
     "headline2": "All in one place.",
-    "subhead": "ContratoFácil is the platform that takes the busywork out of running your business so you can focus on what matters: serving clients and growing.",
+    "subhead": "EasyContract is the platform that takes the busywork out of running your business so you can focus on what matters: serving clients and growing.",
     "ctaStart": "Start free",
     "trust": "No credit card · Cancel anytime",
     "feature1Title": "Digital contracts",
@@ -103,5 +132,187 @@
   },
   "appHeader": {
     "signOut": "Sign out"
+  },
+  "sidebar": {
+    "menu": "Menu",
+    "dashboard": "Dashboard",
+    "clients": "Clients",
+    "contracts": "Contracts",
+    "invoices": "Invoices",
+    "team": "Team",
+    "plans": "Plans",
+    "settings": "Settings",
+    "admin": "Admin"
+  },
+  "clients": {
+    "title": "Clients",
+    "subtitle": "Manage your business client base.",
+    "new": "New client",
+    "searchPlaceholder": "Search by name or email",
+    "empty": "No clients yet",
+    "emptyDesc": "Add your first client to start issuing contracts.",
+    "deleted": "Client deleted",
+    "deleteTitle": "Delete client?",
+    "deleteDesc": "This action cannot be undone. The client {{name}} will be permanently removed.",
+    "form": {
+      "createTitle": "New client",
+      "editTitle": "Edit client",
+      "namePlaceholder": "Client full name",
+      "saved": "Client saved",
+      "errorSaving": "Failed to save client"
+    }
+  },
+  "contracts": {
+    "title": "Contracts",
+    "subtitle": "Create, send and track your digital contracts.",
+    "new": "New contract",
+    "searchPlaceholder": "Search by client, service or title",
+    "empty": "No contracts yet",
+    "emptyDesc": "Create your first contract to get started.",
+    "number": "Number",
+    "service": "Service",
+    "startDate": "Start",
+    "endDate": "End",
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "awaiting_signature": "Awaiting signature",
+      "signed": "Signed",
+      "cancelled": "Cancelled"
+    },
+    "form": {
+      "createTitle": "New contract",
+      "editTitle": "Edit contract",
+      "title": "Title",
+      "client": "Client",
+      "selectClient": "Select a client",
+      "serviceType": "Service type",
+      "serviceDescription": "Service description",
+      "totalValue": "Total amount",
+      "paymentMethod": "Payment method",
+      "oneTime": "One-time",
+      "installments": "Installments",
+      "recurring": "Recurring",
+      "clauses": "Additional clauses",
+      "saved": "Contract saved"
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Generate invoices and track payments.",
+    "new": "New invoice",
+    "searchPlaceholder": "Search by client or description",
+    "empty": "No invoices yet",
+    "emptyDesc": "Create your first invoice to get started.",
+    "summary": {
+      "pending": "Pending",
+      "received": "Received",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "period": {
+      "all": "All time",
+      "month": "This month",
+      "next30": "Next 30 days",
+      "next60": "Next 60 days",
+      "overdueOnly": "Overdue only"
+    },
+    "actions": {
+      "copyLink": "Copy link",
+      "openPage": "Open payment page",
+      "markPaid": "Mark as paid",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "linkCopied": "Payment link copied",
+    "markedPaid": "Invoice marked as paid",
+    "cancelled": "Invoice cancelled",
+    "deleted": "Invoice deleted",
+    "deleteTitle": "Delete invoice?",
+    "deleteDesc": "This action cannot be undone.",
+    "form": {
+      "createTitle": "New invoice",
+      "editTitle": "Edit invoice",
+      "saved": "Invoice saved"
+    }
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Invite collaborators to access your account.",
+    "invite": "Invite member",
+    "emailPlaceholder": "email@domain.com",
+    "sendInvite": "Send invite",
+    "members": "Members",
+    "pending": "Pending",
+    "noMembers": "No team members yet.",
+    "inviteSent": "Invite sent",
+    "inviteRevoked": "Invite revoked",
+    "memberRemoved": "Member removed",
+    "revoke": "Revoke",
+    "remove": "Remove",
+    "joinedOn": "Joined",
+    "invitedOn": "Invited"
+  },
+  "plans": {
+    "title": "Plans",
+    "subtitle": "Choose the right plan for your business.",
+    "currentPlan": "Current plan",
+    "free": "Free",
+    "pro": "Pro",
+    "business": "Business",
+    "month": "/mo",
+    "selectPlan": "Select plan",
+    "manageBilling": "Manage subscription",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account, profile and preferences.",
+    "profile": "Profile",
+    "company": "Company",
+    "pix": "PIX settings",
+    "security": "Security",
+    "save": "Save changes",
+    "saved": "Changes saved",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo",
+    "removeLogo": "Remove logo",
+    "pixKey": "PIX key",
+    "pixKeyType": "Key type",
+    "beneficiary": "Beneficiary name",
+    "city": "City"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "subtitle": "Overview, customers and CRM.",
+    "totals": {
+      "users": "Users",
+      "active": "Active",
+      "revenue": "Estimated revenue",
+      "trials": "Trials"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "customers": "Customers",
+      "logs": "Logs"
+    },
+    "searchUser": "Search by name or email",
+    "plan": "Plan",
+    "status": "Status",
+    "joinedOn": "Joined",
+    "noUsers": "No users found."
+  },
+  "upgrade": {
+    "title": "Plan limit reached",
+    "description": "You've reached the limit of {{limit}} {{resource}} on your current plan.",
+    "viewPlans": "View plans",
+    "later": "Later"
   }
 }

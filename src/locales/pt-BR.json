@@ -5,6 +5,7 @@
     "brandSuffix": "Fácil",
     "loading": "Carregando...",
     "save": "Salvar",
+    "saving": "Salvando...",
     "cancel": "Cancelar",
     "delete": "Excluir",
     "edit": "Editar",
@@ -20,7 +21,35 @@
     "language": "Idioma",
     "viewAll": "Ver todos",
     "new": "Novo",
-    "send": "Enviar"
+    "send": "Enviar",
+    "actions": "Ações",
+    "status": "Status",
+    "all": "Todos",
+    "allStatuses": "Todos os status",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "nothingFound": "Nada encontrado",
+    "tryAdjustFilters": "Tente ajustar os filtros ou a busca.",
+    "confirm": "Confirmar",
+    "close": "Fechar",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "open": "Abrir",
+    "optional": "(opcional)",
+    "required": "Obrigatório",
+    "from": "De",
+    "to": "Até",
+    "name": "Nome",
+    "email": "E-mail",
+    "phone": "Telefone",
+    "document": "CPF/CNPJ",
+    "address": "Endereço",
+    "notes": "Observações",
+    "value": "Valor",
+    "client": "Cliente",
+    "description": "Descrição",
+    "dueDate": "Vencimento",
+    "createdAt": "Cadastro"
   },
   "nav": {
     "login": "Entrar",
@@ -103,5 +132,187 @@
   },
   "appHeader": {
     "signOut": "Sair"
+  },
+  "sidebar": {
+    "menu": "Menu",
+    "dashboard": "Dashboard",
+    "clients": "Clientes",
+    "contracts": "Contratos",
+    "invoices": "Cobranças",
+    "team": "Equipe",
+    "plans": "Planos",
+    "settings": "Configurações",
+    "admin": "Admin"
+  },
+  "clients": {
+    "title": "Clientes",
+    "subtitle": "Gerencie a base de clientes do seu negócio.",
+    "new": "Novo cliente",
+    "searchPlaceholder": "Buscar por nome ou e-mail",
+    "empty": "Nenhum cliente ainda",
+    "emptyDesc": "Cadastre seu primeiro cliente para começar a emitir contratos.",
+    "deleted": "Cliente excluído",
+    "deleteTitle": "Excluir cliente?",
+    "deleteDesc": "Esta ação não pode ser desfeita. O cliente {{name}} será removido permanentemente.",
+    "form": {
+      "createTitle": "Novo cliente",
+      "editTitle": "Editar cliente",
+      "namePlaceholder": "Nome completo do cliente",
+      "saved": "Cliente salvo",
+      "errorSaving": "Erro ao salvar cliente"
+    }
+  },
+  "contracts": {
+    "title": "Contratos",
+    "subtitle": "Crie, envie e acompanhe seus contratos digitais.",
+    "new": "Novo contrato",
+    "searchPlaceholder": "Buscar por cliente, serviço ou título",
+    "empty": "Nenhum contrato ainda",
+    "emptyDesc": "Crie seu primeiro contrato para começar.",
+    "number": "Número",
+    "service": "Serviço",
+    "startDate": "Início",
+    "endDate": "Término",
+    "status": {
+      "draft": "Rascunho",
+      "sent": "Enviado",
+      "awaiting_signature": "Aguardando assinatura",
+      "signed": "Assinado",
+      "cancelled": "Cancelado"
+    },
+    "form": {
+      "createTitle": "Novo contrato",
+      "editTitle": "Editar contrato",
+      "title": "Título",
+      "client": "Cliente",
+      "selectClient": "Selecione o cliente",
+      "serviceType": "Tipo de serviço",
+      "serviceDescription": "Descrição do serviço",
+      "totalValue": "Valor total",
+      "paymentMethod": "Forma de pagamento",
+      "oneTime": "À vista",
+      "installments": "Parcelado",
+      "recurring": "Recorrente",
+      "clauses": "Cláusulas adicionais",
+      "saved": "Contrato salvo"
+    }
+  },
+  "invoices": {
+    "title": "Cobranças",
+    "subtitle": "Gere cobranças PIX e acompanhe os pagamentos.",
+    "new": "Nova cobrança",
+    "searchPlaceholder": "Buscar por cliente ou descrição",
+    "empty": "Nenhuma cobrança ainda",
+    "emptyDesc": "Gere sua primeira cobrança PIX para começar.",
+    "summary": {
+      "pending": "Pendente",
+      "received": "Recebido",
+      "overdue": "Vencido",
+      "cancelled": "Cancelado"
+    },
+    "status": {
+      "pending": "Pendente",
+      "paid": "Pago",
+      "overdue": "Vencido",
+      "cancelled": "Cancelado"
+    },
+    "period": {
+      "all": "Todo o período",
+      "month": "Este mês",
+      "next30": "Próximos 30 dias",
+      "next60": "Próximos 60 dias",
+      "overdueOnly": "Apenas vencidos"
+    },
+    "actions": {
+      "copyLink": "Copiar link",
+      "openPage": "Abrir página de pagamento",
+      "markPaid": "Marcar como pago",
+      "cancel": "Cancelar",
+      "delete": "Excluir"
+    },
+    "linkCopied": "Link de pagamento copiado",
+    "markedPaid": "Cobrança marcada como paga",
+    "cancelled": "Cobrança cancelada",
+    "deleted": "Cobrança excluída",
+    "deleteTitle": "Excluir cobrança?",
+    "deleteDesc": "Essa ação não pode ser desfeita.",
+    "form": {
+      "createTitle": "Nova cobrança",
+      "editTitle": "Editar cobrança",
+      "saved": "Cobrança salva"
+    }
+  },
+  "team": {
+    "title": "Equipe",
+    "subtitle": "Convide colaboradores para acessar a sua conta.",
+    "invite": "Convidar membro",
+    "emailPlaceholder": "email@dominio.com",
+    "sendInvite": "Enviar convite",
+    "members": "Membros",
+    "pending": "Pendentes",
+    "noMembers": "Nenhum membro na equipe ainda.",
+    "inviteSent": "Convite enviado",
+    "inviteRevoked": "Convite revogado",
+    "memberRemoved": "Membro removido",
+    "revoke": "Revogar",
+    "remove": "Remover",
+    "joinedOn": "Entrou em",
+    "invitedOn": "Convidado em"
+  },
+  "plans": {
+    "title": "Planos",
+    "subtitle": "Escolha o plano ideal para o seu negócio.",
+    "currentPlan": "Plano atual",
+    "free": "Grátis",
+    "pro": "Pro",
+    "business": "Business",
+    "month": "/mês",
+    "selectPlan": "Selecionar plano",
+    "manageBilling": "Gerenciar assinatura",
+    "upgrade": "Fazer upgrade",
+    "downgrade": "Fazer downgrade"
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Gerencie sua conta, perfil e preferências.",
+    "profile": "Perfil",
+    "company": "Empresa",
+    "pix": "Configuração PIX",
+    "security": "Segurança",
+    "save": "Salvar alterações",
+    "saved": "Alterações salvas",
+    "logo": "Logotipo",
+    "uploadLogo": "Enviar logotipo",
+    "removeLogo": "Remover logotipo",
+    "pixKey": "Chave PIX",
+    "pixKeyType": "Tipo de chave",
+    "beneficiary": "Nome do beneficiário",
+    "city": "Cidade"
+  },
+  "admin": {
+    "title": "Painel Admin",
+    "subtitle": "Visão geral, clientes e CRM.",
+    "totals": {
+      "users": "Usuários",
+      "active": "Ativos",
+      "revenue": "Receita estimada",
+      "trials": "Em teste"
+    },
+    "tabs": {
+      "overview": "Visão geral",
+      "customers": "Clientes",
+      "logs": "Logs"
+    },
+    "searchUser": "Buscar por nome ou e-mail",
+    "plan": "Plano",
+    "status": "Status",
+    "joinedOn": "Cadastrado em",
+    "noUsers": "Nenhum usuário encontrado."
+  },
+  "upgrade": {
+    "title": "Limite do plano atingido",
+    "description": "Você atingiu o limite de {{limit}} {{resource}} do seu plano atual.",
+    "viewPlans": "Ver planos",
+    "later": "Mais tarde"
   }
 }

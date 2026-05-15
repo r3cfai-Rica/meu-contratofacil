@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { FileSignature, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ interface Contract {
 function ContractsPage() {
   const { user } = useAuth();
   const { planInfo } = usePlan();
+  const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -123,13 +125,13 @@ function ContractsPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Contratos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("contracts.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Crie, envie e acompanhe seus contratos digitais.
+            {t("contracts.subtitle")}
           </p>
         </div>
         <Button className="gap-2" onClick={handleNewContract}>
-          <Plus className="h-4 w-4" /> Novo contrato
+          <Plus className="h-4 w-4" /> {t("contracts.new")}
         </Button>
       </div>
 
@@ -139,7 +141,7 @@ function ContractsPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por cliente, serviço ou título"
+            placeholder={t("contracts.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -151,12 +153,12 @@ function ContractsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="draft">Rascunho</SelectItem>
-            <SelectItem value="sent">Enviado</SelectItem>
-            <SelectItem value="awaiting_signature">Aguardando assinatura</SelectItem>
-            <SelectItem value="signed">Assinado</SelectItem>
-            <SelectItem value="cancelled">Cancelado</SelectItem>
+            <SelectItem value="all">{t("common.allStatuses")}</SelectItem>
+            <SelectItem value="draft">{t("contracts.status.draft")}</SelectItem>
+            <SelectItem value="sent">{t("contracts.status.sent")}</SelectItem>
+            <SelectItem value="awaiting_signature">{t("contracts.status.awaiting_signature")}</SelectItem>
+            <SelectItem value="signed">{t("contracts.status.signed")}</SelectItem>
+            <SelectItem value="cancelled">{t("contracts.status.cancelled")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -164,7 +166,7 @@ function ContractsPage() {
       <div className="rounded-2xl border border-border/70 bg-card">
         {loading ? (
           <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            Carregando...
+            {t("common.loading")}
           </div>
         ) : filtered.length === 0 ? (
           <div className="px-6 py-16 text-center">
@@ -172,16 +174,16 @@ function ContractsPage() {
               <FileSignature className="h-5 w-5" />
             </span>
             <h2 className="text-base font-semibold">
-              {contracts.length === 0 ? "Nenhum contrato ainda" : "Nada encontrado"}
+              {contracts.length === 0 ? t("contracts.empty") : t("common.nothingFound")}
             </h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
               {contracts.length === 0
-                ? "Crie seu primeiro contrato para começar."
-                : "Tente ajustar os filtros ou a busca."}
+                ? t("contracts.emptyDesc")
+                : t("common.tryAdjustFilters")}
             </p>
             {contracts.length === 0 && (
               <Button className="mt-5 gap-2" onClick={handleNewContract}>
-                <Plus className="h-4 w-4" /> Novo contrato
+                <Plus className="h-4 w-4" /> {t("contracts.new")}
               </Button>
             )}
           </div>
@@ -189,12 +191,12 @@ function ContractsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Serviço</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Início</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("contracts.number")}</TableHead>
+                <TableHead>{t("common.client")}</TableHead>
+                <TableHead>{t("contracts.service")}</TableHead>
+                <TableHead>{t("common.value")}</TableHead>
+                <TableHead>{t("contracts.startDate")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

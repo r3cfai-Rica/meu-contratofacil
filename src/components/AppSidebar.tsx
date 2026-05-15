@@ -26,13 +26,13 @@ import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useTranslation } from "react-i18next";
 
 const items = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Clientes", url: "/clientes", icon: Users },
-  { title: "Contratos", url: "/contratos", icon: FileSignature },
-  { title: "Cobranças", url: "/cobrancas", icon: QrCode },
-  { title: "Equipe", url: "/equipe", icon: UsersRound },
-  { title: "Planos", url: "/planos", icon: Sparkles },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
+  { titleKey: "sidebar.dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { titleKey: "sidebar.clients", url: "/clientes", icon: Users },
+  { titleKey: "sidebar.contracts", url: "/contratos", icon: FileSignature },
+  { titleKey: "sidebar.invoices", url: "/cobrancas", icon: QrCode },
+  { titleKey: "sidebar.team", url: "/equipe", icon: UsersRound },
+  { titleKey: "sidebar.plans", url: "/planos", icon: Sparkles },
+  { titleKey: "sidebar.settings", url: "/configuracoes", icon: Settings },
 ] as const;
 
 export function AppSidebar() {
@@ -58,17 +58,18 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("sidebar.menu")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
                 const active = pathname === item.url || pathname.startsWith(item.url + "/");
+                const label = t(item.titleKey);
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+                  <SidebarMenuItem key={item.titleKey}>
+                    <SidebarMenuButton asChild isActive={active} tooltip={label}>
                       <Link to={item.url}>
                         <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <span>{label}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -79,11 +80,11 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === "/admin" || pathname.startsWith("/admin/")}
-                    tooltip="Admin"
+                    tooltip={t("sidebar.admin")}
                   >
                     <Link to="/admin">
                       <ShieldCheck className="h-4 w-4" />
-                      <span>Admin</span>
+                      <span>{t("sidebar.admin")}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
