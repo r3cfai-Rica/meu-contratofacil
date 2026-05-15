@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Check, CheckCircle2, Copy, FileText, QrCode } from "lucide-react";
+import { Check, CheckCircle2, Copy, CreditCard, FileText, Loader2, QrCode } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPixPayload } from "@/lib/pix";
-import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { formatDateBR, formatMoney } from "@/lib/format";
+import { createInvoiceCheckout } from "@/lib/invoice-payments.functions";
 import {
   InvoiceStatusBadge,
   getEffectiveStatus,
