@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Users,
   FileSignature,
@@ -57,6 +58,7 @@ interface ContractRow {
 
 function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<Stats>({
     clients: 0,
     activeContracts: 0,
@@ -112,19 +114,19 @@ function DashboardPage() {
   }, [user]);
 
   const cards = [
-    { label: "Clientes cadastrados", value: stats.clients.toString(), icon: Users },
+    { label: t("dashboard.stats.clients"), value: stats.clients.toString(), icon: Users },
     {
-      label: "Contratos ativos",
+      label: t("dashboard.stats.activeContracts"),
       value: stats.activeContracts.toString(),
       icon: FileSignature,
     },
     {
-      label: "Valor a receber",
+      label: t("dashboard.stats.pending"),
       value: formatCurrencyBRL(stats.pendingAmount),
       icon: Wallet,
     },
     {
-      label: "Aguardando assinatura",
+      label: t("dashboard.stats.awaiting"),
       value: stats.awaitingSignature.toString(),
       icon: Clock,
     },
@@ -134,14 +136,14 @@ function DashboardPage() {
     <div className="mx-auto max-w-7xl space-y-8">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t("dashboard.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Visão geral do seu negócio em tempo real.
+            {t("dashboard.subtitle")}
           </p>
         </div>
         <Button asChild className="gap-2">
           <Link to="/contratos">
-            <Plus className="h-4 w-4" /> Novo contrato
+            <Plus className="h-4 w-4" /> {t("dashboard.newContract")}
           </Link>
         </Button>
       </div>
@@ -155,8 +157,8 @@ function DashboardPage() {
             <div className="flex-1">
               <h2 className="text-sm font-semibold text-emerald-100">
                 {recentlySigned.length === 1
-                  ? "1 contrato foi assinado recentemente"
-                  : `${recentlySigned.length} contratos foram assinados recentemente`}
+                  ? t("dashboard.signedRecentlyOne")
+                  : t("dashboard.signedRecentlyMany", { count: recentlySigned.length })}
               </h2>
               <ul className="mt-2 space-y-1 text-sm text-emerald-200/90">
                 {recentlySigned.map((c) => (
@@ -202,20 +204,20 @@ function DashboardPage() {
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-border/70 bg-card">
           <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
-            <h2 className="text-sm font-semibold">Últimos contratos</h2>
+            <h2 className="text-sm font-semibold">{t("dashboard.lastContracts")}</h2>
             <Button asChild size="sm" variant="ghost" className="gap-1 text-xs">
               <Link to="/contratos">
-                Ver todos <ArrowRight className="h-3 w-3" />
+                {t("common.viewAll")} <ArrowRight className="h-3 w-3" />
               </Link>
             </Button>
           </div>
           {recent.length === 0 ? (
             <div className="px-5 py-10 text-center">
               <p className="text-sm text-muted-foreground">
-                Você ainda não tem contratos.
+                {t("dashboard.noContracts")}
               </p>
               <Button asChild size="sm" variant="outline" className="mt-4">
-                <Link to="/contratos">Criar contrato</Link>
+                <Link to="/contratos">{t("dashboard.createContract")}</Link>
               </Button>
             </div>
           ) : (
@@ -246,16 +248,16 @@ function DashboardPage() {
 
         <div className="rounded-2xl border border-border/70 bg-card">
           <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
-            <h2 className="text-sm font-semibold">Próximas cobranças</h2>
+            <h2 className="text-sm font-semibold">{t("dashboard.nextInvoices")}</h2>
             <Button asChild size="sm" variant="ghost" className="gap-1 text-xs">
               <Link to="/cobrancas">
-                Ver todos <ArrowRight className="h-3 w-3" />
+                {t("common.viewAll")} <ArrowRight className="h-3 w-3" />
               </Link>
             </Button>
           </div>
           <div className="px-5 py-10 text-center">
             <p className="text-sm text-muted-foreground">
-              Nenhuma cobrança a vencer.
+              {t("dashboard.noUpcomingInvoices")}
             </p>
           </div>
         </div>

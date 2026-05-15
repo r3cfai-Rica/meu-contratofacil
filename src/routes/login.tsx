@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff, FileText, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { next } = Route.useSearch();
+  const { t } = useTranslation();
   const redirectTo = next && next.startsWith("/") ? next : "/dashboard";
 
   const [email, setEmail] = useState("");
@@ -47,20 +49,20 @@ function LoginPage() {
 
     if (error) {
       if (error.message.toLowerCase().includes("invalid")) {
-        toast.error("E-mail ou senha incorretos");
+        toast.error(t("auth.invalidCredentials"));
       } else {
         toast.error(error.message);
       }
       return;
     }
 
-    toast.success("Bem-vindo de volta!");
+    toast.success(t("auth.welcomeBack"));
     navigate({ to: redirectTo });
   };
 
   const handleForgotPassword = async () => {
     if (!email) {
-      toast.error("Digite seu e-mail para recuperar a senha");
+      toast.error(t("auth.enterEmailFirst"));
       return;
     }
     setResetLoading(true);
@@ -73,7 +75,7 @@ function LoginPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Enviamos um e-mail com instruções para redefinir sua senha");
+    toast.success(t("auth.resetSent"));
   };
 
   return (
@@ -90,15 +92,15 @@ function LoginPage() {
 
         <div className="rounded-2xl border border-border/70 bg-card p-8 shadow-[var(--shadow-card)]">
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Bem-vindo de volta</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("auth.loginTitle")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Entre na sua conta para continuar
+              {t("auth.loginSubtitle")}
             </p>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -111,14 +113,14 @@ function LoginPage() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <button
                   type="button"
                   onClick={handleForgotPassword}
                   disabled={resetLoading}
                   className="text-xs text-muted-foreground hover:text-primary disabled:opacity-50"
                 >
-                  {resetLoading ? "Enviando..." : "Esqueci minha senha"}
+                  {resetLoading ? t("auth.sending") : t("auth.forgotPassword")}
                 </button>
               </div>
               <div className="relative">
@@ -136,7 +138,7 @@ function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -146,22 +148,22 @@ function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Entrando...
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("auth.loggingIn")}
                 </>
               ) : (
-                "Entrar"
+                t("auth.loginButton")
               )}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Não tem conta?{" "}
+            {t("auth.noAccount")}{" "}
             <Link
               to="/signup"
               search={next ? { next } : {}}
               className="text-primary hover:underline"
             >
-              Cadastrar
+              {t("auth.register")}
             </Link>
           </p>
         </div>

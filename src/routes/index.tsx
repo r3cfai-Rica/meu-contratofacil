@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, FileSignature, QrCode, Users, ShieldCheck, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -26,33 +27,19 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-const benefits = [
-  {
-    icon: FileSignature,
-    title: "Contratos digitais",
-    description:
-      "Crie, envie e assine contratos com validade jurídica em minutos. Modelos prontos para serviços recorrentes.",
-  },
-  {
-    icon: QrCode,
-    title: "Cobrança via PIX",
-    description:
-      "Gere cobranças automáticas por PIX, acompanhe pagamentos em tempo real e reduza a inadimplência.",
-  },
-  {
-    icon: Users,
-    title: "Gestão de clientes",
-    description:
-      "Centralize histórico, contratos e pagamentos de cada cliente em um painel simples e organizado.",
-  },
-];
-
 function LandingPage() {
+  const { t } = useTranslation();
+
+  const benefits = [
+    { icon: FileSignature, title: t("landing.feature1Title"), description: t("landing.feature1Desc") },
+    { icon: QrCode, title: t("landing.feature2Title"), description: t("landing.feature2Desc") },
+    { icon: Users, title: t("landing.feature3Title"), description: t("landing.feature3Desc") },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      {/* Hero */}
       <section className="relative overflow-hidden">
         <div
           aria-hidden
@@ -62,42 +49,40 @@ function LandingPage() {
         <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-24 text-center sm:pt-28 sm:pb-32">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-3 py-1 text-xs text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Feito para MEIs, autônomos e prestadores de serviço
+            {t("landing.badge")}
           </div>
 
           <h1 className="mx-auto mt-6 max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-6xl">
-            Seus contratos, cobranças e clientes.{" "}
+            {t("landing.headline1")}{" "}
             <span
               className="bg-clip-text text-transparent"
               style={{ backgroundImage: "var(--gradient-hero)" }}
             >
-              Tudo em um lugar.
+              {t("landing.headline2")}
             </span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-pretty text-base text-muted-foreground sm:text-lg">
-            ContratoFácil é a plataforma que descomplica a parte burocrática do seu negócio para
-            você focar no que importa: atender bem e crescer.
+            {t("landing.subhead")}
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="gap-2">
               <Link to="/signup">
-                Começar grátis <ArrowRight className="h-4 w-4" />
+                {t("landing.ctaStart")} <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="ghost">
-              <Link to="/login">Já tenho conta</Link>
+              <Link to="/login">{t("nav.haveAccount")}</Link>
             </Button>
           </div>
 
           <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" /> Sem cartão de crédito · Cancele quando quiser
+            <ShieldCheck className="h-3.5 w-3.5" /> {t("landing.trust")}
           </p>
         </div>
       </section>
 
-      {/* Benefits */}
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {benefits.map(({ icon: Icon, title, description }) => (
@@ -114,17 +99,16 @@ function LandingPage() {
           ))}
         </div>
 
-        {/* Final CTA */}
         <div className="mt-16 rounded-3xl border border-border/70 bg-card p-10 text-center">
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Pronto para profissionalizar seu negócio?
+            {t("landing.finalCtaTitle")}
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-            Crie sua conta gratuita e comece a enviar contratos e cobranças hoje mesmo.
+            {t("landing.finalCtaDesc")}
           </p>
           <Button asChild size="lg" className="mt-6 gap-2">
             <Link to="/signup">
-              Começar grátis <ArrowRight className="h-4 w-4" />
+              {t("landing.ctaStart")} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>
@@ -132,7 +116,7 @@ function LandingPage() {
 
       <footer className="border-t border-border/60 py-8">
         <div className="mx-auto max-w-6xl px-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} ContratoFácil. Todos os direitos reservados.
+          © {new Date().getFullYear()} ContratoFácil. {t("landing.footer")}
         </div>
       </footer>
     </div>

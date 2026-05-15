@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function Navbar() {
+  const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -15,12 +18,13 @@ export function Navbar() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-1 sm:gap-2">
+          <LanguageSwitcher />
           <Button asChild variant="ghost" size="sm">
-            <Link to="/login">Entrar</Link>
+            <Link to="/login">{t("nav.login")}</Link>
           </Button>
           <Button asChild size="sm">
-            <Link to="/signup">Começar grátis</Link>
+            <Link to="/signup">{t("nav.signupFree")}</Link>
           </Button>
         </nav>
       </div>
