@@ -157,9 +157,22 @@
     "form": {
       "createTitle": "Novo cliente",
       "editTitle": "Editar cliente",
+      "description": "Preencha os dados para cadastrar um novo cliente.",
+      "fullName": "Nome completo",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "phonePlaceholder": "(11) 99999-9999",
+      "document": "CPF / CNPJ",
+      "documentPlaceholder": "000.000.000-00",
+      "address": "Endereço completo",
+      "addressPlaceholder": "Rua, número, bairro, cidade — UF",
+      "notes": "Observações",
       "namePlaceholder": "Nome completo do cliente",
-      "saved": "Cliente salvo",
-      "errorSaving": "Erro ao salvar cliente"
+      "saveButton": "Salvar cliente",
+      "saved": "Cliente cadastrado com sucesso!",
+      "errorSaving": "Erro ao salvar cliente",
+      "errorName": "Informe o nome do cliente",
+      "errorDocument": "CPF ou CNPJ inválido"
     }
   },
   "contracts": {
