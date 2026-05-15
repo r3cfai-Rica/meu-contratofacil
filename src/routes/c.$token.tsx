@@ -8,6 +8,7 @@ import {
   PenLine,
   Type as TypeIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,7 @@ import { formatCurrencyBRL, formatDateBR, maskDocument, isValidDocument } from "
 export const Route = createFileRoute("/c/$token")({
   head: () => ({
     meta: [
-      { title: "Assinar contrato — ContratoFácil" },
+      { title: "Sign contract — EasyContract" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -62,39 +63,31 @@ interface PublicContract {
   clients: { full_name: string; document: string | null; email: string | null } | null;
 }
 
-const PAYMENT_LABELS: Record<string, string> = {
-  one_time: "À vista",
-  installments: "Parcelado",
-  recurring: "Recorrente",
-};
-
-const STEPS = [
-  { id: 1, label: "Leitura" },
-  { id: 2, label: "Dados" },
-  { id: 3, label: "Assinatura" },
-];
-
 function PublicContractPage() {
   const { token } = Route.useParams();
+  const { t } = useTranslation();
   const [contract, setContract] = useState<PublicContract | null>(null);
   const [providerName, setProviderName] = useState<string>("");
   const [providerLogo, setProviderLogo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
 
-  // Step 1
   const [agreed, setAgreed] = useState(false);
 
-  // Step 2
   const [signerName, setSignerName] = useState("");
   const [document, setDocumentValue] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [displayName, setDisplayName] = useState("");
 
-  // Step 3
   const [signMode, setSignMode] = useState<"draw" | "type">("draw");
   const padRef = useRef<SignaturePadHandle>(null);
   const [signing, setSigning] = useState(false);
+
+  const STEPS = [
+    { id: 1, label: t("publicContract.steps.read") },
+    { id: 2, label: t("publicContract.steps.data") },
+    { id: 3, label: t("publicContract.steps.sign") },
+  ];
 
   useEffect(() => {
     (async () => {
@@ -116,7 +109,6 @@ function PublicContractPage() {
         setDisplayName(c.signer_display_name || c.signer_name || c.clients?.full_name || "");
         setBirthDate(c.signer_birth_date || "");
 
-        // Fetch provider name + logo (public read of profiles is restricted; tolerate failure)
         const { data: profile } = await supabase
           .from("profiles")
           .select("full_name, logo_url")
@@ -129,7 +121,6 @@ function PublicContractPage() {
     })();
   }, [token]);
 
-  // Keep displayName synced with signerName until user edits it
   useEffect(() => {
     if (!displayName && signerName) setDisplayName(signerName);
   }, [signerName, displayName]);
@@ -138,11 +129,11 @@ function PublicContractPage() {
   const isCancelled = contract?.status === "cancelled";
 
   const validateStep2 = (): string | null => {
-    if (!signerName.trim()) return "Informe seu nome completo";
-    if (!isValidDocument(document)) return "CPF inválido";
-    if (document.replace(/\D/g, "").length !== 11) return "Use CPF (11 dígitos)";
-    if (!birthDate) return "Informe sua data de nascimento";
-    if (!displayName.trim()) return 'Informe como deseja assinar';
+    if (!signerName.trim()) return t("publicContract.errFullName");
+    if (!isValidDocument(document)) return t("publicContract.errInvalidCpf");
+    if (document.replace(/\D/g, "").length !== 11) return t("publicContract.errCpfDigits");
+    if (!birthDate) return t("publicContract.errBirthDate");
+    if (!displayName.trim()) return t("publicContract.errDisplayName");
     return null;
   };
 
@@ -175,13 +166,13 @@ function PublicContractPage() {
     let signatureData = "";
     if (signMode === "draw") {
       if (padRef.current?.isEmpty()) {
-        toast.error("Desenhe sua assinatura no quadro");
+        toast.error(t("publicContract.drawHint"));
         return;
       }
       signatureData = padRef.current?.toDataURL() ?? "";
     } else {
       if (!displayName.trim()) {
-        toast.error('Informe o nome para assinatura');
+        toast.error(t("publicContract.typedHint"));
         return;
       }
       signatureData = renderTypedSignature(displayName);
@@ -215,7 +206,7 @@ function PublicContractPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("Contrato assinado com sucesso!");
+    toast.success(t("publicContract.signed"));
     setContract(data as unknown as PublicContract);
   };
 
@@ -242,47 +233,51 @@ function PublicContractPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="rounded-2xl border border-border/70 bg-card p-10 text-center">
-          <h1 className="text-lg font-semibold">Contrato não encontrado</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            O link pode ter expirado ou ser inválido.
-          </p>
+          <h1 className="text-lg font-semibold">{t("publicContract.notFound")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("publicContract.notFoundDesc")}</p>
         </div>
       </div>
     );
   }
+
+  const paymentLabel = (m: string) => {
+    if (m === "one_time" || m === "installments" || m === "recurring") {
+      return t(`publicContract.paymentMethods.${m}`);
+    }
+    return m;
+  };
 
   return (
     <div className="min-h-screen bg-background pb-16">
       <PublicHeader />
 
       <main className="mx-auto max-w-4xl px-4 pt-8">
-        {/* Provider + contract identity */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-xs uppercase tracking-wide text-muted-foreground">
-              Prestador
+              {t("publicContract.provider")}
             </div>
-            <div className="text-sm font-medium">{providerName || "Prestador"}</div>
+            <div className="text-sm font-medium">{providerName || t("publicContract.providerFallback")}</div>
           </div>
           <ContractStatusBadge status={contract.status} />
         </div>
 
-        {/* Confirmation state */}
         {isSigned ? (
           <SignedConfirmation
             contract={contract}
             providerName={providerName}
             onDownload={downloadPdf}
+            paymentLabel={paymentLabel}
           />
         ) : isCancelled ? (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-sm text-red-300">
-            Este contrato foi cancelado pelo prestador.
+            {t("publicContract.cancelled")}
           </div>
         ) : (
           <>
-            <ProgressBar step={step} />
+            <ProgressBar step={step} steps={STEPS} />
 
-            <ContractDocument contract={contract} />
+            <ContractDocument contract={contract} paymentLabel={paymentLabel} />
 
             {step === 1 && (
               <StepCard>
@@ -293,22 +288,22 @@ function PublicContractPage() {
                     onCheckedChange={(c) => setAgreed(c === true)}
                   />
                   <Label htmlFor="agree" className="text-sm leading-relaxed">
-                    Li e concordo com os termos do contrato acima.
+                    {t("publicContract.agree")}
                   </Label>
                 </div>
                 <div className="mt-5 flex justify-end">
                   <Button onClick={goToStep2} disabled={!agreed}>
-                    Continuar
+                    {t("publicContract.continue")}
                   </Button>
                 </div>
               </StepCard>
             )}
 
             {step === 2 && (
-              <StepCard title="Seus dados">
+              <StepCard title={t("publicContract.yourData")}>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="full">Nome completo</Label>
+                    <Label htmlFor="full">{t("publicContract.fullName")}</Label>
                     <Input
                       id="full"
                       value={signerName}
@@ -316,7 +311,7 @@ function PublicContractPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
+                    <Label htmlFor="cpf">{t("publicContract.cpf")}</Label>
                     <Input
                       id="cpf"
                       value={document}
@@ -326,7 +321,7 @@ function PublicContractPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="birth">Data de nascimento</Label>
+                    <Label htmlFor="birth">{t("publicContract.birthDate")}</Label>
                     <Input
                       id="birth"
                       type="date"
@@ -335,33 +330,33 @@ function PublicContractPage() {
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="display">Assinar como</Label>
+                    <Label htmlFor="display">{t("publicContract.signAs")}</Label>
                     <Input
                       id="display"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Nome que aparecerá na assinatura"
+                      placeholder={t("publicContract.signAsPlaceholder")}
                     />
                   </div>
                 </div>
                 <div className="mt-5 flex justify-between">
                   <Button variant="ghost" onClick={() => setStep(1)}>
-                    Voltar
+                    {t("publicContract.back")}
                   </Button>
-                  <Button onClick={goToStep3}>Continuar</Button>
+                  <Button onClick={goToStep3}>{t("publicContract.continue")}</Button>
                 </div>
               </StepCard>
             )}
 
             {step === 3 && (
-              <StepCard title="Assinatura digital">
+              <StepCard title={t("publicContract.digitalSignature")}>
                 <Tabs value={signMode} onValueChange={(v) => setSignMode(v as "draw" | "type")}>
                   <TabsList className="grid w-full grid-cols-2 sm:w-80">
                     <TabsTrigger value="draw" className="gap-2">
-                      <PenLine className="h-3.5 w-3.5" /> Desenhar
+                      <PenLine className="h-3.5 w-3.5" /> {t("publicContract.draw")}
                     </TabsTrigger>
                     <TabsTrigger value="type" className="gap-2">
-                      <TypeIcon className="h-3.5 w-3.5" /> Digitar nome
+                      <TypeIcon className="h-3.5 w-3.5" /> {t("publicContract.type")}
                     </TabsTrigger>
                   </TabsList>
 
@@ -375,13 +370,12 @@ function PublicContractPage() {
                 </Tabs>
 
                 <div className="mt-5 rounded-xl border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-                  Ao assinar, registramos seu nome, CPF, data, hora e endereço IP como
-                  prova da autenticidade da assinatura.
+                  {t("publicContract.legalNote")}
                 </div>
 
                 <div className="mt-5 flex justify-between">
                   <Button variant="ghost" onClick={() => setStep(2)}>
-                    Voltar
+                    {t("publicContract.back")}
                   </Button>
                   <Button onClick={handleSign} disabled={signing} className="gap-2">
                     {signing ? (
@@ -389,7 +383,7 @@ function PublicContractPage() {
                     ) : (
                       <CheckCircle2 className="h-4 w-4" />
                     )}
-                    Assinar contrato
+                    {t("publicContract.signContract")}
                   </Button>
                 </div>
               </StepCard>
@@ -402,23 +396,26 @@ function PublicContractPage() {
 }
 
 function PublicHeader() {
+  const { t } = useTranslation();
   return (
     <header className="border-b border-border/60 bg-card/40 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-4xl items-center gap-2 px-4">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <FileSignature className="h-4 w-4" />
         </span>
-        <span className="text-sm font-semibold tracking-tight">ContratoFácil</span>
+        <span className="text-sm font-semibold tracking-tight">
+          {t("common.brandPrefix")}{t("common.brandSuffix")}
+        </span>
       </div>
     </header>
   );
 }
 
-function ProgressBar({ step }: { step: number }) {
+function ProgressBar({ step, steps }: { step: number; steps: { id: number; label: string }[] }) {
   return (
     <div className="mb-6 rounded-2xl border border-border/70 bg-card/60 p-4">
       <div className="flex items-center gap-3">
-        {STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const active = step === s.id;
           const done = step > s.id;
           return (
@@ -441,9 +438,7 @@ function ProgressBar({ step }: { step: number }) {
               >
                 {s.label}
               </span>
-              {i < STEPS.length - 1 && (
-                <div className="h-px flex-1 bg-border/60" />
-              )}
+              {i < steps.length - 1 && <div className="h-px flex-1 bg-border/60" />}
             </div>
           );
         })}
@@ -452,7 +447,14 @@ function ProgressBar({ step }: { step: number }) {
   );
 }
 
-function ContractDocument({ contract }: { contract: PublicContract }) {
+function ContractDocument({
+  contract,
+  paymentLabel,
+}: {
+  contract: PublicContract;
+  paymentLabel: (m: string) => string;
+}) {
+  const { t } = useTranslation();
   return (
     <article className="mb-6 rounded-2xl border border-border/70 bg-card p-6 sm:p-8">
       <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -462,22 +464,19 @@ function ContractDocument({ contract }: { contract: PublicContract }) {
       <p className="mt-1 text-sm text-muted-foreground">{contract.service_type}</p>
 
       <dl className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-        <Field label="Cliente" value={contract.clients?.full_name ?? "—"} />
-        <Field label="Valor" value={formatCurrencyBRL(Number(contract.total_value))} />
-        <Field
-          label="Pagamento"
-          value={PAYMENT_LABELS[contract.payment_method] ?? contract.payment_method}
-        />
-        <Field label="Início" value={formatDateBR(contract.start_date)} />
+        <Field label={t("publicContract.client")} value={contract.clients?.full_name ?? "—"} />
+        <Field label={t("publicContract.amount")} value={formatCurrencyBRL(Number(contract.total_value))} />
+        <Field label={t("publicContract.payment")} value={paymentLabel(contract.payment_method)} />
+        <Field label={t("publicContract.start")} value={formatDateBR(contract.start_date)} />
         {contract.end_date && (
-          <Field label="Término" value={formatDateBR(contract.end_date)} />
+          <Field label={t("publicContract.end")} value={formatDateBR(contract.end_date)} />
         )}
       </dl>
 
       {contract.service_description && (
         <section className="mt-8">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Descrição do serviço
+            {t("publicContract.serviceDescription")}
           </h2>
           <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
             {contract.service_description}
@@ -488,7 +487,7 @@ function ContractDocument({ contract }: { contract: PublicContract }) {
       {contract.clauses && (
         <section className="mt-8">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Cláusulas do contrato
+            {t("publicContract.clauses")}
           </h2>
           <div className="prose-contract mt-3 max-h-[28rem] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border/60 bg-background/40 p-4 font-sans text-sm leading-relaxed text-foreground/90">
             {contract.clauses}
@@ -509,16 +508,13 @@ function StepCard({ children, title }: { children: React.ReactNode; title?: stri
 }
 
 function TypedPreview({ name }: { name: string }) {
+  const { t } = useTranslation();
   const dataUrl = useMemo(() => renderTypedSignature(name || " "), [name]);
   return (
     <div className="rounded-xl border border-border/70 bg-white p-4">
-      <img
-        src={dataUrl}
-        alt="Pré-visualização da assinatura"
-        className="mx-auto h-32 object-contain"
-      />
+      <img src={dataUrl} alt={t("publicContract.typedPreview")} className="mx-auto h-32 object-contain" />
       <p className="mt-2 text-center text-xs text-slate-500">
-        Pré-visualização — sua assinatura tipográfica
+        {t("publicContract.typedPreviewCaption")}
       </p>
     </div>
   );
@@ -528,11 +524,14 @@ function SignedConfirmation({
   contract,
   providerName,
   onDownload,
+  paymentLabel,
 }: {
   contract: PublicContract;
   providerName: string;
   onDownload: () => void;
+  paymentLabel: (m: string) => string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-8 text-center">
@@ -540,49 +539,44 @@ function SignedConfirmation({
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <h2 className="text-xl font-semibold text-emerald-100">
-          Contrato assinado com sucesso! ✅
+          {t("publicContract.signedHeader")}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-emerald-200/80">
-          Uma cópia do contrato assinado foi registrada com data, hora e IP. Você pode
-          baixar o PDF abaixo.
+          {t("publicContract.signedDesc")}
         </p>
         <Button onClick={onDownload} className="mt-6 gap-2">
-          <Download className="h-4 w-4" /> Baixar PDF do contrato
+          <Download className="h-4 w-4" /> {t("publicContract.downloadPdf")}
         </Button>
       </div>
 
-      <ContractDocument contract={contract} />
+      <ContractDocument contract={contract} paymentLabel={paymentLabel} />
 
       <div className="rounded-2xl border border-border/70 bg-card p-6">
-        <h3 className="mb-4 text-base font-semibold">Registro da assinatura</h3>
+        <h3 className="mb-4 text-base font-semibold">{t("publicContract.signatureRecord")}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           {contract.signature_data && (
             <div className="sm:col-span-2">
               <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Assinatura
+                {t("publicContract.signature")}
               </div>
               <div className="mt-2 rounded-xl border border-border/60 bg-white p-3">
                 <img
                   src={contract.signature_data}
-                  alt="Assinatura"
+                  alt={t("publicContract.signature")}
                   className="mx-auto h-28 object-contain"
                 />
               </div>
             </div>
           )}
-          <Field label="Assinado por" value={contract.signer_display_name ?? "—"} />
-          <Field label="Nome completo" value={contract.signer_name ?? "—"} />
-          <Field label="CPF" value={contract.signer_document ?? "—"} />
+          <Field label={t("publicContract.signedBy")} value={contract.signer_display_name ?? "—"} />
+          <Field label={t("publicContract.signerName")} value={contract.signer_name ?? "—"} />
+          <Field label={t("publicContract.signerCpf")} value={contract.signer_document ?? "—"} />
           <Field
-            label="Data e hora"
-            value={
-              contract.signed_at
-                ? new Date(contract.signed_at).toLocaleString("pt-BR")
-                : "—"
-            }
+            label={t("publicContract.dateTime")}
+            value={contract.signed_at ? new Date(contract.signed_at).toLocaleString() : "—"}
           />
-          <Field label="IP de origem" value={contract.signer_ip ?? "—"} />
-          <Field label="Prestador" value={providerName || "—"} />
+          <Field label={t("publicContract.originIp")} value={contract.signer_ip ?? "—"} />
+          <Field label={t("publicContract.providerLabel")} value={providerName || "—"} />
         </div>
       </div>
     </div>
