@@ -121,6 +121,31 @@ function PublicInvoicePage() {
     })();
   }, [token]);
 
+  useEffect(() => {
+    if (search.status === "success") {
+      toast.success(t("publicInvoice.paymentSuccess"));
+      void (async () => {
+        const fresh = await loadInvoice();
+        if (fresh) setInvoice(fresh);
+      })();
+    } else if (search.status === "cancelled") {
+      toast.error(t("publicInvoice.paymentCancelled"));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.status]);
+
+  const payWithCard = async () => {
+    setPayingCard(true);
+    try {
+      const { url } = await createCheckout({ data: { invoiceToken: token } });
+      window.location.href = url;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg);
+      setPayingCard(false);
+    }
+  };
+
   const copy = async (text: string, type: "key" | "code") => {
     await navigator.clipboard.writeText(text);
     setCopied(type);
