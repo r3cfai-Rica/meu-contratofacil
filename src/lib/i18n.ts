@@ -20,8 +20,7 @@ function getBrowserLanguage() {
 }
 
 if (!i18n.isInitialized) {
-  i18n.use(initReactI18next);
-  i18n.init({
+  i18n.use(initReactI18next).init({
     resources: {
       "pt-BR": { translation: ptBR },
       "en-US": { translation: enUS },
@@ -31,14 +30,13 @@ if (!i18n.isInitialized) {
     lng: DEFAULT_LANGUAGE,
     fallbackLng: DEFAULT_LANGUAGE,
     interpolation: { escapeValue: false },
-    react: { useSuspense: false, bindI18n: "languageChanged loaded" },
-    ...({ initImmediate: false } as Record<string, unknown>),
+    initImmediate: false,
+    react: { useSuspense: false },
   });
 }
 
-// On the server, the i18n singleton is shared across requests in the Worker
-// isolate. Force-reset to the default language on every server-side import
-// access so SSR is deterministic and matches the first client render.
+// Force SSR to always render in the default language so the first client
+// render (which also starts at default language) matches.
 export function resetServerLanguage() {
   if (typeof window === "undefined" && i18n.language !== DEFAULT_LANGUAGE) {
     void i18n.changeLanguage(DEFAULT_LANGUAGE);
