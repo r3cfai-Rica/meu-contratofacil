@@ -288,14 +288,56 @@
     "title": "Planos",
     "subtitle": "Escolha o plano ideal para o seu negócio.",
     "currentPlan": "Plano atual",
-    "free": "Grátis",
-    "pro": "Pro",
-    "business": "Business",
     "month": "/mês",
     "selectPlan": "Selecionar plano",
     "manageBilling": "Gerenciar assinatura",
     "upgrade": "Fazer upgrade",
-    "downgrade": "Fazer downgrade"
+    "downgrade": "Fazer downgrade",
+    "back": "Voltar",
+    "signIn": "Entrar",
+    "badge": "Planos & Preços",
+    "heroTitle": "Escolha o plano ideal para o seu negócio",
+    "heroSubtitle": "Comece grátis e faça upgrade quando precisar. Sem fidelidade — cancele a qualquer momento.",
+    "mostPopular": "Mais popular",
+    "startFree": "Começar grátis",
+    "subscribePrefix": "Assinar",
+    "checkoutCanceled": "Checkout cancelado",
+    "checkoutError": "Não foi possível iniciar o checkout",
+    "changeError": "Erro ao iniciar a alteração",
+    "changedTo": "Plano alterado para {{plan}}",
+    "tiers": {
+      "free": {
+        "name": "Grátis",
+        "tagline": "Comece sem custos para validar sua operação",
+        "features": [
+          "Até 3 clientes",
+          "Até 3 contratos ativos",
+          "Até 3 cobranças por mês",
+          "Sem personalização de marca"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "tagline": "Para profissionais que querem crescer sem limites",
+        "features": [
+          "Clientes ilimitados",
+          "Contratos ilimitados",
+          "Cobranças ilimitadas",
+          "Logo próprio nos contratos",
+          "Lembretes automáticos de vencimento"
+        ]
+      },
+      "business": {
+        "name": "Business",
+        "tagline": "Para times com necessidades avançadas",
+        "features": [
+          "Tudo do Pro",
+          "Múltiplos usuários (até 3)",
+          "Relatórios avançados",
+          "Suporte prioritário"
+        ]
+      }
+    }
   },
   "settings": {
     "title": "Configurações",
