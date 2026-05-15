@@ -60,7 +60,7 @@ function PublicInvoicePage() {
       const { data: inv } = await supabase
         .from("invoices")
         .select(
-          "id, description, amount, due_date, status, paid_at, user_id, clients(full_name)",
+          "id, description, amount, currency, due_date, status, paid_at, user_id, public_token, clients(full_name)",
         )
         .eq("public_token", token)
         .maybeSingle();
