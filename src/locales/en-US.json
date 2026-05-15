@@ -323,9 +323,18 @@
     "noUsers": "No users found."
   },
   "upgrade": {
-    "title": "Plan limit reached",
-    "description": "You've reached the limit of {{limit}} {{resource}} on your current plan.",
+    "title": "Free plan limit reached",
+    "description": "You've reached the limit of {{limit}} {{resource}} on the free plan. Upgrade to keep creating without limits.",
+    "proTitle": "Pro plan — $9/mo",
+    "benefit1": "Unlimited clients, contracts and invoices",
+    "benefit2": "Custom logo on contracts",
+    "benefit3": "Automatic due-date reminders",
     "viewPlans": "View plans",
-    "later": "Later"
+    "later": "Not now",
+    "resources": {
+      "clientes": "clients",
+      "contratos": "contracts",
+      "cobrancas": "invoices"
+    }
   }
 }
