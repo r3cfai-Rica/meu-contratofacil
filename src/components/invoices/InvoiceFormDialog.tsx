@@ -189,7 +189,31 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
             {t("invoices.form.noPixWarning")}
           </div>
         )}
-        {isUS && (
+        {isUS && usdBlocked && (
+          <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3 text-xs">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+              <div className="space-y-2">
+                <p className="font-semibold text-yellow-200">
+                  {t("invoices.form.usdNotConfiguredTitle")}
+                </p>
+                <p className="text-yellow-100/90">
+                  {t("invoices.form.usdNotConfiguredDesc")}
+                </p>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="mt-1 h-7 border-yellow-500/40 bg-transparent text-xs"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Link to="/configuracoes">{t("invoices.form.goToSettings")}</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {isUS && !usdBlocked && (
           <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
             {t("invoices.form.usdNotice")}
           </div>
