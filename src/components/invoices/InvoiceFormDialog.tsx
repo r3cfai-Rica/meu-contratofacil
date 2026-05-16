@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,9 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
   const [loading, setLoading] = useState(false);
   const [hasPix, setHasPix] = useState<boolean | null>(null);
   const [country, setCountry] = useState<"BR" | "US">("BR");
+  const [stripeReady, setStripeReady] = useState<boolean | null>(null);
   const isUS = country === "US";
+  const usdBlocked = isUS && stripeReady === false;
 
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
@@ -94,15 +97,22 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           .maybeSingle(),
         supabase
           .from("profiles")
-          .select("country")
+          .select("country, stripe_connect_account_id, stripe_connect_charges_enabled")
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
       setClients((clientsRes.data ?? []) as ClientRow[]);
       setContracts((contractsRes.data ?? []) as ContractRow[]);
       setHasPix(!!pixRes.data);
-      const c = (profRes.data as { country?: string } | null)?.country;
-      setCountry(c === "US" ? "US" : "BR");
+      const prof = profRes.data as {
+        country?: string;
+        stripe_connect_account_id?: string | null;
+        stripe_connect_charges_enabled?: boolean | null;
+      } | null;
+      setCountry(prof?.country === "US" ? "US" : "BR");
+      setStripeReady(
+        !!prof?.stripe_connect_account_id && !!prof?.stripe_connect_charges_enabled,
+      );
     })();
   }, [open, user]);
 
@@ -114,6 +124,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     e.preventDefault();
     if (!user) return;
 
+    if (usdBlocked) return toast.error(t("invoices.form.usdNotConfiguredTitle"));
     if (!clientId) return toast.error(t("invoices.form.errClient"));
     if (!description.trim()) return toast.error(t("invoices.form.errDescription"));
     const amountNum = parseFloat(amount.replace(",", "."));
@@ -178,7 +189,31 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
             {t("invoices.form.noPixWarning")}
           </div>
         )}
-        {isUS && (
+        {isUS && usdBlocked && (
+          <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3 text-xs">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+              <div className="space-y-2">
+                <p className="font-semibold text-yellow-200">
+                  {t("invoices.form.usdNotConfiguredTitle")}
+                </p>
+                <p className="text-yellow-100/90">
+                  {t("invoices.form.usdNotConfiguredDesc")}
+                </p>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="mt-1 h-7 border-yellow-500/40 bg-transparent text-xs"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <Link to="/configuracoes">{t("invoices.form.goToSettings")}</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {isUS && !usdBlocked && (
           <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
             {t("invoices.form.usdNotice")}
           </div>
@@ -310,7 +345,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
             >
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={loading} className="gap-2">
+            <Button type="submit" disabled={loading || usdBlocked} className="gap-2">
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("invoices.form.generate")}
             </Button>
