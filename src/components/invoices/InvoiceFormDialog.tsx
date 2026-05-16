@@ -97,15 +97,22 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           .maybeSingle(),
         supabase
           .from("profiles")
-          .select("country")
+          .select("country, stripe_connect_account_id, stripe_connect_charges_enabled")
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
       setClients((clientsRes.data ?? []) as ClientRow[]);
       setContracts((contractsRes.data ?? []) as ContractRow[]);
       setHasPix(!!pixRes.data);
-      const c = (profRes.data as { country?: string } | null)?.country;
-      setCountry(c === "US" ? "US" : "BR");
+      const prof = profRes.data as {
+        country?: string;
+        stripe_connect_account_id?: string | null;
+        stripe_connect_charges_enabled?: boolean | null;
+      } | null;
+      setCountry(prof?.country === "US" ? "US" : "BR");
+      setStripeReady(
+        !!prof?.stripe_connect_account_id && !!prof?.stripe_connect_charges_enabled,
+      );
     })();
   }, [open, user]);
 
