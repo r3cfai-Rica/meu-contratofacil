@@ -425,6 +425,44 @@ function SettingsPage() {
           </div>
         ) : !connectStatus?.connected ? (
           <div className="space-y-4">
+            <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+              <h3 className="text-sm font-semibold">{t("settings.stripeConnect.whyTitle")}</h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                {[
+                  { icon: "💵", titleKey: "whyPoint1Title", descKey: "whyPoint1Desc" },
+                  { icon: "🏦", titleKey: "whyPoint2Title", descKey: "whyPoint2Desc" },
+                  { icon: "⚡", titleKey: "whyPoint3Title", descKey: "whyPoint3Desc" },
+                ].map((p) => (
+                  <div key={p.titleKey} className="rounded-lg border border-border/50 bg-card/40 p-3">
+                    <div className="text-xl">{p.icon}</div>
+                    <p className="mt-1 text-sm font-medium">
+                      {t(`settings.stripeConnect.${p.titleKey}`)}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t(`settings.stripeConnect.${p.descKey}`)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 border-t border-border/50 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("settings.stripeConnect.whatHappensTitle")}
+                </p>
+                <ol className="mt-2 space-y-1.5 text-sm">
+                  {["step1", "step2", "step3"].map((k, i) => (
+                    <li key={k} className="flex gap-2">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                        {i + 1}
+                      </span>
+                      <span>{t(`settings.stripeConnect.${k}`)}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  ℹ️ {t("settings.stripeConnect.bankNote")}
+                </p>
+              </div>
+            </div>
             <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
               <Globe className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div>
