@@ -124,6 +124,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     e.preventDefault();
     if (!user) return;
 
+    if (usdBlocked) return toast.error(t("invoices.form.usdNotConfiguredTitle"));
     if (!clientId) return toast.error(t("invoices.form.errClient"));
     if (!description.trim()) return toast.error(t("invoices.form.errDescription"));
     const amountNum = parseFloat(amount.replace(",", "."));
