@@ -110,7 +110,9 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
         let stripe: Stripe | null = null;
         const candidates: Array<{ secret: string; client: Stripe | null; mode: string }> = [];
         if (liveWhSecret && liveStripe) candidates.push({ secret: liveWhSecret, client: liveStripe, mode: "live" });
+        if (liveConnectWhSecret && liveStripe) candidates.push({ secret: liveConnectWhSecret, client: liveStripe, mode: "live-connect" });
         if (testWhSecret && testStripe) candidates.push({ secret: testWhSecret, client: testStripe, mode: "test" });
+        if (testConnectWhSecret && testStripe) candidates.push({ secret: testConnectWhSecret, client: testStripe, mode: "test-connect" });
 
         let lastErr: unknown = null;
         for (const c of candidates) {
