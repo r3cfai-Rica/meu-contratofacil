@@ -85,6 +85,8 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
         const testKey = process.env.STRIPE_SECRET_KEY_TEST;
         const liveWhSecret = process.env.STRIPE_WEBHOOK_SECRET;
         const testWhSecret = process.env.STRIPE_WEBHOOK_SECRET_TEST;
+        const liveConnectWhSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+        const testConnectWhSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET_TEST;
         if (!liveKey && !testKey) {
           console.error("[stripe-webhook] missing STRIPE_SECRET_KEY(_TEST)");
           return new Response("Webhook not configured", { status: 500 });
