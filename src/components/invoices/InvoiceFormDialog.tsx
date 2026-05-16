@@ -345,7 +345,7 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
             >
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={loading} className="gap-2">
+            <Button type="submit" disabled={loading || usdBlocked} className="gap-2">
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("invoices.form.generate")}
             </Button>
