@@ -85,6 +85,8 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
         const testKey = process.env.STRIPE_SECRET_KEY_TEST;
         const liveWhSecret = process.env.STRIPE_WEBHOOK_SECRET;
         const testWhSecret = process.env.STRIPE_WEBHOOK_SECRET_TEST;
+        const liveConnectWhSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+        const testConnectWhSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET_TEST;
         if (!liveKey && !testKey) {
           console.error("[stripe-webhook] missing STRIPE_SECRET_KEY(_TEST)");
           return new Response("Webhook not configured", { status: 500 });
@@ -108,7 +110,9 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
         let stripe: Stripe | null = null;
         const candidates: Array<{ secret: string; client: Stripe | null; mode: string }> = [];
         if (liveWhSecret && liveStripe) candidates.push({ secret: liveWhSecret, client: liveStripe, mode: "live" });
+        if (liveConnectWhSecret && liveStripe) candidates.push({ secret: liveConnectWhSecret, client: liveStripe, mode: "live-connect" });
         if (testWhSecret && testStripe) candidates.push({ secret: testWhSecret, client: testStripe, mode: "test" });
+        if (testConnectWhSecret && testStripe) candidates.push({ secret: testConnectWhSecret, client: testStripe, mode: "test-connect" });
 
         let lastErr: unknown = null;
         for (const c of candidates) {
