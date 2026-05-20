@@ -65,7 +65,7 @@ interface Contract {
 
 function ContractsPage() {
   const { user } = useAuth();
-  const { planInfo } = usePlan();
+  const { planInfo, loading: planLoading } = usePlan();
   const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +78,7 @@ function ContractsPage() {
   const limit = planInfo.limits.maxActiveContracts;
   const activeCount = contracts.filter((c) => c.status !== "cancelled").length;
   const handleNewContract = () => {
+    if (planLoading) return;
     if (limit !== null && activeCount >= limit) {
       setUpgradeOpen(true);
       return;
@@ -130,7 +131,7 @@ function ContractsPage() {
             {t("contracts.subtitle")}
           </p>
         </div>
-        <Button className="gap-2" onClick={handleNewContract}>
+        <Button className="gap-2" onClick={handleNewContract} disabled={planLoading}>
           <Plus className="h-4 w-4" /> {t("contracts.new")}
         </Button>
       </div>
@@ -182,7 +183,7 @@ function ContractsPage() {
                 : t("common.tryAdjustFilters")}
             </p>
             {contracts.length === 0 && (
-              <Button className="mt-5 gap-2" onClick={handleNewContract}>
+              <Button className="mt-5 gap-2" onClick={handleNewContract} disabled={planLoading}>
                 <Plus className="h-4 w-4" /> {t("contracts.new")}
               </Button>
             )}

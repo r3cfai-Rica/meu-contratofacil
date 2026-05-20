@@ -73,7 +73,7 @@ type Period = "all" | "30" | "60" | "overdue" | "month";
 
 function InvoicesPage() {
   const { user } = useAuth();
-  const { planInfo } = usePlan();
+  const { planInfo, loading: planLoading } = usePlan();
   const { t } = useTranslation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +95,7 @@ function InvoicesPage() {
     }).length;
   }, [invoices]);
   const handleNewInvoice = () => {
+    if (planLoading) return;
     if (limit !== null && thisMonthCount >= limit) {
       setUpgradeOpen(true);
       return;
@@ -229,7 +230,7 @@ function InvoicesPage() {
             {t("invoices.subtitle")}
           </p>
         </div>
-        <Button className="gap-2" onClick={handleNewInvoice}>
+        <Button className="gap-2" onClick={handleNewInvoice} disabled={planLoading}>
           <Plus className="h-4 w-4" /> {t("invoices.new")}
         </Button>
       </div>
@@ -313,7 +314,7 @@ function InvoicesPage() {
                 : t("common.tryAdjustFilters")}
             </p>
             {invoices.length === 0 && (
-              <Button className="mt-5 gap-2" onClick={handleNewInvoice}>
+              <Button className="mt-5 gap-2" onClick={handleNewInvoice} disabled={planLoading}>
                 <Plus className="h-4 w-4" /> {t("invoices.new")}
               </Button>
             )}

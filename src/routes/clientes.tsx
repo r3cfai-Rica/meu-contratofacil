@@ -69,7 +69,7 @@ interface Client {
 
 function ClientsPage() {
   const { user } = useAuth();
-  const { planInfo } = usePlan();
+  const { planInfo, loading: planLoading } = usePlan();
   const { t } = useTranslation();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +81,7 @@ function ClientsPage() {
 
   const limit = planInfo.limits.maxClients;
   const handleNewClient = () => {
+    if (planLoading) return;
     if (limit !== null && clients.length >= limit) {
       setUpgradeOpen(true);
       return;
@@ -142,7 +143,7 @@ function ClientsPage() {
             {t("clients.subtitle")}
           </p>
         </div>
-        <Button className="gap-2" onClick={handleNewClient}>
+        <Button className="gap-2" onClick={handleNewClient} disabled={planLoading}>
           <Plus className="h-4 w-4" /> {t("clients.new")}
         </Button>
       </div>
@@ -188,7 +189,7 @@ function ClientsPage() {
                 : t("common.tryAdjustFilters")}
             </p>
             {clients.length === 0 && (
-              <Button className="mt-5 gap-2" onClick={handleNewClient}>
+              <Button className="mt-5 gap-2" onClick={handleNewClient} disabled={planLoading}>
                 <Plus className="h-4 w-4" /> {t("clients.new")}
               </Button>
             )}
