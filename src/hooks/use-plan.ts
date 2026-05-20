@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { supabase } from "@/integrations/supabase/client";
 import { checkSubscription } from "@/lib/billing.functions";
 import { PLANS, type PlanInfo, type PlanTier } from "@/lib/plans";
@@ -17,6 +18,7 @@ interface UsePlanState {
 
 export function usePlan(): UsePlanState {
   const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const checkSubscriptionFn = useServerFn(checkSubscription);
   const [plan, setPlan] = useState<PlanTier>("free");
   const [status, setStatus] = useState<string>("active");
@@ -84,13 +86,34 @@ export function usePlan(): UsePlanState {
     })();
   }, [user, authLoading, loadFromDb, refresh, resetToFree]);
 
+  const planInfo = useMemo<PlanInfo>(() => {
+    if (isAdmin) {
+      return {
+        ...PLANS.business,
+        limits: {
+          maxClients: null,
+          maxActiveContracts: null,
+          maxInvoicesPerMonth: null,
+          maxTeamMembers: Number.MAX_SAFE_INTEGER,
+          customLogo: true,
+          reminders: true,
+          multiUser: true,
+          advancedReports: true,
+          prioritySupport: true,
+        },
+      };
+    }
+
+    return PLANS[plan] ?? PLANS.free;
+  }, [isAdmin, plan]);
+
   return {
     plan,
-    planInfo: PLANS[plan] ?? PLANS.free,
+    planInfo,
     status,
     currentPeriodEnd,
     cancelAtPeriodEnd,
-    loading,
+    loading: loading || adminLoading,
     refresh,
   };
 }
