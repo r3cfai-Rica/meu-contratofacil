@@ -237,7 +237,7 @@ function PublicInvoicePage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t("publicInvoice.dueDate")}</p>
-              <p className="mt-1 text-base font-medium">{formatDateBR(invoice.due_date)}</p>
+              <p className="mt-1 text-base font-medium">{formatDateByLang(invoice.due_date, i18n.language)}</p>
             </div>
           </div>
         </div>
@@ -250,7 +250,7 @@ function PublicInvoicePage() {
             </h2>
             {invoice.paid_at && (
               <p className="mt-1 text-sm text-emerald-200/80">
-                {t("publicInvoice.paidOn", { date: formatDateBR(invoice.paid_at) })}
+                {t("publicInvoice.paidOn", { date: formatDateByLang(invoice.paid_at, i18n.language) })}
               </p>
             )}
           </div>
