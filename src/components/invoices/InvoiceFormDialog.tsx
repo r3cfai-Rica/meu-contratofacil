@@ -3,6 +3,7 @@ import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendInvoiceEmail } from "@/lib/invoiceEmail.functions";
 
 interface Props {
   open: boolean;
