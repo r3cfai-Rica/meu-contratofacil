@@ -91,8 +91,9 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           .order("full_name"),
         supabase
           .from("contracts")
-          .select("id, contract_number, title, client_id")
+          .select("id, contract_number, title, client_id, total_value, start_date, end_date, status")
           .eq("user_id", user.id)
+          .eq("status", "signed")
           .order("created_at", { ascending: false }),
         supabase
           .from("pix_settings")
