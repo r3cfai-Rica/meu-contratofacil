@@ -41,6 +41,10 @@ interface ContractRow {
   contract_number: string;
   title: string;
   client_id: string;
+  total_value: number;
+  start_date: string;
+  end_date: string | null;
+  status: string;
 }
 
 type Frequency = "one_time" | "recurring";
