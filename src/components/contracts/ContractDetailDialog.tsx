@@ -112,7 +112,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
     setSendingEmail(true);
     try {
       const result = await sendEmail({
-        data: { contractId: contract.id, appOrigin: window.location.origin },
+        data: { contractId: contract.id, appOrigin: window.location.origin, language: currentLang },
       });
       toast.success(t("contracts.detail.emailResent", { recipient: result.recipient }));
       onChanged();
