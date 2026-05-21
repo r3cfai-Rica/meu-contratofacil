@@ -42,7 +42,9 @@ type PaymentMethod = "one_time" | "installments" | "recurring";
 
 export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang: "pt-BR" | "en-US" =
+    i18n.language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
   const sendEmail = useServerFn(sendContractEmail);
   const [loading, setLoading] = useState(false);
   const [clientsList, setClientsList] = useState<ClientOption[]>([]);
