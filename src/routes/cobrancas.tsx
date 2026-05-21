@@ -209,7 +209,8 @@ function InvoicesPage() {
   };
 
   const copyLink = async (token: string) => {
-    const url = `${window.location.origin}/pagar/${token}`;
+    const { buildInvoicePayUrl } = await import("@/lib/publicUrls");
+    const url = buildInvoicePayUrl(token, i18n.language);
     await navigator.clipboard.writeText(url);
     toast.success(t("invoices.linkCopied"));
   };
