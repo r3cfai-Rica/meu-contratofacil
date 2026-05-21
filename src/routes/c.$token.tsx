@@ -71,7 +71,15 @@ interface PublicContract {
 
 function PublicContractPage() {
   const { token } = Route.useParams();
-  const { t } = useTranslation();
+  const { lang } = Route.useSearch();
+  const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    if (lang && i18n.language !== lang) {
+      void i18n.changeLanguage(lang);
+    }
+  }, [lang, i18n]);
+
   const [contract, setContract] = useState<PublicContract | null>(null);
   const [providerName, setProviderName] = useState<string>("");
   const [providerLogo, setProviderLogo] = useState<string | null>(null);
