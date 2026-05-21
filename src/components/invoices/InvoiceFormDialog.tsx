@@ -125,6 +125,17 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     ? contracts.filter((c) => c.client_id === clientId)
     : contracts;
 
+  useEffect(() => {
+    if (contractId === "none" || !contractId) return;
+    const c = contracts.find((x) => x.id === contractId);
+    if (!c) return;
+    if (!clientId) setClientId(c.client_id);
+    setDescription((prev) => (prev.trim() ? prev : `${c.contract_number} — ${c.title}`));
+    setAmount((prev) => (prev.trim() ? prev : String(c.total_value).replace(".", ",")));
+    setDueDate((prev) => prev || c.start_date);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contractId, contracts]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
