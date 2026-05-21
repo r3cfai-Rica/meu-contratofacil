@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { buildContractSignUrl } from "@/lib/publicUrls";
 import { generateContractPdf } from "@/lib/contractPdf";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -79,8 +80,9 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
   if (!contract) return null;
 
   const publicUrl = contract.public_token
-    ? `${window.location.origin}/c/${contract.public_token}`
+    ? buildContractSignUrl(contract.public_token, currentLang)
     : null;
+
 
   const generateLink = async () => {
     setLoadingAction(true);
@@ -172,6 +174,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
         provider_name: profile?.full_name ?? null,
         provider_logo_url: profile?.logo_url ?? null,
         client_name: contract.clients?.full_name ?? null,
+        language: currentLang === "en-US" ? "en-US" : "pt-BR",
       });
       pdf.save(`${full.contract_number}.pdf`);
     } catch (err) {

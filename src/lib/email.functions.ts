@@ -2,39 +2,22 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { withSupabaseAccessToken } from "@/integrations/supabase/server-fn-auth";
+import { buildContractSignUrl } from "@/lib/publicUrls";
 
 const FROM = "ContratoFácil <contratos@r3cf.com>";
 
-// URL pública estável – nunca usar a URL de preview (que exige login no Lovable).
-// Pode ser sobrescrita via env PUBLIC_APP_URL.
-const PUBLIC_APP_URL = "https://meu-contrato-na-mao.lovable.app";
-
 const InputSchema = z.object({
   contractId: z.string().uuid(),
-  appOrigin: z.string().url(),
+  // Mantido por compatibilidade, mas IGNORADO: o link enviado por email
+  // sempre aponta para a URL pública estável (PUBLIC_APP_URL). Preview do
+  // Lovable exige login e não pode ser usado em emails para clientes.
+  appOrigin: z.string().url().optional(),
   language: z.enum(["pt-BR", "en-US"]).optional().default("pt-BR"),
 });
 
 type Lang = "pt-BR" | "en-US";
 
-function resolvePublicOrigin(appOrigin: string): string {
-  const envUrl = process.env.PUBLIC_APP_URL;
-  const base = (envUrl && envUrl.trim()) || PUBLIC_APP_URL;
-  try {
-    const u = new URL(appOrigin);
-    // Bloqueia URLs de preview do Lovable que exigem login.
-    if (
-      u.hostname.includes("id-preview--") ||
-      u.hostname.endsWith("-dev.lovable.app") ||
-      u.hostname.includes("lovable.dev")
-    ) {
-      return base.replace(/\/$/, "");
-    }
-    return appOrigin.replace(/\/$/, "");
-  } catch {
-    return base.replace(/\/$/, "");
-  }
-}
+
 
 function formatMoney(value: number, lang: Lang) {
   if (lang === "en-US") {
@@ -251,8 +234,8 @@ export const sendContractEmail = createServerFn({ method: "POST" })
       (language === "en-US" ? "Your provider" : "Seu prestador");
 
     // Sempre usar URL pública estável + propagar idioma na URL.
-    const origin = resolvePublicOrigin(data.appOrigin);
-    const signUrl = `${origin}/c/${contract.public_token}?lang=${encodeURIComponent(language)}`;
+    const signUrl = buildContractSignUrl(contract.public_token, language);
+
 
     const html = buildHtml({
       clientName: client.full_name,

@@ -1,11 +1,62 @@
 import { jsPDF } from "jspdf";
-import { formatCurrencyBRL, formatDateBR } from "./format";
+import { formatCurrencyBRL, formatCurrencyUSD, formatDateByLang } from "./format";
 
-const PAYMENT_LABELS: Record<string, string> = {
-  one_time: "À vista",
-  installments: "Parcelado",
-  recurring: "Recorrente",
-};
+type Lang = "pt-BR" | "en-US";
+
+const STRINGS = {
+  "pt-BR": {
+    brand: "CONTRATOFÁCIL",
+    provider: "PRESTADOR",
+    client: "CLIENTE",
+    providerRole: "Contratada",
+    clientRole: "Contratante",
+    totalValue: "Valor total",
+    payment: "Pagamento",
+    start: "Início",
+    end: "Término",
+    indefinite: "Indeterminado",
+    description: "DESCRIÇÃO DO SERVIÇO",
+    clauses: "CLÁUSULAS",
+    clauseWord: /^CLÁUSULA\s/i,
+    signature: "ASSINATURA DIGITAL",
+    name: "Nome",
+    document: "CPF",
+    signedAt: "Assinado em",
+    ip: "IP",
+    page: (i: number, n: number) => `Página ${i} de ${n}`,
+    paymentLabels: {
+      one_time: "À vista",
+      installments: "Parcelado",
+      recurring: "Recorrente",
+    } as Record<string, string>,
+  },
+  "en-US": {
+    brand: "EASYCONTRACT",
+    provider: "PROVIDER",
+    client: "CLIENT",
+    providerRole: "Contractor",
+    clientRole: "Client",
+    totalValue: "Total value",
+    payment: "Payment",
+    start: "Start",
+    end: "End",
+    indefinite: "Open-ended",
+    description: "SERVICE DESCRIPTION",
+    clauses: "CLAUSES",
+    clauseWord: /^(CLAUSE|CLÁUSULA)\s/i,
+    signature: "DIGITAL SIGNATURE",
+    name: "Name",
+    document: "Tax ID",
+    signedAt: "Signed at",
+    ip: "IP",
+    page: (i: number, n: number) => `Page ${i} of ${n}`,
+    paymentLabels: {
+      one_time: "One-time",
+      installments: "Installments",
+      recurring: "Recurring",
+    } as Record<string, string>,
+  },
+} as const;
 
 export interface ContractPdfData {
   contract_number: string;
@@ -27,11 +78,11 @@ export interface ContractPdfData {
   signature_type?: string | null;
   signed_at?: string | null;
   signer_ip?: string | null;
+  language?: Lang;
 }
 
-const MARGIN = 56; // ~ 20mm at 72dpi (jsPDF "pt")
+const MARGIN = 56;
 
-/** Load an image URL and return a data URL + intrinsic dimensions. */
 async function loadImageAsDataUrl(
   url: string,
 ): Promise<{ dataUrl: string; width: number; height: number; format: "PNG" | "JPEG" } | null> {
@@ -58,11 +109,13 @@ async function loadImageAsDataUrl(
   }
 }
 
-/**
- * Generate a contract PDF. Async because the provider logo (if any) is fetched
- * from a URL and embedded as a data URL.
- */
 export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF> {
+  const lang: Lang = data.language === "en-US" ? "en-US" : "pt-BR";
+  const S = STRINGS[lang];
+  const formatMoney = (v: number) =>
+    lang === "en-US" ? formatCurrencyUSD(v) : formatCurrencyBRL(v);
+  const fmtDate = (v: string | Date) => formatDateByLang(v, lang);
+
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -76,7 +129,6 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
     }
   };
 
-  // Header — logo on the left if available, otherwise the brand name
   const logo = data.provider_logo_url
     ? await loadImageAsDataUrl(data.provider_logo_url)
     : null;
@@ -94,7 +146,7 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
     try {
       doc.addImage(logo.dataUrl, logo.format, MARGIN, y - 4, w, h);
     } catch {
-      // ignore image errors
+      // ignore
     }
     if (data.provider_name) {
       doc.setFont("helvetica", "bold");
@@ -106,8 +158,8 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
   } else {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(99, 102, 241); // primary
-    doc.text("CONTRATOFÁCIL", MARGIN, y);
+    doc.setTextColor(99, 102, 241);
+    doc.text(S.brand, MARGIN, y);
   }
 
   doc.setTextColor(120);
@@ -119,7 +171,6 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
   doc.line(MARGIN, y, pageWidth - MARGIN, y);
   y += 24;
 
-  // Title
   doc.setTextColor(15, 23, 42);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
@@ -133,14 +184,13 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
   doc.text(data.service_type, MARGIN, y);
   y += 24;
 
-  // Parties
   doc.setDrawColor(230);
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(MARGIN, y, contentWidth, 70, 6, 6, "F");
   doc.setTextColor(100);
   doc.setFontSize(8);
-  doc.text("PRESTADOR", MARGIN + 12, y + 16);
-  doc.text("CLIENTE", MARGIN + contentWidth / 2 + 12, y + 16);
+  doc.text(S.provider, MARGIN + 12, y + 16);
+  doc.text(S.client, MARGIN + contentWidth / 2 + 12, y + 16);
   doc.setTextColor(15, 23, 42);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
@@ -149,16 +199,15 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(100);
-  doc.text("Contratada", MARGIN + 12, y + 52);
-  doc.text("Contratante", MARGIN + contentWidth / 2 + 12, y + 52);
+  doc.text(S.providerRole, MARGIN + 12, y + 52);
+  doc.text(S.clientRole, MARGIN + contentWidth / 2 + 12, y + 52);
   y += 90;
 
-  // Key facts grid
   const facts: Array<[string, string]> = [
-    ["Valor total", formatCurrencyBRL(Number(data.total_value))],
-    ["Pagamento", PAYMENT_LABELS[data.payment_method] ?? data.payment_method],
-    ["Início", formatDateBR(data.start_date)],
-    ["Término", data.end_date ? formatDateBR(data.end_date) : "Indeterminado"],
+    [S.totalValue, formatMoney(Number(data.total_value))],
+    [S.payment, S.paymentLabels[data.payment_method] ?? data.payment_method],
+    [S.start, fmtDate(data.start_date)],
+    [S.end, data.end_date ? fmtDate(data.end_date) : S.indefinite],
   ];
   const colW = contentWidth / 4;
   facts.forEach(([label, value], i) => {
@@ -177,12 +226,11 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
   doc.line(MARGIN, y, pageWidth - MARGIN, y);
   y += 24;
 
-  // Description
   if (data.service_description) {
     ensureSpace(60);
     doc.setFontSize(8);
     doc.setTextColor(120);
-    doc.text("DESCRIÇÃO DO SERVIÇO", MARGIN, y);
+    doc.text(S.description, MARGIN, y);
     y += 14;
     doc.setFontSize(10.5);
     doc.setTextColor(30, 41, 59);
@@ -195,19 +243,18 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
     y += 12;
   }
 
-  // Clauses
   if (data.clauses) {
     ensureSpace(40);
     doc.setFontSize(8);
     doc.setTextColor(120);
-    doc.text("CLÁUSULAS", MARGIN, y);
+    doc.text(S.clauses, MARGIN, y);
     y += 14;
     doc.setFontSize(10);
     doc.setTextColor(30, 41, 59);
     const lines = doc.splitTextToSize(data.clauses, contentWidth);
     lines.forEach((line: string) => {
       ensureSpace(13);
-      if (/^CLÁUSULA\s/i.test(line.trim())) {
+      if (S.clauseWord.test(line.trim())) {
         doc.setFont("helvetica", "bold");
         doc.text(line, MARGIN, y);
         doc.setFont("helvetica", "normal");
@@ -219,21 +266,20 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
     y += 16;
   }
 
-  // Signature block
   ensureSpace(180);
   doc.setDrawColor(220);
   doc.line(MARGIN, y, pageWidth - MARGIN, y);
   y += 20;
   doc.setFontSize(8);
   doc.setTextColor(120);
-  doc.text("ASSINATURA DIGITAL", MARGIN, y);
+  doc.text(S.signature, MARGIN, y);
   y += 16;
 
   if (data.signature_data) {
     try {
       doc.addImage(data.signature_data, "PNG", MARGIN, y, 200, 70);
     } catch {
-      // ignore image errors
+      // ignore
     }
     y += 76;
     doc.setDrawColor(180);
@@ -250,31 +296,30 @@ export async function generateContractPdf(data: ContractPdfData): Promise<jsPDF>
   doc.setFontSize(9);
   doc.setTextColor(100);
   if (data.signer_name && data.signer_name !== data.signer_display_name) {
-    doc.text(`Nome: ${data.signer_name}`, MARGIN, y);
+    doc.text(`${S.name}: ${data.signer_name}`, MARGIN, y);
     y += 12;
   }
   if (data.signer_document) {
-    doc.text(`CPF: ${data.signer_document}`, MARGIN, y);
+    doc.text(`${S.document}: ${data.signer_document}`, MARGIN, y);
     y += 12;
   }
   if (data.signed_at) {
     const d = new Date(data.signed_at);
-    doc.text(`Assinado em: ${d.toLocaleString("pt-BR")}`, MARGIN, y);
+    doc.text(`${S.signedAt}: ${d.toLocaleString(lang)}`, MARGIN, y);
     y += 12;
   }
   if (data.signer_ip) {
-    doc.text(`IP: ${data.signer_ip}`, MARGIN, y);
+    doc.text(`${S.ip}: ${data.signer_ip}`, MARGIN, y);
     y += 12;
   }
 
-  // Footer page numbers
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `${data.contract_number} · Página ${i} de ${pageCount}`,
+      `${data.contract_number} · ${S.page(i, pageCount)}`,
       pageWidth / 2,
       pageHeight - 24,
       { align: "center" },

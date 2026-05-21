@@ -74,7 +74,7 @@ type Period = "all" | "30" | "60" | "overdue" | "month";
 function InvoicesPage() {
   const { user } = useAuth();
   const { planInfo, loading: planLoading } = usePlan();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [defaultCurrency, setDefaultCurrency] = useState<string>("BRL");
@@ -209,7 +209,8 @@ function InvoicesPage() {
   };
 
   const copyLink = async (token: string) => {
-    const url = `${window.location.origin}/pagar/${token}`;
+    const { buildInvoicePayUrl } = await import("@/lib/publicUrls");
+    const url = buildInvoicePayUrl(token, i18n.language);
     await navigator.clipboard.writeText(url);
     toast.success(t("invoices.linkCopied"));
   };

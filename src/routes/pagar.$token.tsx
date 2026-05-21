@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPixPayload } from "@/lib/pix";
-import { formatDateBR, formatMoney } from "@/lib/format";
+import { formatDateByLang, formatMoney } from "@/lib/format";
 import { createInvoiceCheckout } from "@/lib/invoice-payments.functions";
 import {
   InvoiceStatusBadge,
@@ -16,13 +16,17 @@ import {
   type InvoiceStatus,
 } from "@/components/invoices/InvoiceStatusBadge";
 
-type PaymentSearch = { status?: "success" | "cancelled" };
+type PaymentSearch = { status?: "success" | "cancelled"; lang?: "pt-BR" | "en-US" };
 
 export const Route = createFileRoute("/pagar/$token")({
   validateSearch: (search: Record<string, unknown>): PaymentSearch => ({
     status:
       search.status === "success" || search.status === "cancelled"
         ? search.status
+        : undefined,
+    lang:
+      search.lang === "en-US" || search.lang === "pt-BR"
+        ? (search.lang as "en-US" | "pt-BR")
         : undefined,
   }),
   head: () => ({
@@ -55,7 +59,7 @@ interface PixSettings {
 
 function PublicInvoicePage() {
   const { token } = Route.useParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [invoice, setInvoice] = useState<PublicInvoice | null>(null);
   const [pix, setPix] = useState<PixSettings | null>(null);
   const [providerName, setProviderName] = useState("");
@@ -120,6 +124,12 @@ function PublicInvoicePage() {
       setLoading(false);
     })();
   }, [token]);
+
+  useEffect(() => {
+    if (search.lang && i18n.language !== search.lang) {
+      void i18n.changeLanguage(search.lang);
+    }
+  }, [search.lang, i18n]);
 
   useEffect(() => {
     if (search.status === "success") {
@@ -233,7 +243,7 @@ function PublicInvoicePage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t("publicInvoice.dueDate")}</p>
-              <p className="mt-1 text-base font-medium">{formatDateBR(invoice.due_date)}</p>
+              <p className="mt-1 text-base font-medium">{formatDateByLang(invoice.due_date, i18n.language)}</p>
             </div>
           </div>
         </div>
@@ -246,7 +256,7 @@ function PublicInvoicePage() {
             </h2>
             {invoice.paid_at && (
               <p className="mt-1 text-sm text-emerald-200/80">
-                {t("publicInvoice.paidOn", { date: formatDateBR(invoice.paid_at) })}
+                {t("publicInvoice.paidOn", { date: formatDateByLang(invoice.paid_at, i18n.language) })}
               </p>
             )}
           </div>
