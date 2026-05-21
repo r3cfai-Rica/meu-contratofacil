@@ -79,3 +79,20 @@ export function formatDateBR(value: string | Date): string {
   const d = typeof value === "string" ? new Date(value) : value;
   return d.toLocaleDateString("pt-BR");
 }
+
+type Lang = "pt-BR" | "en-US";
+
+function normalizeLang(lang: string | undefined | null): Lang {
+  return lang && lang.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
+}
+
+export function formatMoneyByLang(value: number, lang: string | undefined | null): string {
+  const l = normalizeLang(lang);
+  return l === "en-US" ? formatCurrencyUSD(value) : formatCurrencyBRL(value);
+}
+
+export function formatDateByLang(value: string | Date, lang: string | undefined | null): string {
+  const d = typeof value === "string" ? new Date(value) : value;
+  const l = normalizeLang(lang);
+  return d.toLocaleDateString(l);
+}
