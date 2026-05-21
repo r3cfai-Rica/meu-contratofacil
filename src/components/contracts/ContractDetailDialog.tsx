@@ -54,8 +54,10 @@ interface Props {
 
 export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Props) {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const sendEmail = useServerFn(sendContractEmail);
+  const currentLang: "pt-BR" | "en-US" =
+    i18n.language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
   const [downloading, setDownloading] = useState(false);
