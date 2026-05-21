@@ -26,7 +26,7 @@ import {
 } from "@/components/contracts/SignaturePad";
 import { renderTypedSignature } from "@/lib/typedSignature";
 import { generateContractPdf } from "@/lib/contractPdf";
-import { formatCurrencyBRL, formatDateBR, maskDocument, isValidDocument } from "@/lib/format";
+import { formatMoneyByLang, formatDateByLang, maskDocument, isValidDocument } from "@/lib/format";
 
 export const Route = createFileRoute("/c/$token")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -231,6 +231,7 @@ function PublicContractPage() {
       provider_name: providerName,
       provider_logo_url: providerLogo,
       client_name: contract.clients?.full_name ?? null,
+      language: i18n.language === "en-US" ? "en-US" : "pt-BR",
     });
     pdf.save(`${contract.contract_number}.pdf`);
   };
@@ -479,11 +480,11 @@ function ContractDocument({
 
       <dl className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
         <Field label={t("publicContract.client")} value={contract.clients?.full_name ?? "—"} />
-        <Field label={t("publicContract.amount")} value={formatCurrencyBRL(Number(contract.total_value))} />
+        <Field label={t("publicContract.amount")} value={formatMoneyByLang(Number(contract.total_value), i18n.language)} />
         <Field label={t("publicContract.payment")} value={paymentLabel(contract.payment_method)} />
-        <Field label={t("publicContract.start")} value={formatDateBR(contract.start_date)} />
+        <Field label={t("publicContract.start")} value={formatDateByLang(contract.start_date, i18n.language)} />
         {contract.end_date && (
-          <Field label={t("publicContract.end")} value={formatDateBR(contract.end_date)} />
+          <Field label={t("publicContract.end")} value={formatDateByLang(contract.end_date, i18n.language)} />
         )}
       </dl>
 

@@ -174,6 +174,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
         provider_name: profile?.full_name ?? null,
         provider_logo_url: profile?.logo_url ?? null,
         client_name: contract.clients?.full_name ?? null,
+        language: currentLang === "en-US" ? "en-US" : "pt-BR",
       });
       pdf.save(`${full.contract_number}.pdf`);
     } catch (err) {
