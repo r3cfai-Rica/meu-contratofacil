@@ -97,7 +97,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
     toast.success(t("contracts.detail.linkGenerated"));
     try {
       const result = await sendEmail({
-        data: { contractId: contract.id, appOrigin: window.location.origin },
+        data: { contractId: contract.id, appOrigin: window.location.origin, language: currentLang },
       });
       toast.success(t("contracts.detail.emailSent", { recipient: result.recipient }));
     } catch (err) {
