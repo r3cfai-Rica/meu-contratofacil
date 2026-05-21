@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPixPayload } from "@/lib/pix";
-import { formatDateBR, formatMoney } from "@/lib/format";
+import { formatDateByLang, formatMoney } from "@/lib/format";
 import { createInvoiceCheckout } from "@/lib/invoice-payments.functions";
 import {
   InvoiceStatusBadge,
@@ -16,13 +16,17 @@ import {
   type InvoiceStatus,
 } from "@/components/invoices/InvoiceStatusBadge";
 
-type PaymentSearch = { status?: "success" | "cancelled" };
+type PaymentSearch = { status?: "success" | "cancelled"; lang?: "pt-BR" | "en-US" };
 
 export const Route = createFileRoute("/pagar/$token")({
   validateSearch: (search: Record<string, unknown>): PaymentSearch => ({
     status:
       search.status === "success" || search.status === "cancelled"
         ? search.status
+        : undefined,
+    lang:
+      search.lang === "en-US" || search.lang === "pt-BR"
+        ? (search.lang as "en-US" | "pt-BR")
         : undefined,
   }),
   head: () => ({
@@ -55,7 +59,7 @@ interface PixSettings {
 
 function PublicInvoicePage() {
   const { token } = Route.useParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [invoice, setInvoice] = useState<PublicInvoice | null>(null);
   const [pix, setPix] = useState<PixSettings | null>(null);
   const [providerName, setProviderName] = useState("");
