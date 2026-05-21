@@ -469,7 +469,7 @@ function ContractDocument({
   contract: PublicContract;
   paymentLabel: (m: string) => string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <article className="mb-6 rounded-2xl border border-border/70 bg-card p-6 sm:p-8">
       <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
