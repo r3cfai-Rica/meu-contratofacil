@@ -139,6 +139,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
           data: {
             contractId: data.id,
             appOrigin: window.location.origin,
+            language: currentLang,
           },
         });
         toast.success(t("contracts.form.sentToEmail", { recipient: result.recipient }));
