@@ -126,6 +126,12 @@ function PublicInvoicePage() {
   }, [token]);
 
   useEffect(() => {
+    if (search.lang && i18n.language !== search.lang) {
+      void i18n.changeLanguage(search.lang);
+    }
+  }, [search.lang, i18n]);
+
+  useEffect(() => {
     if (search.status === "success") {
       toast.success(t("publicInvoice.paymentSuccess"));
       void (async () => {
