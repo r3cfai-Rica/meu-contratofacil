@@ -29,6 +29,12 @@ import { generateContractPdf } from "@/lib/contractPdf";
 import { formatCurrencyBRL, formatDateBR, maskDocument, isValidDocument } from "@/lib/format";
 
 export const Route = createFileRoute("/c/$token")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    lang:
+      search.lang === "en-US" || search.lang === "pt-BR"
+        ? (search.lang as "en-US" | "pt-BR")
+        : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign contract — EasyContract" },
