@@ -181,16 +181,50 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
     });
 
     setLoading(true);
-    const { error } = await supabase.from("invoices").insert(rows);
-    setLoading(false);
+    const { data: inserted, error } = await supabase
+      .from("invoices")
+      .insert(rows)
+      .select("id");
 
-    if (error) return toast.error(error.message);
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+
+    const lang = i18n.language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
+    const ids = (inserted ?? []).map((r) => r.id);
+    let sent = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await sendInvoiceEmailFn({ data: { invoiceId: id, language: lang } });
+        sent++;
+      } catch (err) {
+        failed++;
+        console.error("sendInvoiceEmail failed", err);
+      }
+    }
+    setLoading(false);
 
     toast.success(
       total > 1
         ? t("invoices.form.createdMany", { count: total })
         : t("invoices.form.createdOne"),
     );
+    if (sent > 0) {
+      toast.success(
+        lang === "en-US"
+          ? `Email sent to client (${sent})`
+          : `Email enviado ao cliente (${sent})`,
+      );
+    }
+    if (failed > 0) {
+      toast.error(
+        lang === "en-US"
+          ? `Failed to email ${failed} invoice(s). You can resend from the list.`
+          : `Falha ao enviar ${failed} email(s). Você pode reenviar pela lista.`,
+      );
+    }
     onOpenChange(false);
     onSaved();
   };
