@@ -41,6 +41,10 @@ interface ContractRow {
   contract_number: string;
   title: string;
   client_id: string;
+  total_value: number;
+  start_date: string;
+  end_date: string | null;
+  status: string;
 }
 
 type Frequency = "one_time" | "recurring";
@@ -87,8 +91,9 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
           .order("full_name"),
         supabase
           .from("contracts")
-          .select("id, contract_number, title, client_id")
+          .select("id, contract_number, title, client_id, total_value, start_date, end_date, status")
           .eq("user_id", user.id)
+          .eq("status", "signed")
           .order("created_at", { ascending: false }),
         supabase
           .from("pix_settings")
@@ -119,6 +124,17 @@ export function InvoiceFormDialog({ open, onOpenChange, onSaved }: Props) {
   const filteredContracts = clientId
     ? contracts.filter((c) => c.client_id === clientId)
     : contracts;
+
+  useEffect(() => {
+    if (contractId === "none" || !contractId) return;
+    const c = contracts.find((x) => x.id === contractId);
+    if (!c) return;
+    if (!clientId) setClientId(c.client_id);
+    setDescription((prev) => (prev.trim() ? prev : `${c.contract_number} — ${c.title}`));
+    setAmount((prev) => (prev.trim() ? prev : String(c.total_value).replace(".", ",")));
+    setDueDate((prev) => prev || c.start_date);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contractId, contracts]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
