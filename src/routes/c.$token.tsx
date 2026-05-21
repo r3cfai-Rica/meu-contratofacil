@@ -29,6 +29,12 @@ import { generateContractPdf } from "@/lib/contractPdf";
 import { formatCurrencyBRL, formatDateBR, maskDocument, isValidDocument } from "@/lib/format";
 
 export const Route = createFileRoute("/c/$token")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    lang:
+      search.lang === "en-US" || search.lang === "pt-BR"
+        ? (search.lang as "en-US" | "pt-BR")
+        : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign contract — EasyContract" },
@@ -65,7 +71,15 @@ interface PublicContract {
 
 function PublicContractPage() {
   const { token } = Route.useParams();
-  const { t } = useTranslation();
+  const { lang } = Route.useSearch();
+  const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    if (lang && i18n.language !== lang) {
+      void i18n.changeLanguage(lang);
+    }
+  }, [lang, i18n]);
+
   const [contract, setContract] = useState<PublicContract | null>(null);
   const [providerName, setProviderName] = useState<string>("");
   const [providerLogo, setProviderLogo] = useState<string | null>(null);

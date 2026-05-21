@@ -54,8 +54,10 @@ interface Props {
 
 export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Props) {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const sendEmail = useServerFn(sendContractEmail);
+  const currentLang: "pt-BR" | "en-US" =
+    i18n.language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -95,7 +97,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
     toast.success(t("contracts.detail.linkGenerated"));
     try {
       const result = await sendEmail({
-        data: { contractId: contract.id, appOrigin: window.location.origin },
+        data: { contractId: contract.id, appOrigin: window.location.origin, language: currentLang },
       });
       toast.success(t("contracts.detail.emailSent", { recipient: result.recipient }));
     } catch (err) {
@@ -110,7 +112,7 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
     setSendingEmail(true);
     try {
       const result = await sendEmail({
-        data: { contractId: contract.id, appOrigin: window.location.origin },
+        data: { contractId: contract.id, appOrigin: window.location.origin, language: currentLang },
       });
       toast.success(t("contracts.detail.emailResent", { recipient: result.recipient }));
       onChanged();

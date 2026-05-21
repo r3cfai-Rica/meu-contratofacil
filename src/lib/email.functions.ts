@@ -5,16 +5,45 @@ import { withSupabaseAccessToken } from "@/integrations/supabase/server-fn-auth"
 
 const FROM = "ContratoFácil <contratos@r3cf.com>";
 
+// URL pública estável – nunca usar a URL de preview (que exige login no Lovable).
+// Pode ser sobrescrita via env PUBLIC_APP_URL.
+const PUBLIC_APP_URL = "https://meu-contrato-na-mao.lovable.app";
+
 const InputSchema = z.object({
   contractId: z.string().uuid(),
   appOrigin: z.string().url(),
+  language: z.enum(["pt-BR", "en-US"]).optional().default("pt-BR"),
 });
 
-function formatBRL(value: number) {
+type Lang = "pt-BR" | "en-US";
+
+function resolvePublicOrigin(appOrigin: string): string {
+  const envUrl = process.env.PUBLIC_APP_URL;
+  const base = (envUrl && envUrl.trim()) || PUBLIC_APP_URL;
+  try {
+    const u = new URL(appOrigin);
+    // Bloqueia URLs de preview do Lovable que exigem login.
+    if (
+      u.hostname.includes("id-preview--") ||
+      u.hostname.endsWith("-dev.lovable.app") ||
+      u.hostname.includes("lovable.dev")
+    ) {
+      return base.replace(/\/$/, "");
+    }
+    return appOrigin.replace(/\/$/, "");
+  } catch {
+    return base.replace(/\/$/, "");
+  }
+}
+
+function formatMoney(value: number, lang: Lang) {
+  if (lang === "en-US") {
+    return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  }
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("pt-BR");
+function formatDate(value: string, lang: Lang) {
+  return new Date(value).toLocaleDateString(lang === "en-US" ? "en-US" : "pt-BR");
 }
 function escapeHtml(str: string) {
   return str
@@ -25,6 +54,39 @@ function escapeHtml(str: string) {
     .replace(/'/g, "&#39;");
 }
 
+const T = {
+  "pt-BR": {
+    htmlLang: "pt-BR",
+    brand: "ContratoFácil",
+    hello: (n: string) => `Olá, ${n}!`,
+    intro: (p: string) =>
+      `<strong>${p}</strong> enviou um contrato para sua assinatura digital. Revise os termos e assine diretamente pelo navegador, do computador ou celular.`,
+    contractLabel: "Contrato",
+    amountLabel: "Valor:",
+    startLabel: "Início:",
+    cta: "Revisar e assinar contrato",
+    copyLink: "Ou copie este link no navegador:",
+    footer: (p: string) =>
+      `Em caso de dúvidas, basta responder este email.<br/>Enviado por ${p} via ContratoFácil.`,
+    subject: (p: string) => `${p} enviou um contrato para sua assinatura`,
+  },
+  "en-US": {
+    htmlLang: "en",
+    brand: "EasyContract",
+    hello: (n: string) => `Hello, ${n}!`,
+    intro: (p: string) =>
+      `<strong>${p}</strong> has sent you a contract for digital signature. Review the terms and sign directly in your browser, on desktop or mobile.`,
+    contractLabel: "Contract",
+    amountLabel: "Amount:",
+    startLabel: "Start:",
+    cta: "Review and sign contract",
+    copyLink: "Or copy this link into your browser:",
+    footer: (p: string) =>
+      `If you have any questions, just reply to this email.<br/>Sent by ${p} via EasyContract.`,
+    subject: (p: string) => `${p} sent you a contract to sign`,
+  },
+} as const;
+
 function buildHtml(params: {
   clientName: string;
   providerName: string;
@@ -34,6 +96,7 @@ function buildHtml(params: {
   totalValue: number;
   startDate: string;
   signUrl: string;
+  language: Lang;
 }) {
   const {
     clientName,
@@ -44,10 +107,12 @@ function buildHtml(params: {
     totalValue,
     startDate,
     signUrl,
+    language,
   } = params;
+  const tr = T[language];
 
   return `<!doctype html>
-<html lang="pt-BR">
+<html lang="${tr.htmlLang}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -70,10 +135,10 @@ function buildHtml(params: {
           <tr>
             <td style="padding:8px 32px 0;">
               <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#1a1a1a;line-height:1.3;">
-                Olá, ${escapeHtml(clientName)}!
+                ${escapeHtml(tr.hello(clientName))}
               </h1>
               <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3a3a3a;">
-                <strong>${escapeHtml(providerName)}</strong> enviou um contrato para sua assinatura digital. Revise os termos e assine diretamente pelo navegador, do computador ou celular.
+                ${tr.intro(escapeHtml(providerName))}
               </p>
             </td>
           </tr>
@@ -81,7 +146,7 @@ function buildHtml(params: {
             <td style="padding:8px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9f9fb;border:1px solid #ececef;border-radius:12px;padding:20px;">
                 <tr>
-                  <td style="font-size:13px;color:#6b6b70;padding-bottom:6px;">Contrato</td>
+                  <td style="font-size:13px;color:#6b6b70;padding-bottom:6px;">${tr.contractLabel}</td>
                 </tr>
                 <tr>
                   <td style="font-size:16px;font-weight:600;color:#1a1a1a;padding-bottom:14px;">
@@ -90,14 +155,14 @@ function buildHtml(params: {
                 </tr>
                 <tr>
                   <td style="padding-bottom:6px;">
-                    <span style="font-size:13px;color:#6b6b70;">Valor: </span>
-                    <span style="font-size:14px;font-weight:600;color:#1a1a1a;">${escapeHtml(formatBRL(totalValue))}</span>
+                    <span style="font-size:13px;color:#6b6b70;">${tr.amountLabel} </span>
+                    <span style="font-size:14px;font-weight:600;color:#1a1a1a;">${escapeHtml(formatMoney(totalValue, language))}</span>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <span style="font-size:13px;color:#6b6b70;">Início: </span>
-                    <span style="font-size:14px;color:#1a1a1a;">${escapeHtml(formatDate(startDate))}</span>
+                    <span style="font-size:13px;color:#6b6b70;">${tr.startLabel} </span>
+                    <span style="font-size:14px;color:#1a1a1a;">${escapeHtml(formatDate(startDate, language))}</span>
                   </td>
                 </tr>
               </table>
@@ -107,14 +172,14 @@ function buildHtml(params: {
             <td style="padding:24px 32px;text-align:center;">
               <a href="${escapeHtml(signUrl)}"
                  style="display:inline-block;background-color:#1a1a1a;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 32px;border-radius:10px;">
-                Revisar e assinar contrato
+                ${tr.cta}
               </a>
             </td>
           </tr>
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#8a8a8e;line-height:1.5;">
-                Ou copie este link no navegador:<br/>
+                ${tr.copyLink}<br/>
                 <a href="${escapeHtml(signUrl)}" style="color:#3a3a3a;word-break:break-all;">${escapeHtml(signUrl)}</a>
               </p>
             </td>
@@ -122,8 +187,7 @@ function buildHtml(params: {
           <tr>
             <td style="padding:20px 32px;background-color:#f9f9fb;border-top:1px solid #ececef;text-align:center;">
               <p style="margin:0;font-size:12px;color:#8a8a8e;line-height:1.5;">
-                Em caso de dúvidas, basta responder este email.<br/>
-                Enviado por ${escapeHtml(providerName)} via ContratoFácil.
+                ${tr.footer(escapeHtml(providerName))}
               </p>
             </td>
           </tr>
@@ -144,6 +208,9 @@ export const sendContractEmail = createServerFn({ method: "POST" })
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY não configurada");
     }
+
+    const language: Lang = data.language ?? "pt-BR";
+    const tr = T[language];
 
     // Busca contrato (RLS garante que é do user)
     const { data: contract, error: cErr } = await supabase
@@ -179,8 +246,13 @@ export const sendContractEmail = createServerFn({ method: "POST" })
     if (!client.email)
       throw new Error("Cliente sem email cadastrado. Cadastre um email para o cliente antes de enviar.");
 
-    const providerName = profile?.full_name?.trim() || "Seu prestador";
-    const signUrl = `${data.appOrigin.replace(/\/$/, "")}/c/${contract.public_token}`;
+    const providerName =
+      profile?.full_name?.trim() ||
+      (language === "en-US" ? "Your provider" : "Seu prestador");
+
+    // Sempre usar URL pública estável + propagar idioma na URL.
+    const origin = resolvePublicOrigin(data.appOrigin);
+    const signUrl = `${origin}/c/${contract.public_token}?lang=${encodeURIComponent(language)}`;
 
     const html = buildHtml({
       clientName: client.full_name,
@@ -191,9 +263,10 @@ export const sendContractEmail = createServerFn({ method: "POST" })
       totalValue: Number(contract.total_value),
       startDate: contract.start_date,
       signUrl,
+      language,
     });
 
-    const subject = `${providerName} enviou um contrato para sua assinatura`;
+    const subject = tr.subject(providerName);
 
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -228,6 +301,7 @@ export const sendContractEmail = createServerFn({ method: "POST" })
       details: {
         recipient: client.email,
         message_id: respJson.id ?? null,
+        language,
       },
     });
 
