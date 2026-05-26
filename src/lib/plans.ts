@@ -120,9 +120,29 @@ export const PLANS: Record<PlanTier, PlanInfo> = {
 
 export const PLAN_ORDER: PlanTier[] = ["free", "pro", "business"];
 
+/** Launch offer: one-time payment that unlocks the Pro plan. */
+export const LAUNCH_OFFER = {
+  amountBRL: 48.9,
+  regularPriceBRL: 68.9,
+  unitAmountCents: 4890,
+  stripeProductId: "prod_UacbBdtqaZtybk",
+  stripePriceId: "price_1TbRMRB2CRIHoDBfbhnIxLmJ",
+  stripeProductIdTest: "prod_UacbaLo8KXjDjL",
+  stripePriceIdTest: "price_1TbRMdF7QCShwtsLLbT3YUsz",
+} as const;
+
+export function getLaunchOfferPriceId(mode: StripeMode): string {
+  return mode === "test" ? LAUNCH_OFFER.stripePriceIdTest : LAUNCH_OFFER.stripePriceId;
+}
+
 /** Map a Stripe product id to a plan tier (used by check-subscription). Matches both live and test product IDs. */
 export function planFromProductId(productId: string | null | undefined): PlanTier {
   if (!productId) return "free";
+  if (
+    productId === LAUNCH_OFFER.stripeProductId ||
+    productId === LAUNCH_OFFER.stripeProductIdTest
+  )
+    return "pro";
   for (const tier of PLAN_ORDER) {
     const p = PLANS[tier];
     if (p.stripeProductId === productId || p.stripeProductIdTest === productId) return tier;

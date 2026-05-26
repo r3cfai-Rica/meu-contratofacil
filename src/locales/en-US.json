@@ -75,7 +75,27 @@
     "feature3Desc": "Centralize history, contracts and payments for each client in a clean, organized dashboard.",
     "finalCtaTitle": "Ready to professionalize your business?",
     "finalCtaDesc": "Create your free account and start sending contracts and invoices today.",
-    "footer": "All rights reserved."
+    "footer": "All rights reserved.",
+    "launchOffer": {
+      "eyebrow": "Launch offer · limited time",
+      "title": "Get full access with a one-time payment",
+      "discountBadge": "30% OFF",
+      "regularPriceLabel": "Regular subscription",
+      "regularPrice": "$14.90/mo",
+      "promoPrice": "$9.90",
+      "promoSuffix": "one-time payment",
+      "description": "We're validating the app with early users. Pay once and unlock the entire Pro plan — no monthly fee while the promo lasts.",
+      "feature1": "Unlimited clients, contracts and invoices",
+      "feature2": "Your logo on every contract",
+      "feature3": "Automatic due-date reminders",
+      "feature4": "Pay by card or PIX",
+      "cta": "Claim launch offer",
+      "ctaLoading": "Opening checkout...",
+      "paymentMethods": "Card · PIX · Stripe",
+      "disclaimer": "After this period, access will be available only via the $14.90/mo subscription.",
+      "checkoutError": "Could not open checkout. Please try again.",
+      "successToast": "Payment confirmed! Your Pro plan is unlocked."
+    }
   },
   "auth": {
     "loginTitle": "Welcome back",

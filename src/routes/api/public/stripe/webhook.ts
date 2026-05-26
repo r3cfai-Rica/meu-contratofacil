@@ -136,6 +136,39 @@ export const Route = createFileRoute("/api/public/stripe/webhook")({
           switch (event.type) {
             case "checkout.session.completed": {
               const session = event.data.object as Stripe.Checkout.Session;
+
+              // Launch offer: one-time payment that unlocks Pro plan.
+              if (session.metadata?.type === "launch_offer") {
+                const userId = session.metadata.user_id;
+                const customerId =
+                  typeof session.customer === "string"
+                    ? session.customer
+                    : session.customer?.id ?? null;
+                if (userId) {
+                  // Unlock Pro for ~10 years; no recurring subscription id.
+                  const farFuture = new Date();
+                  farFuture.setFullYear(farFuture.getFullYear() + 10);
+                  const { error } = await supabaseAdmin
+                    .from("subscriptions")
+                    .upsert(
+                      {
+                        user_id: userId,
+                        plan: "pro",
+                        status: "active",
+                        stripe_customer_id: customerId,
+                        stripe_subscription_id: null,
+                        stripe_price_id: session.metadata.price_id ?? null,
+                        current_period_end: farFuture.toISOString(),
+                        cancel_at_period_end: false,
+                      },
+                      { onConflict: "user_id" },
+                    );
+                  if (error)
+                    console.error("[stripe-webhook] launch_offer upsert error", error);
+                }
+                break;
+              }
+
               const subId =
                 typeof session.subscription === "string"
                   ? session.subscription
