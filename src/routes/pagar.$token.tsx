@@ -71,47 +71,33 @@ function PublicInvoicePage() {
   const createCheckout = useServerFn(createInvoiceCheckout);
 
   const loadInvoice = async () => {
-    const { data: inv } = await supabase
-      .from("invoices")
-      .select(
-        "id, description, amount, currency, due_date, status, paid_at, user_id, public_token, clients(full_name)",
-      )
-      .eq("public_token", token)
-      .maybeSingle();
-    return inv as unknown as PublicInvoice | null;
+    const { data } = await supabase.rpc("get_invoice_by_token", { p_token: token });
+    return data as unknown as
+      | (PublicInvoice & {
+          provider?: { full_name: string | null } | null;
+          pix?: PixSettings | null;
+        })
+      | null;
   };
 
   useEffect(() => {
     void (async () => {
-      const invoice = await loadInvoice();
-      setInvoice(invoice);
+      const inv = await loadInvoice();
+      setInvoice(inv);
 
-      if (invoice) {
-        const [pixRes, profRes] = await Promise.all([
-          supabase
-            .from("pix_settings")
-            .select("pix_key, beneficiary_name, city")
-            .eq("user_id", invoice.user_id)
-            .maybeSingle(),
-          supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("user_id", invoice.user_id)
-            .maybeSingle(),
-        ]);
-
-        const pixData = pixRes.data as PixSettings | null;
+      if (inv) {
+        const pixData = inv.pix ?? null;
         setPix(pixData);
-        if (profRes.data?.full_name) setProviderName(profRes.data.full_name);
+        if (inv.provider?.full_name) setProviderName(inv.provider.full_name);
 
         if (pixData) {
           const payload = buildPixPayload({
             pixKey: pixData.pix_key,
             beneficiaryName: pixData.beneficiary_name,
             city: pixData.city,
-            amount: Number(invoice.amount),
-            txid: invoice.id.replace(/-/g, "").slice(0, 25),
-            description: invoice.description,
+            amount: Number(inv.amount),
+            txid: inv.id.replace(/-/g, "").slice(0, 25),
+            description: inv.description,
           });
           const url = await QRCode.toDataURL(payload, {
             width: 320,
@@ -124,6 +110,7 @@ function PublicInvoicePage() {
       setLoading(false);
     })();
   }, [token]);
+
 
   useEffect(() => {
     if (search.lang && i18n.language !== search.lang) {

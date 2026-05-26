@@ -105,16 +105,13 @@ function PublicContractPage() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from("contracts")
-        .select(
-          "id, contract_number, title, service_type, service_description, total_value, payment_method, start_date, end_date, clauses, status, client_id, user_id, signer_name, signer_document, signer_birth_date, signer_display_name, signature_data, signature_type, signed_at, signer_ip, clients(full_name, document, email)",
-        )
-        .eq("public_token", token)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("get_contract_by_token", {
+        p_token: token,
+      });
 
       if (error) toast.error(error.message);
-      const c = data as unknown as PublicContract | null;
+      const raw = data as (PublicContract & { provider?: { full_name: string | null; logo_url: string | null } }) | null;
+      const c = raw as unknown as PublicContract | null;
       setContract(c);
 
       if (c) {
@@ -123,17 +120,14 @@ function PublicContractPage() {
         setDisplayName(c.signer_display_name || c.signer_name || c.clients?.full_name || "");
         setBirthDate(c.signer_birth_date || "");
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, logo_url")
-          .eq("user_id", c.user_id)
-          .maybeSingle();
-        if (profile?.full_name) setProviderName(profile.full_name);
-        if (profile?.logo_url) setProviderLogo(profile.logo_url);
+        const provider = raw?.provider;
+        if (provider?.full_name) setProviderName(provider.full_name);
+        if (provider?.logo_url) setProviderLogo(provider.logo_url);
       }
       setLoading(false);
     })();
   }, [token]);
+
 
   useEffect(() => {
     if (!displayName && signerName) setDisplayName(signerName);
@@ -195,24 +189,16 @@ function PublicContractPage() {
     setSigning(true);
     const ip = await fetchClientIp();
 
-    const { data, error } = await supabase
-      .from("contracts")
-      .update({
-        signer_name: signerName.trim(),
-        signer_document: document,
-        signer_birth_date: birthDate,
-        signer_display_name: displayName.trim(),
-        signature_data: signatureData,
-        signature_type: signMode === "draw" ? "drawn" : "typed",
-        signer_ip: ip,
-        signed_at: new Date().toISOString(),
-        status: "signed",
-      })
-      .eq("public_token", token)
-      .select(
-        "id, contract_number, title, service_type, service_description, total_value, payment_method, start_date, end_date, clauses, status, client_id, user_id, signer_name, signer_document, signer_birth_date, signer_display_name, signature_data, signature_type, signed_at, signer_ip, clients(full_name, document, email)",
-      )
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("sign_contract_by_token", {
+      p_token: token,
+      p_signer_name: signerName.trim(),
+      p_signer_document: document,
+      p_signer_birth_date: birthDate,
+      p_signer_display_name: displayName.trim(),
+      p_signature_data: signatureData,
+      p_signature_type: signMode === "draw" ? "drawn" : "typed",
+      p_signer_ip: ip ?? "",
+    });
 
     setSigning(false);
 
@@ -222,6 +208,7 @@ function PublicContractPage() {
     }
     toast.success(t("publicContract.signed"));
     setContract(data as unknown as PublicContract);
+
   };
 
   const downloadPdf = async () => {
