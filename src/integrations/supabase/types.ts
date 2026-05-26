@@ -560,6 +560,9 @@ export type Database = {
       }
       get_admin_overview: { Args: never; Returns: Json }
       get_admin_stats: { Args: never; Returns: Json }
+      get_contract_by_token: { Args: { p_token: string }; Returns: Json }
+      get_invoice_by_token: { Args: { p_token: string }; Returns: Json }
+      get_team_invite_by_token: { Args: { p_token: string }; Returns: Json }
       get_user_plan: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["plan_tier"]
@@ -639,6 +642,19 @@ export type Database = {
           subscription_status: Database["public"]["Enums"]["subscription_status"]
           user_id: string
         }[]
+      }
+      sign_contract_by_token: {
+        Args: {
+          p_signature_data: string
+          p_signature_type: string
+          p_signer_birth_date: string
+          p_signer_display_name: string
+          p_signer_document: string
+          p_signer_ip: string
+          p_signer_name: string
+          p_token: string
+        }
+        Returns: Json
       }
       user_workspace_owners: { Args: { _user_id: string }; Returns: string[] }
     }
