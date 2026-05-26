@@ -75,7 +75,27 @@
     "feature3Desc": "Centralize histórico, contratos e pagamentos de cada cliente em um painel simples e organizado.",
     "finalCtaTitle": "Pronto para profissionalizar seu negócio?",
     "finalCtaDesc": "Crie sua conta gratuita e comece a enviar contratos e cobranças hoje mesmo.",
-    "footer": "Todos os direitos reservados."
+    "footer": "Todos os direitos reservados.",
+    "launchOffer": {
+      "eyebrow": "Oferta de lançamento · por tempo limitado",
+      "title": "Garanta acesso completo com pagamento único",
+      "discountBadge": "30% OFF",
+      "regularPriceLabel": "Assinatura normal",
+      "regularPrice": "R$ 68,90/mês",
+      "promoPrice": "R$ 48,90",
+      "promoSuffix": "pagamento único",
+      "description": "Estamos validando o app com os primeiros usuários. Pague uma vez e libere todo o plano Pro — sem mensalidade enquanto durar a promoção.",
+      "feature1": "Clientes, contratos e cobranças ilimitados",
+      "feature2": "Logo da sua marca nos contratos",
+      "feature3": "Lembretes automáticos de vencimento",
+      "feature4": "Pague no cartão ou via PIX",
+      "cta": "Quero a oferta de lançamento",
+      "ctaLoading": "Abrindo checkout...",
+      "paymentMethods": "Cartão · PIX · Stripe",
+      "disclaimer": "Depois desse período, o acesso será apenas via assinatura mensal de R$ 68,90.",
+      "checkoutError": "Não foi possível abrir o checkout. Tente novamente.",
+      "successToast": "Pagamento confirmado! Seu plano Pro está liberado."
+    }
   },
   "auth": {
     "loginTitle": "Bem-vindo de volta",
