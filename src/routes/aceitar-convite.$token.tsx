@@ -40,23 +40,14 @@ function AcceptInvitePage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("team_members")
-        .select("id, email, status, owner_id")
-        .eq("invite_token", token)
-        .maybeSingle();
-      setInvite((data as InviteRow | null) ?? null);
-      if (data) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("user_id", data.owner_id)
-          .maybeSingle();
-        if (profile?.full_name) setOwnerName(profile.full_name);
-      }
+      const { data } = await supabase.rpc("get_team_invite_by_token", { p_token: token });
+      const row = data as (InviteRow & { owner_name?: string | null }) | null;
+      setInvite(row ?? null);
+      if (row?.owner_name) setOwnerName(row.owner_name);
       setLoading(false);
     })();
   }, [token]);
+
 
   const handleAccept = async () => {
     setAccepting(true);
