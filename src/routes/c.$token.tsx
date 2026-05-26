@@ -197,7 +197,7 @@ function PublicContractPage() {
       p_signer_display_name: displayName.trim(),
       p_signature_data: signatureData,
       p_signature_type: signMode === "draw" ? "drawn" : "typed",
-      p_signer_ip: ip,
+      p_signer_ip: ip ?? "",
     });
 
     setSigning(false);
