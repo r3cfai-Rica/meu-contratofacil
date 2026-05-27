@@ -59,7 +59,9 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("one_time");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [clauses, setClauses] = useState(DEFAULT_CONTRACT_CLAUSES);
+  const [contractLang, setContractLang] = useState<ContractLang>(currentLang);
+  const [clausesTouched, setClausesTouched] = useState(false);
+  const [clauses, setClauses] = useState(getDefaultContractClauses(currentLang));
 
   useEffect(() => {
     if (!open) {
@@ -71,7 +73,9 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
       setPaymentMethod("one_time");
       setStartDate("");
       setEndDate("");
-      setClauses(DEFAULT_CONTRACT_CLAUSES);
+      setContractLang(currentLang);
+      setClausesTouched(false);
+      setClauses(getDefaultContractClauses(currentLang));
       return;
     }
     if (!user) return;
