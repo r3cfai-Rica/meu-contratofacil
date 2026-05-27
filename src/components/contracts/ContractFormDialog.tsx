@@ -290,16 +290,45 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="contract_language">{t("contracts.form.contractLanguage")}</Label>
+            <Select
+              value={contractLang}
+              onValueChange={(v) => {
+                const next = v as ContractLang;
+                setContractLang(next);
+                if (!clausesTouched) {
+                  setClauses(getDefaultContractClauses(next));
+                }
+              }}
+            >
+              <SelectTrigger id="contract_language">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pt-BR">{t("contracts.form.langPt")}</SelectItem>
+                <SelectItem value="en-US">{t("contracts.form.langEn")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {t("contracts.form.contractLanguageHint")}
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="clauses">{t("contracts.form.clauses")}</Label>
             <Textarea
               id="clauses"
               value={clauses}
-              onChange={(e) => setClauses(e.target.value)}
+              onChange={(e) => {
+                setClausesTouched(true);
+                setClauses(e.target.value);
+              }}
               rows={10}
               className="font-mono text-xs leading-relaxed"
             />
             <p className="text-xs text-muted-foreground">{t("contracts.form.clausesHint")}</p>
           </div>
+
 
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:gap-2">
             <Button
