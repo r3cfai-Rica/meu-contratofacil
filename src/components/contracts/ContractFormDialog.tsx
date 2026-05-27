@@ -25,7 +25,9 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { DEFAULT_CONTRACT_CLAUSES } from "@/lib/contractTemplate";
+import { getDefaultContractClauses } from "@/lib/contractTemplate";
+
+type ContractLang = "pt-BR" | "en-US";
 
 interface ClientOption {
   id: string;
