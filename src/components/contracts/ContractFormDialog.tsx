@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Loader2, Send, Save } from "lucide-react";
+import { Loader2, Send, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDefaultContractClauses } from "@/lib/contractTemplate";
+import { getDefaultContractClausesList, joinClauses } from "@/lib/contractTemplate";
 
 type ContractLang = "pt-BR" | "en-US";
 
@@ -61,7 +61,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   const [endDate, setEndDate] = useState("");
   const [contractLang, setContractLang] = useState<ContractLang>(currentLang);
   const [clausesTouched, setClausesTouched] = useState(false);
-  const [clauses, setClauses] = useState(getDefaultContractClauses(currentLang));
+  const [clauses, setClauses] = useState<string[]>(getDefaultContractClausesList(currentLang));
 
   useEffect(() => {
     if (!open) {
@@ -75,7 +75,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
       setEndDate("");
       setContractLang(currentLang);
       setClausesTouched(false);
-      setClauses(getDefaultContractClauses(currentLang));
+      setClauses(getDefaultContractClausesList(currentLang));
       return;
     }
     if (!user) return;
@@ -125,7 +125,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
         payment_method: paymentMethod,
         start_date: startDate,
         end_date: endDate || null,
-        clauses: clauses.trim() || null,
+        clauses: joinClauses(clauses) || null,
         status: sendForSignature ? "awaiting_signature" : "draft",
         public_token: publicToken,
       })
@@ -297,7 +297,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
                 const next = v as ContractLang;
                 setContractLang(next);
                 if (!clausesTouched) {
-                  setClauses(getDefaultContractClauses(next));
+                  setClauses(getDefaultContractClausesList(next));
                 }
               }}
             >
@@ -315,19 +315,68 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="clauses">{t("contracts.form.clauses")}</Label>
-            <Textarea
-              id="clauses"
-              value={clauses}
-              onChange={(e) => {
-                setClausesTouched(true);
-                setClauses(e.target.value);
-              }}
-              rows={10}
-              className="font-mono text-xs leading-relaxed"
-            />
+            <div className="flex items-center justify-between">
+              <Label>{t("contracts.form.clauses")}</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => {
+                  setClausesTouched(true);
+                  setClauses((prev) => [...prev, ""]);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t("contracts.form.addClause")}
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {clauses.length === 0 ? (
+                <p className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  {t("contracts.form.noClauses")}
+                </p>
+              ) : (
+                clauses.map((clause, idx) => (
+                  <div key={idx} className="rounded-md border p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {t("contracts.form.clauseLabel", { index: idx + 1 })}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          setClausesTouched(true);
+                          setClauses((prev) => prev.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {t("common.delete")}
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={clause}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setClausesTouched(true);
+                        setClauses((prev) =>
+                          prev.map((c, i) => (i === idx ? value : c)),
+                        );
+                      }}
+                      rows={5}
+                      className="font-mono text-xs leading-relaxed"
+                      placeholder={t("contracts.form.clausePlaceholder")}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">{t("contracts.form.clausesHint")}</p>
           </div>
+
 
 
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:gap-2">

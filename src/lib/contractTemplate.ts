@@ -50,5 +50,20 @@ export function getDefaultContractClauses(language: "pt-BR" | "en-US"): string {
   return language === "en-US" ? DEFAULT_CONTRACT_CLAUSES_EN : DEFAULT_CONTRACT_CLAUSES_PT;
 }
 
+export function splitClauses(clauses: string): string[] {
+  return clauses
+    .split(/\n\s*\n/)
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0);
+}
+
+export function joinClauses(clauses: string[]): string {
+  return clauses.map((c) => c.trim()).filter((c) => c.length > 0).join("\n\n");
+}
+
+export function getDefaultContractClausesList(language: "pt-BR" | "en-US"): string[] {
+  return splitClauses(getDefaultContractClauses(language));
+}
+
 // Backwards-compat export
 export const DEFAULT_CONTRACT_CLAUSES = DEFAULT_CONTRACT_CLAUSES_PT;
