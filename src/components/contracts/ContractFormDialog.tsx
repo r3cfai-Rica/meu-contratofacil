@@ -25,7 +25,9 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { DEFAULT_CONTRACT_CLAUSES } from "@/lib/contractTemplate";
+import { getDefaultContractClauses } from "@/lib/contractTemplate";
+
+type ContractLang = "pt-BR" | "en-US";
 
 interface ClientOption {
   id: string;
@@ -57,7 +59,9 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("one_time");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [clauses, setClauses] = useState(DEFAULT_CONTRACT_CLAUSES);
+  const [contractLang, setContractLang] = useState<ContractLang>(currentLang);
+  const [clausesTouched, setClausesTouched] = useState(false);
+  const [clauses, setClauses] = useState(getDefaultContractClauses(currentLang));
 
   useEffect(() => {
     if (!open) {
@@ -69,7 +73,9 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
       setPaymentMethod("one_time");
       setStartDate("");
       setEndDate("");
-      setClauses(DEFAULT_CONTRACT_CLAUSES);
+      setContractLang(currentLang);
+      setClausesTouched(false);
+      setClauses(getDefaultContractClauses(currentLang));
       return;
     }
     if (!user) return;
@@ -139,7 +145,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
           data: {
             contractId: data.id,
             appOrigin: window.location.origin,
-            language: currentLang,
+            language: contractLang,
           },
         });
         toast.success(t("contracts.form.sentToEmail", { recipient: result.recipient }));
@@ -284,16 +290,45 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="contract_language">{t("contracts.form.contractLanguage")}</Label>
+            <Select
+              value={contractLang}
+              onValueChange={(v) => {
+                const next = v as ContractLang;
+                setContractLang(next);
+                if (!clausesTouched) {
+                  setClauses(getDefaultContractClauses(next));
+                }
+              }}
+            >
+              <SelectTrigger id="contract_language">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pt-BR">{t("contracts.form.langPt")}</SelectItem>
+                <SelectItem value="en-US">{t("contracts.form.langEn")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {t("contracts.form.contractLanguageHint")}
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="clauses">{t("contracts.form.clauses")}</Label>
             <Textarea
               id="clauses"
               value={clauses}
-              onChange={(e) => setClauses(e.target.value)}
+              onChange={(e) => {
+                setClausesTouched(true);
+                setClauses(e.target.value);
+              }}
               rows={10}
               className="font-mono text-xs leading-relaxed"
             />
             <p className="text-xs text-muted-foreground">{t("contracts.form.clausesHint")}</p>
           </div>
+
 
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:gap-2">
             <Button
