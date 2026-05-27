@@ -125,7 +125,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
         payment_method: paymentMethod,
         start_date: startDate,
         end_date: endDate || null,
-        clauses: clauses.trim() || null,
+        clauses: joinClauses(clauses) || null,
         status: sendForSignature ? "awaiting_signature" : "draft",
         public_token: publicToken,
       })
