@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { getDefaultContractClauses } from "@/lib/contractTemplate";
+import { getDefaultContractClausesList, joinClauses } from "@/lib/contractTemplate";
 
 type ContractLang = "pt-BR" | "en-US";
 
