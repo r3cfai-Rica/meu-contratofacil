@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Loader2, Send, Save } from "lucide-react";
+import { Loader2, Send, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
