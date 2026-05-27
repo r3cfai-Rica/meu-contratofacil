@@ -61,7 +61,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
   const [endDate, setEndDate] = useState("");
   const [contractLang, setContractLang] = useState<ContractLang>(currentLang);
   const [clausesTouched, setClausesTouched] = useState(false);
-  const [clauses, setClauses] = useState(getDefaultContractClauses(currentLang));
+  const [clauses, setClauses] = useState<string[]>(getDefaultContractClausesList(currentLang));
 
   useEffect(() => {
     if (!open) {
