@@ -1,6 +1,6 @@
-// Template padrão profissional de contrato de prestação de serviços (PT-BR)
+// Default professional service contract templates
 
-export const DEFAULT_CONTRACT_CLAUSES = `CLÁUSULA 1ª — DO OBJETO
+export const DEFAULT_CONTRACT_CLAUSES_PT = `CLÁUSULA 1ª — DO OBJETO
 O presente contrato tem como objeto a prestação dos serviços descritos acima pela CONTRATADA à CONTRATANTE, conforme escopo, prazos e condições aqui estabelecidos.
 
 CLÁUSULA 2ª — DO VALOR E DA FORMA DE PAGAMENTO
@@ -22,3 +22,33 @@ CLÁUSULA 7ª — DO FORO
 Fica eleito o foro da comarca do domicílio da CONTRATANTE para dirimir quaisquer dúvidas ou controvérsias oriundas deste contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
 
 E, por estarem assim justas e contratadas, as partes assinam o presente instrumento.`;
+
+export const DEFAULT_CONTRACT_CLAUSES_EN = `CLAUSE 1 — PURPOSE
+The purpose of this agreement is the provision of the services described above by the CONTRACTOR to the CLIENT, in accordance with the scope, deadlines, and conditions set forth herein.
+
+CLAUSE 2 — PRICE AND PAYMENT TERMS
+For the services rendered, the CLIENT shall pay the CONTRACTOR the total amount described in this instrument, according to the payment method defined (one-time, installments, or recurring). Late payments shall incur a penalty of 2% (two percent) of the amount due, plus default interest of 1% (one percent) per month.
+
+CLAUSE 3 — TERM
+This agreement shall start on the date indicated as "Start date" and shall remain in effect until the stipulated end date, if any. In the absence of an end date, it shall remain in effect for an indefinite term and may be terminated by either party upon 30 (thirty) days' prior written notice.
+
+CLAUSE 4 — OBLIGATIONS OF THE CONTRACTOR
+The CONTRACTOR undertakes to perform the services with diligence, technical quality, and within the agreed deadlines, maintaining confidentiality regarding any confidential information accessed during the engagement.
+
+CLAUSE 5 — OBLIGATIONS OF THE CLIENT
+The CLIENT undertakes to provide all information and materials necessary for the performance of the services, as well as to make payments on the agreed dates.
+
+CLAUSE 6 — TERMINATION
+This agreement may be terminated by either party in the event of breach of any clause, upon written notice with a 15 (fifteen) day cure period. Termination without cause must observe the prior notice set forth in Clause 3.
+
+CLAUSE 7 — GOVERNING LAW AND VENUE
+The parties elect the venue of the CLIENT's domicile to resolve any doubts or controversies arising from this agreement, expressly waiving any other, however privileged.
+
+And, being so agreed, the parties sign this instrument.`;
+
+export function getDefaultContractClauses(language: "pt-BR" | "en-US"): string {
+  return language === "en-US" ? DEFAULT_CONTRACT_CLAUSES_EN : DEFAULT_CONTRACT_CLAUSES_PT;
+}
+
+// Backwards-compat export
+export const DEFAULT_CONTRACT_CLAUSES = DEFAULT_CONTRACT_CLAUSES_PT;
