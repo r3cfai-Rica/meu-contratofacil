@@ -297,7 +297,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
                 const next = v as ContractLang;
                 setContractLang(next);
                 if (!clausesTouched) {
-                  setClauses(getDefaultContractClauses(next));
+                  setClauses(getDefaultContractClausesList(next));
                 }
               }}
             >
