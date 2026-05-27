@@ -75,7 +75,7 @@ export function ContractFormDialog({ open, onOpenChange, onSaved }: Props) {
       setEndDate("");
       setContractLang(currentLang);
       setClausesTouched(false);
-      setClauses(getDefaultContractClauses(currentLang));
+      setClauses(getDefaultContractClausesList(currentLang));
       return;
     }
     if (!user) return;
