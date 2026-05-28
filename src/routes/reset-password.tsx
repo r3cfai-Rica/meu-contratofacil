@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
-    meta: [{ title: "Reset password — EasyContract" }],
+    meta: [{ title: "Redefinir senha — ContratoFácil" }, { name: "robots", content: "noindex" }],
   }),
   component: ResetPasswordPage,
 });
