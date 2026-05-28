@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PlanosRouteImport } from './routes/planos'
@@ -26,6 +27,11 @@ import { Route as CTokenRouteImport } from './routes/c.$token'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe/webhook'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/c/$token': typeof CTokenRoute
   '/pagar/$token': typeof PagarTokenRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/planos'
     | '/reset-password'
     | '/signup'
+    | '/sitemap.xml'
     | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/planos'
     | '/reset-password'
     | '/signup'
+    | '/sitemap.xml'
     | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/planos'
     | '/reset-password'
     | '/signup'
+    | '/sitemap.xml'
     | '/aceitar-convite/$token'
     | '/c/$token'
     | '/pagar/$token'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   PlanosRoute: typeof PlanosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
   CTokenRoute: typeof CTokenRoute
   PagarTokenRoute: typeof PagarTokenRoute
@@ -240,6 +253,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlanosRoute: PlanosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
   CTokenRoute: CTokenRoute,
   PagarTokenRoute: PagarTokenRoute,

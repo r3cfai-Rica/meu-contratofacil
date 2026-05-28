@@ -1,0 +1,12 @@
+# ContratoFácil
+
+> Plataforma SaaS para MEIs, autônomos e prestadores de serviço gerenciarem contratos digitais, cobranças via PIX e clientes em um só lugar.
+
+ContratoFácil ajuda profissionais brasileiros a criar contratos digitais com assinatura eletrônica, gerar cobranças com PIX e cartão, e organizar uma base de clientes — sem precisar de papelada nem ferramentas separadas.
+
+## Pages
+
+- [Início](/): Visão geral do produto, benefícios e oferta de lançamento.
+- [Planos](/planos): Planos e preços (Grátis, Pro e Business).
+- [Criar conta](/signup): Cadastro gratuito para começar a usar a plataforma.
+- [Entrar](/login): Acesso para usuários existentes.
