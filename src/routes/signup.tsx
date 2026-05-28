@@ -25,7 +25,13 @@ export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title: "Criar conta — ContratoFácil" },
-      { name: "description", content: "Crie sua conta grátis no ContratoFácil." },
+      { name: "description", content: "Crie sua conta grátis no ContratoFácil e comece a gerenciar contratos digitais e cobranças PIX." },
+      { property: "og:title", content: "Criar conta — ContratoFácil" },
+      { property: "og:description", content: "Crie sua conta grátis no ContratoFácil." },
+      { property: "og:url", content: "https://contratofacil.r3cf.com/signup" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://contratofacil.r3cf.com/signup" },
     ],
   }),
   component: SignupPage,
