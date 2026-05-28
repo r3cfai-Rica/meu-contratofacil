@@ -33,17 +33,28 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Aprova ai" },
-      { name: "description", content: "Contratos, cobranças e clientes em um só lugar." },
+      { title: "ContratoFácil" },
+      {
+        name: "description",
+        content:
+          "ContratoFácil: contratos digitais, cobranças via PIX e gestão de clientes em uma só plataforma para MEIs, autônomos e prestadores de serviço no Brasil.",
+      },
       { name: "author", content: "ContratoFácil" },
-      { property: "og:title", content: "Aprova ai" },
-      { property: "og:description", content: "Contratos, cobranças e clientes em um só lugar." },
+      { property: "og:site_name", content: "ContratoFácil" },
+      { property: "og:title", content: "ContratoFácil" },
+      {
+        property: "og:description",
+        content:
+          "Contratos digitais, cobranças via PIX e gestão de clientes em uma só plataforma para MEIs, autônomos e prestadores de serviço.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Aprova ai" },
-      { name: "twitter:description", content: "Contratos, cobranças e clientes em um só lugar." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3373182-d88d-46fb-9134-726ba14fa091/id-preview-3a79b7d3--a1120060-9d17-4448-8ade-6bfc3d442970.lovable.app-1778263195074.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3373182-d88d-46fb-9134-726ba14fa091/id-preview-3a79b7d3--a1120060-9d17-4448-8ade-6bfc3d442970.lovable.app-1778263195074.png" },
+      { name: "twitter:title", content: "ContratoFácil" },
+      {
+        name: "twitter:description",
+        content:
+          "Contratos digitais, cobranças via PIX e gestão de clientes em uma só plataforma para MEIs, autônomos e prestadores de serviço.",
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -55,6 +66,19 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: appCss,
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "ContratoFácil",
+          url: "https://contratofacil.r3cf.com",
+          description:
+            "Plataforma de contratos digitais, cobranças via PIX e gestão de clientes para MEIs, autônomos e prestadores de serviço.",
+        }),
       },
     ],
   }),
