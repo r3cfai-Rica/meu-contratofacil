@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /clientes
+Disallow: /contratos
+Disallow: /cobrancas
+Disallow: /equipe
+Disallow: /configuracoes
+Disallow: /admin
+Disallow: /c/
+Disallow: /pagar/
+Disallow: /aceitar-convite/
+Disallow: /reset-password
+Disallow: /api/
+
+Sitemap: https://contratofacil.r3cf.com/sitemap.xml

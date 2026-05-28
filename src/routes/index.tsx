@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "ContratoFácil — Contratos, cobranças e clientes em um só lugar" },
+      { title: "ContratoFácil — Contratos digitais e cobranças PIX" },
       {
         name: "description",
         content:
@@ -33,12 +33,28 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "ContratoFácil — Contratos, cobranças e clientes em um só lugar",
+        content: "ContratoFácil — Contratos digitais e cobranças PIX",
       },
       {
         property: "og:description",
         content:
           "Gerencie contratos digitais, receba via PIX e organize seus clientes em uma única plataforma feita para o profissional brasileiro.",
+      },
+      { property: "og:url", content: "https://contratofacil.r3cf.com/" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://contratofacil.r3cf.com/" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "ContratoFácil",
+          url: "https://contratofacil.r3cf.com/",
+          inLanguage: "pt-BR",
+        }),
       },
     ],
   }),
@@ -160,7 +176,7 @@ function LandingPage() {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
                 <Icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-5 text-lg font-semibold">{title}</h3>
+              <h2 className="mt-5 text-lg font-semibold">{title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
             </div>
           ))}
