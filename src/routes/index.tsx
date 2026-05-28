@@ -176,7 +176,7 @@ function LandingPage() {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
                 <Icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-5 text-lg font-semibold">{title}</h3>
+              <h2 className="mt-5 text-lg font-semibold">{title}</h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
             </div>
           ))}
