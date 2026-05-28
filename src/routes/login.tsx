@@ -18,7 +18,13 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Entrar — ContratoFácil" },
-      { name: "description", content: "Acesse sua conta ContratoFácil." },
+      { name: "description", content: "Acesse sua conta ContratoFácil para gerenciar contratos, cobranças e clientes." },
+      { property: "og:title", content: "Entrar — ContratoFácil" },
+      { property: "og:description", content: "Acesse sua conta ContratoFácil." },
+      { property: "og:url", content: "https://contratofacil.r3cf.com/login" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://contratofacil.r3cf.com/login" },
     ],
   }),
   component: LoginPage,
