@@ -21,6 +21,16 @@ export const Route = createFileRoute("/planos")({
         content:
           "Escolha o plano ideal para o seu negócio. Comece grátis ou faça upgrade para o Pro com clientes, contratos e cobranças ilimitados.",
       },
+      { property: "og:title", content: "Planos — ContratoFácil" },
+      {
+        property: "og:description",
+        content:
+          "Planos do ContratoFácil: comece grátis ou escolha o Pro para clientes, contratos e cobranças ilimitados.",
+      },
+      { property: "og:url", content: "https://contratofacil.r3cf.com/planos" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://contratofacil.r3cf.com/planos" },
     ],
   }),
   component: PlansRoute,
