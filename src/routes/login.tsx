@@ -98,7 +98,7 @@ function LoginPage() {
 
         <div className="rounded-2xl border border-border/70 bg-card p-8 shadow-[var(--shadow-card)]">
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">{t("auth.loginTitle")}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Entrar no ContratoFácil</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("auth.loginSubtitle")}
             </p>
