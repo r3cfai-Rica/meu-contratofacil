@@ -125,8 +125,8 @@ export const LAUNCH_OFFER = {
   amountBRL: 48.9,
   regularPriceBRL: 68.9,
   unitAmountCents: 4890,
-  stripeProductId: "prod_UacbBdtqaZtybk",
-  stripePriceId: "price_1TbRMRB2CRIHoDBfbhnIxLmJ",
+  stripeProductId: "prod_Ubf9azufCLe7H9",
+  stripePriceId: "price_1TcRp1F7QCShwtsLT5GIilzd",
   stripeProductIdTest: "prod_UacbaLo8KXjDjL",
   stripePriceIdTest: "price_1TbRMdF7QCShwtsLLbT3YUsz",
 } as const;
