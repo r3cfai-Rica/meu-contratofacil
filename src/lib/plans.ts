@@ -1,3 +1,4 @@
+// Build: 2026-06-01
 export type PlanTier = "free" | "pro" | "business";
 
 export interface PlanLimits {
