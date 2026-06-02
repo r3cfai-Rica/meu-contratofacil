@@ -1,7 +1,7 @@
 // URL pública estável do app publicado. Nunca usar URLs de preview do Lovable
 // (id-preview--*.lovable.app, *-dev.lovable.app, *.lovableproject.com) em links
 // enviados a clientes — essas URLs exigem login no Lovable.
-export const PUBLIC_APP_URL = "https://meu-contrato-na-mao.lovable.app";
+export const PUBLIC_APP_URL = "https://contratofacil.r3cf.com";
 
 export type AppLang = "pt-BR" | "en-US";
 
