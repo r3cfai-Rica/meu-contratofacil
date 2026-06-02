@@ -95,6 +95,41 @@
       "disclaimer": "Depois desse período, o acesso será apenas via assinatura mensal de R$ 68,90.",
       "checkoutError": "Não foi possível abrir o checkout. Tente novamente.",
       "successToast": "Pagamento confirmado! Seu plano Pro está liberado."
+    },
+    "tour": {
+      "eyebrow": "Tour pelo app",
+      "title": "Conheça cada parte do ContratoFácil",
+      "subtitle": "Um passeio rápido por todas as telas que você vai usar no dia a dia.",
+      "items": {
+        "dashboard": {
+          "title": "Dashboard",
+          "desc": "Visão geral em tempo real: clientes ativos, contratos em andamento, valores a receber e contratos aguardando assinatura."
+        },
+        "clientes": {
+          "title": "Clientes",
+          "desc": "Cadastre e organize sua base de clientes com nome, contato e documento. Tudo pronto para gerar contratos e cobranças em segundos."
+        },
+        "contratos": {
+          "title": "Contratos",
+          "desc": "Crie contratos digitais com modelos prontos, envie por link e acompanhe status: rascunho, enviado, aguardando assinatura ou assinado."
+        },
+        "cobrancas": {
+          "title": "Cobranças",
+          "desc": "Gere cobranças avulsas ou parceladas, acompanhe pendentes, recebidos e atrasados, e envie o link de pagamento direto para o cliente."
+        },
+        "equipe": {
+          "title": "Equipe",
+          "desc": "Convide colaboradores para acessar o mesmo painel com você. Ideal para escritórios e agências com mais de uma pessoa."
+        },
+        "planos": {
+          "title": "Planos",
+          "desc": "Compare os planos Free, Pro e Business e faça upgrade quando precisar de mais clientes, contratos ou recursos avançados."
+        },
+        "configuracoes": {
+          "title": "Configurações",
+          "desc": "Ajuste dados de perfil, tipo de conta, país, chave PIX, logo da marca e conecte o Stripe para receber em cartão internacional."
+        }
+      }
     }
   },
   "auth": {
