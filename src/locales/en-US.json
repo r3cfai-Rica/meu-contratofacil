@@ -95,6 +95,41 @@
       "disclaimer": "After this period, access will be available only via the $14.90/mo subscription.",
       "checkoutError": "Could not open checkout. Please try again.",
       "successToast": "Payment confirmed! Your Pro plan is unlocked."
+    },
+    "tour": {
+      "eyebrow": "App tour",
+      "title": "Get to know every part of ContratoFácil",
+      "subtitle": "A quick walkthrough of every screen you'll use day to day.",
+      "items": {
+        "dashboard": {
+          "title": "Dashboard",
+          "desc": "Real-time overview: active clients, ongoing contracts, receivables and contracts awaiting signature."
+        },
+        "clientes": {
+          "title": "Clients",
+          "desc": "Register and organize your client base with contact and document info. Ready to issue contracts and invoices in seconds."
+        },
+        "contratos": {
+          "title": "Contracts",
+          "desc": "Create digital contracts from templates, send by link and track status: draft, sent, awaiting signature or signed."
+        },
+        "cobrancas": {
+          "title": "Invoices",
+          "desc": "Issue one-off or installment invoices, watch pending, received and overdue balances, and share the payment link with your client."
+        },
+        "equipe": {
+          "title": "Team",
+          "desc": "Invite collaborators to access the same dashboard. Ideal for studios and agencies with more than one person."
+        },
+        "planos": {
+          "title": "Plans",
+          "desc": "Compare Free, Pro and Business plans and upgrade when you need more clients, contracts or advanced features."
+        },
+        "configuracoes": {
+          "title": "Settings",
+          "desc": "Adjust profile data, account type, country, PIX key, brand logo and connect Stripe to accept international card payments."
+        }
+      }
     }
   },
   "auth": {
