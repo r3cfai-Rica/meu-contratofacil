@@ -184,6 +184,8 @@ function LandingPage() {
         </div>
       </section>
 
+      <MenuTourSection />
+
       {/* Launch Offer */}
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <div
