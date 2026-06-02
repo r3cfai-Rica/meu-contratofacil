@@ -18,6 +18,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { createLaunchOfferCheckout } from "@/lib/launchOffer.functions";
+import { MenuTourSection } from "@/components/landing/MenuTourSection";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -182,6 +183,8 @@ function LandingPage() {
           ))}
         </div>
       </section>
+
+      <MenuTourSection />
 
       {/* Launch Offer */}
       <section className="mx-auto max-w-6xl px-6 pb-24">
