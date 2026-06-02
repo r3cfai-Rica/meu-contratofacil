@@ -18,6 +18,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { createLaunchOfferCheckout } from "@/lib/launchOffer.functions";
+import { MenuTourSection } from "@/components/landing/MenuTourSection";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
