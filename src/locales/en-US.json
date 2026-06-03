@@ -79,7 +79,9 @@
     "video": {
       "eyebrow": "Explainer video",
       "title": "See EasyContract in action",
-      "description": "In just a few minutes you'll see how to create contracts, send invoices and organize your clients."
+      "description": "In just a few minutes you'll see how to create contracts, send invoices and organize your clients.",
+      "comingSoon": "COMING SOON",
+      "comingSoonHint": "We're preparing a video to walk you through everything."
     },
     "launchOffer": {
       "eyebrow": "Launch offer · limited time",

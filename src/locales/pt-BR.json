@@ -79,7 +79,9 @@
     "video": {
       "eyebrow": "Vídeo explicativo",
       "title": "Veja o ContratoFácil em ação",
-      "description": "Em poucos minutos você entende como criar contratos, enviar cobranças e organizar seus clientes."
+      "description": "Em poucos minutos você entende como criar contratos, enviar cobranças e organizar seus clientes.",
+      "comingSoon": "EM BREVE",
+      "comingSoonHint": "Estamos preparando um vídeo para te mostrar tudo na prática."
     },
     "launchOffer": {
       "eyebrow": "Oferta de lançamento · por tempo limitado",
