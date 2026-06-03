@@ -62,8 +62,6 @@ export function VideoSection() {
   const { t } = useTranslation();
   const embed = parseVideoUrl(VIDEO_URL);
 
-  if (!embed) return null;
-
   return (
     <section className="mx-auto max-w-5xl px-6 pb-16">
       <div className="mx-auto mb-8 max-w-2xl text-center">
@@ -79,8 +77,21 @@ export function VideoSection() {
         </p>
       </div>
 
-      <div className="relative aspect-video overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[var(--shadow-glow)]">
-        {embed.kind === "file" ? (
+      <div
+        className="relative aspect-video overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[var(--shadow-glow)]"
+        style={{ backgroundImage: "var(--gradient-glow)" }}
+      >
+        {!embed ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-4 text-center">
+            <PlayCircle className="h-14 w-14 text-primary/70" />
+            <div className="text-3xl font-bold tracking-[0.2em] text-foreground sm:text-5xl">
+              {t("landing.video.comingSoon")}
+            </div>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {t("landing.video.comingSoonHint")}
+            </p>
+          </div>
+        ) : embed.kind === "file" ? (
           <video
             src={embed.src}
             controls
@@ -98,6 +109,9 @@ export function VideoSection() {
           />
         )}
       </div>
+    </section>
+  );
+}
     </section>
   );
 }
