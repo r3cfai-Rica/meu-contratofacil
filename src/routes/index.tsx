@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { createLaunchOfferCheckout } from "@/lib/launchOffer.functions";
 import { MenuTourSection } from "@/components/landing/MenuTourSection";
+import { VideoSection } from "@/components/landing/VideoSection";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -183,6 +184,8 @@ function LandingPage() {
           ))}
         </div>
       </section>
+
+      <VideoSection />
 
       <MenuTourSection />
 

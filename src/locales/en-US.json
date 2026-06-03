@@ -76,6 +76,11 @@
     "finalCtaTitle": "Ready for some serious business?",
     "finalCtaDesc": "Create your free account and start sending contracts and invoices today.",
     "footer": "All rights reserved.",
+    "video": {
+      "eyebrow": "Explainer video",
+      "title": "See EasyContract in action",
+      "description": "In just a few minutes you'll see how to create contracts, send invoices and organize your clients."
+    },
     "launchOffer": {
       "eyebrow": "Launch offer · limited time",
       "title": "Get full access with a one-time payment",

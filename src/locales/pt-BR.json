@@ -76,6 +76,11 @@
     "finalCtaTitle": "Pronto para profissionalizar seu negócio?",
     "finalCtaDesc": "Crie sua conta gratuita e comece a enviar contratos e cobranças hoje mesmo.",
     "footer": "Todos os direitos reservados.",
+    "video": {
+      "eyebrow": "Vídeo explicativo",
+      "title": "Veja o ContratoFácil em ação",
+      "description": "Em poucos minutos você entende como criar contratos, enviar cobranças e organizar seus clientes."
+    },
     "launchOffer": {
       "eyebrow": "Oferta de lançamento · por tempo limitado",
       "title": "Garanta acesso completo com pagamento único",
