@@ -97,12 +97,12 @@ function PublicInvoicePage() {
             city: pixData.city,
             amount: Number(inv.amount),
             txid: inv.id.replace(/-/g, "").slice(0, 25),
-            description: inv.description,
           });
           const url = await QRCode.toDataURL(payload, {
             width: 320,
-            margin: 1,
-            color: { dark: "#0F172A", light: "#FFFFFF" },
+            margin: 4,
+            errorCorrectionLevel: "M",
+            color: { dark: "#000000", light: "#FFFFFF" },
           });
           setQrUrl(url);
         }
