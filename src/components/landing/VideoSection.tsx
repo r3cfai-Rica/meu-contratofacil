@@ -15,7 +15,7 @@ import { PlayCircle } from "lucide-react";
  *
  * Deixe como string vazia ("") para esconder a seção.
  */
-const VIDEO_URL = "";
+const VIDEO_URL = "https://www.youtube.com/watch?v=QgUNZJBz-ms";
 
 type EmbedInfo =
   | { kind: "youtube"; src: string }
