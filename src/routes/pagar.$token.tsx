@@ -180,7 +180,6 @@ function PublicInvoicePage() {
       city: pix.city,
       amount: Number(invoice.amount),
       txid: invoice.id.replace(/-/g, "").slice(0, 25),
-      description: invoice.description,
     });
 
   return (
