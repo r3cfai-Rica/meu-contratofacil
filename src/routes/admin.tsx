@@ -14,7 +14,18 @@ import {
   Receipt,
   Mail,
   Contact,
+  Star,
+  Check,
+  X,
+  Trash2,
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listAllReviewsAdmin,
+  moderateReview,
+  deleteReviewAdmin,
+  type AdminReview,
+} from "@/lib/reviews.functions";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,6 +147,10 @@ function AdminPage() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [clients, setClients] = useState<AdminClientRow[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const fetchReviews = useServerFn(listAllReviewsAdmin);
+  const moderateFn = useServerFn(moderateReview);
+  const deleteReviewFn = useServerFn(deleteReviewAdmin);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
@@ -172,7 +187,37 @@ function AdminPage() {
     else setAudit((audRes.data as unknown as AuditRow[]) ?? []);
     if (cliRes.error) toast.error(cliRes.error.message);
     else setClients((cliRes.data as unknown as AdminClientRow[]) ?? []);
+    try {
+      const rv = await fetchReviews();
+      setReviews(rv);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Erro ao carregar reviews";
+      toast.error(m);
+    }
     setLoading(false);
+  };
+
+  const handleModerate = async (id: string, status: "approved" | "rejected" | "pending") => {
+    try {
+      await moderateFn({ data: { id, status } });
+      setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      toast.success("Review atualizado");
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Erro ao moderar review";
+      toast.error(m);
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm("Apagar este review?")) return;
+    try {
+      await deleteReviewFn({ data: { id } });
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+      toast.success("Review removido");
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Erro ao remover review";
+      toast.error(m);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -279,6 +324,9 @@ function AdminPage() {
                 <TabsTrigger value="clients">Clientes / CRM ({clients.length})</TabsTrigger>
                 <TabsTrigger value="payments">Pagamentos ({payments.length})</TabsTrigger>
                 <TabsTrigger value="audit">Auditoria ({audit.length})</TabsTrigger>
+                <TabsTrigger value="reviews">
+                  Reviews ({reviews.filter((r) => r.status === "pending").length}/{reviews.length})
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="users">
@@ -584,6 +632,91 @@ function AdminPage() {
                         </TableBody>
                       </Table>
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="reviews">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Star className="h-4 w-4" />
+                      Reviews da landing page
+                    </CardTitle>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Aprove ou rejeite os depoimentos enviados pelos usuários. Apenas reviews
+                      aprovados aparecem publicamente.
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {reviews.length === 0 ? (
+                      <p className="py-10 text-center text-sm text-muted-foreground">
+                        Nenhum review ainda.
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {reviews.map((r) => (
+                          <div
+                            key={r.id}
+                            className="rounded-xl border border-border/70 bg-card p-4"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium">{r.author_name}</span>
+                                <span className="flex items-center gap-0.5 text-primary">
+                                  {Array.from({ length: r.rating }).map((_, i) => (
+                                    <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                                  ))}
+                                </span>
+                                <Badge
+                                  variant={
+                                    r.status === "approved"
+                                      ? "default"
+                                      : r.status === "rejected"
+                                        ? "destructive"
+                                        : "secondary"
+                                  }
+                                >
+                                  {r.status === "pending"
+                                    ? "Pendente"
+                                    : r.status === "approved"
+                                      ? "Aprovado"
+                                      : "Rejeitado"}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDateBR(r.created_at)}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                {r.status !== "approved" && (
+                                  <button
+                                    onClick={() => void handleModerate(r.id, "approved")}
+                                    className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-primary/10 hover:text-primary"
+                                  >
+                                    <Check className="h-3.5 w-3.5" /> Aprovar
+                                  </button>
+                                )}
+                                {r.status !== "rejected" && (
+                                  <button
+                                    onClick={() => void handleModerate(r.id, "rejected")}
+                                    className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
+                                  >
+                                    <X className="h-3.5 w-3.5" /> Rejeitar
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => void handleDeleteReview(r.id)}
+                                  className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Apagar
+                                </button>
+                              </div>
+                            </div>
+                            <p className="mt-3 text-sm text-foreground/90">"{r.comment}"</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

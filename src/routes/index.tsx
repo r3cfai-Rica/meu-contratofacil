@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createLaunchOfferCheckout } from "@/lib/launchOffer.functions";
 import { MenuTourSection } from "@/components/landing/MenuTourSection";
 import { VideoSection } from "@/components/landing/VideoSection";
+import { ReviewsSection } from "@/components/landing/ReviewsSection";
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -188,6 +189,8 @@ function LandingPage() {
       <VideoSection />
 
       <MenuTourSection />
+
+      <ReviewsSection />
 
       {/* Launch Offer */}
       <section className="mx-auto max-w-6xl px-6 pb-24">
