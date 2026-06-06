@@ -124,6 +124,32 @@ function ClientsPage() {
 
   const handleDelete = async () => {
     if (!toDelete) return;
+
+    // Check for related records first to give a clear error message
+    const [{ count: contractsCount }, { count: invoicesCount }] = await Promise.all([
+      supabase
+        .from("contracts")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", toDelete.id),
+      supabase
+        .from("invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", toDelete.id),
+    ]);
+
+    if ((contractsCount ?? 0) > 0 || (invoicesCount ?? 0) > 0) {
+      const parts: string[] = [];
+      if ((contractsCount ?? 0) > 0)
+        parts.push(`${contractsCount} contrato(s)`);
+      if ((invoicesCount ?? 0) > 0)
+        parts.push(`${invoicesCount} cobrança(s)`);
+      toast.error(
+        `Não é possível excluir: este cliente possui ${parts.join(" e ")} vinculados. Remova-os antes de excluir o cliente.`,
+      );
+      setToDelete(null);
+      return;
+    }
+
     const { error } = await supabase.from("clients").delete().eq("id", toDelete.id);
     if (error) {
       toast.error(error.message);
