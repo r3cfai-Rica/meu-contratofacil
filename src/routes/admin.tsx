@@ -147,6 +147,10 @@ function AdminPage() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [clients, setClients] = useState<AdminClientRow[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const fetchReviews = useServerFn(listAllReviewsAdmin);
+  const moderateFn = useServerFn(moderateReview);
+  const deleteReviewFn = useServerFn(deleteReviewAdmin);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
@@ -183,7 +187,37 @@ function AdminPage() {
     else setAudit((audRes.data as unknown as AuditRow[]) ?? []);
     if (cliRes.error) toast.error(cliRes.error.message);
     else setClients((cliRes.data as unknown as AdminClientRow[]) ?? []);
+    try {
+      const rv = await fetchReviews();
+      setReviews(rv);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Erro ao carregar reviews";
+      toast.error(m);
+    }
     setLoading(false);
+  };
+
+  const handleModerate = async (id: string, status: "approved" | "rejected" | "pending") => {
+    try {
+      await moderateFn({ data: { id, status } });
+      setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      toast.success("Review atualizado");
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Erro ao moderar review";
+      toast.error(m);
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm("Apagar este review?")) return;
+    try {
+      await deleteReviewFn({ data: { id } });
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+      toast.success("Review removido");
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "Erro ao remover review";
+      toast.error(m);
+    }
   };
 
   const filtered = useMemo(() => {
