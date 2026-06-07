@@ -571,6 +571,21 @@ function AdminPage() {
                                   {formatCurrencyBRL((c.total_paid_cents ?? 0) / 100)}
                                 </TableCell>
                                 <TableCell className="text-sm">{formatDateBR(c.created_at)}</TableCell>
+                                <TableCell>
+                                  <button
+                                    onClick={() => void handleDeleteClient(c.client_id, c.full_name)}
+                                    disabled={deletingClient === c.client_id}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                    aria-label="Excluir cliente"
+                                    title="Excluir cliente (e contratos/cobranças vinculados)"
+                                  >
+                                    {deletingClient === c.client_id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </TableCell>
                               </TableRow>
                             ))
                           )}
