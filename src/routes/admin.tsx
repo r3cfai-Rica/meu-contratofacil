@@ -791,14 +791,19 @@ function StatCard({
   label,
   value,
   hint,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   hint?: string;
+  onClick?: () => void;
 }) {
   return (
-    <Card>
+    <Card
+      onClick={onClick}
+      className={onClick ? "cursor-pointer transition hover:border-primary/50 hover:bg-primary/5" : undefined}
+    >
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">{label}</span>
@@ -818,14 +823,19 @@ function MiniStat({
   label,
   value,
   hint,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   hint?: string;
+  onClick?: () => void;
 }) {
   return (
-    <Card>
+    <Card
+      onClick={onClick}
+      className={onClick ? "cursor-pointer transition hover:border-primary/50 hover:bg-primary/5" : undefined}
+    >
       <CardContent className="flex items-center justify-between pt-6">
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
@@ -844,10 +854,12 @@ function PlanCard({
   label,
   count,
   variant,
+  onClick,
 }: {
   label: string;
   count: number;
   variant: "muted" | "secondary" | "primary";
+  onClick?: () => void;
 }) {
   const styles =
     variant === "primary"
@@ -856,7 +868,10 @@ function PlanCard({
         ? "border-secondary/40 bg-secondary/10"
         : "border-border bg-muted/30";
   return (
-    <Card className={styles}>
+    <Card
+      onClick={onClick}
+      className={`${styles} ${onClick ? "cursor-pointer transition hover:border-primary/60 hover:shadow-md" : ""}`}
+    >
       <CardContent className="flex items-center justify-between pt-6">
         <div>
           <p className="text-sm text-muted-foreground">Plano {label}</p>
