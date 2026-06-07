@@ -157,6 +157,37 @@ function AdminPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [clientSearch, setClientSearch] = useState("");
   const [clientPlanFilter, setClientPlanFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("users");
+  const [deletingClient, setDeletingClient] = useState<string | null>(null);
+
+  const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
+    setActiveTab(tab);
+    if (plan) {
+      if (tab === "users") setPlanFilter(plan);
+      if (tab === "clients") setClientPlanFilter(plan);
+    }
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 300, behavior: "smooth" });
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string, name: string) => {
+    if (!confirm(`Excluir cliente "${name}" e TODOS os contratos e cobranças vinculados?`)) return;
+    setDeletingClient(clientId);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_delete_client", {
+      _client_id: clientId,
+    });
+    setDeletingClient(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Cliente excluído");
+    setClients((prev) => prev.filter((c) => c.client_id !== clientId));
+  };
 
   useEffect(() => {
     if (roleLoading) return;
