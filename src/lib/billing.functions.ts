@@ -69,7 +69,7 @@ export const checkSubscription = createServerFn({ method: "POST" })
     });
 
     const active = subs.data.find((s) =>
-      ["active", "trialing", "past_due"].includes(s.status),
+      ["active", "trialing", "past_good", "past_due"].includes(s.status),
     );
 
     let plan: PlanTier = "free";
@@ -92,6 +92,56 @@ export const checkSubscription = createServerFn({ method: "POST" })
       cancelAtPeriodEnd = active.cancel_at_period_end ?? false;
       stripeSubscriptionId = active.id;
       stripePriceId = item.price.id;
+    } else {
+      // No active subscription — check if user has a paid launch offer (one-time payment).
+      // 1) Preserve an existing launch-offer grant already stored in our DB.
+      const { data: existing } = await supabaseAdmin
+        .from("subscriptions")
+        .select("plan, stripe_subscription_id, status, current_period_end")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const hasExistingLaunchGrant =
+        existing?.plan === "pro" &&
+        !existing.stripe_subscription_id &&
+        existing.status === "active";
+
+      // 2) Fallback: query Stripe directly for a paid launch-offer checkout session.
+      let foundLaunchPayment = false;
+      let launchPriceId: string | null = null;
+      if (!hasExistingLaunchGrant) {
+        try {
+          const sessions = await stripe.checkout.sessions.list({
+            customer: customer.id,
+            limit: 20,
+          });
+          const paid = sessions.data.find(
+            (s) =>
+              s.metadata?.type === "launch_offer" &&
+              s.payment_status === "paid" &&
+              s.mode === "payment",
+          );
+          if (paid) {
+            foundLaunchPayment = true;
+            launchPriceId = (paid.metadata?.price_id as string | undefined) ?? null;
+          }
+        } catch (e) {
+          console.error("[checkSubscription] launch offer lookup failed", e);
+        }
+      }
+
+      if (hasExistingLaunchGrant || foundLaunchPayment) {
+        plan = "pro";
+        status = "active";
+        if (hasExistingLaunchGrant && existing?.current_period_end) {
+          currentPeriodEnd = existing.current_period_end;
+        } else {
+          const farFuture = new Date();
+          farFuture.setFullYear(farFuture.getFullYear() + 10);
+          currentPeriodEnd = farFuture.toISOString();
+        }
+        stripeSubscriptionId = null;
+        stripePriceId = launchPriceId;
+      }
     }
 
     await supabaseAdmin
