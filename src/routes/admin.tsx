@@ -157,6 +157,37 @@ function AdminPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [clientSearch, setClientSearch] = useState("");
   const [clientPlanFilter, setClientPlanFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("users");
+  const [deletingClient, setDeletingClient] = useState<string | null>(null);
+
+  const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
+    setActiveTab(tab);
+    if (plan) {
+      if (tab === "users") setPlanFilter(plan);
+      if (tab === "clients") setClientPlanFilter(plan);
+    }
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 300, behavior: "smooth" });
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string, name: string) => {
+    if (!confirm(`Excluir cliente "${name}" e TODOS os contratos e cobranças vinculados?`)) return;
+    setDeletingClient(clientId);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_delete_client", {
+      _client_id: clientId,
+    });
+    setDeletingClient(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Cliente excluído");
+    setClients((prev) => prev.filter((c) => c.client_id !== clientId));
+  };
 
   useEffect(() => {
     if (roleLoading) return;
@@ -284,50 +315,64 @@ function AdminPage() {
                 label="MRR"
                 value={formatCurrencyBRL(overview.mrr_cents / 100)}
                 hint={`${overview.paying_users} assinantes pagantes`}
+                onClick={() => goToTab("payments")}
               />
               <StatCard
                 icon={<TrendingUp className="h-4 w-4" />}
                 label="Receita 30d"
                 value={formatCurrencyBRL(overview.revenue_30d_cents / 100)}
                 hint={`Total: ${formatCurrencyBRL(overview.total_revenue_cents / 100)}`}
+                onClick={() => goToTab("payments")}
               />
               <StatCard
                 icon={<Users className="h-4 w-4" />}
                 label="Usuários"
                 value={overview.total_users.toLocaleString("pt-BR")}
                 hint={`+${overview.signups_last_7d} (7d) · +${overview.signups_last_30d} (30d)`}
+                onClick={() => goToTab("users", "all")}
               />
               <StatCard
                 icon={<AlertTriangle className="h-4 w-4" />}
                 label="Em risco"
                 value={(overview.past_due_users + overview.cancel_scheduled + overview.overdue_invoices).toString()}
                 hint={`${overview.past_due_users} atraso · ${overview.cancel_scheduled} cancelando · ${overview.overdue_invoices} vencidas`}
+                onClick={() => goToTab("users", "all")}
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <PlanCard label="Grátis" count={overview.free_users} variant="muted" />
-              <PlanCard label="Pro" count={overview.pro_users} variant="secondary" />
-              <PlanCard label="Business" count={overview.business_users} variant="primary" />
+              <PlanCard label="Grátis" count={overview.free_users} variant="muted" onClick={() => goToTab("users", "free")} />
+              <PlanCard label="Pro" count={overview.pro_users} variant="secondary" onClick={() => goToTab("users", "pro")} />
+              <PlanCard label="Business" count={overview.business_users} variant="primary" onClick={() => goToTab("users", "business")} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-4">
-              <MiniStat icon={<FileSignature className="h-4 w-4" />} label="Contratos" value={overview.total_contracts} />
-              <MiniStat icon={<Users className="h-4 w-4" />} label="Clientes" value={overview.total_clients} />
-              <MiniStat icon={<Receipt className="h-4 w-4" />} label="Cobranças pagas" value={overview.paid_invoices} />
-              <MiniStat icon={<Mail className="h-4 w-4" />} label="Convites" value={overview.team_invites_accepted} hint={`${overview.team_invites_pending} pendentes`} />
+              <MiniStat icon={<FileSignature className="h-4 w-4" />} label="Contratos" value={overview.total_contracts} onClick={() => goToTab("clients")} />
+              <MiniStat icon={<Users className="h-4 w-4" />} label="Clientes" value={overview.total_clients} onClick={() => goToTab("clients")} />
+              <MiniStat icon={<Receipt className="h-4 w-4" />} label="Cobranças pagas" value={overview.paid_invoices} onClick={() => goToTab("payments")} />
+              <MiniStat icon={<Mail className="h-4 w-4" />} label="Convites" value={overview.team_invites_accepted} hint={`${overview.team_invites_pending} pendentes`} onClick={() => goToTab("audit")} />
             </div>
 
-            <Tabs defaultValue="users">
-              <TabsList>
-                <TabsTrigger value="users">Usuários ({users.length})</TabsTrigger>
-                <TabsTrigger value="clients">Clientes / CRM ({clients.length})</TabsTrigger>
-                <TabsTrigger value="payments">Pagamentos ({payments.length})</TabsTrigger>
-                <TabsTrigger value="audit">Auditoria ({audit.length})</TabsTrigger>
-                <TabsTrigger value="reviews">
-                  Reviews ({reviews.filter((r) => r.status === "pending").length}/{reviews.length})
-                </TabsTrigger>
-              </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">CRM</span>
+                <TabsList>
+                  <TabsTrigger value="users">Usuários ({users.length})</TabsTrigger>
+                  <TabsTrigger value="clients">Clientes ({clients.length})</TabsTrigger>
+                </TabsList>
+                <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Financeiro</span>
+                <TabsList>
+                  <TabsTrigger value="payments">Pagamentos ({payments.length})</TabsTrigger>
+                  <TabsTrigger value="audit">Auditoria ({audit.length})</TabsTrigger>
+                </TabsList>
+                <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Conteúdo</span>
+                <TabsList>
+                  <TabsTrigger value="reviews">
+                    Reviews ({reviews.filter((r) => r.status === "pending").length}/{reviews.length})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
 
               <TabsContent value="users">
                 <Card>
@@ -479,12 +524,13 @@ function AdminPage() {
                             <TableHead className="text-right">Cobranças</TableHead>
                             <TableHead className="text-right">Total pago</TableHead>
                             <TableHead>Cadastro</TableHead>
+                            <TableHead className="w-12"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filteredClients.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={9} className="text-center text-muted-foreground">
+                              <TableCell colSpan={10} className="text-center text-muted-foreground">
                                 Nenhum cliente encontrado.
                               </TableCell>
                             </TableRow>
@@ -525,6 +571,21 @@ function AdminPage() {
                                   {formatCurrencyBRL((c.total_paid_cents ?? 0) / 100)}
                                 </TableCell>
                                 <TableCell className="text-sm">{formatDateBR(c.created_at)}</TableCell>
+                                <TableCell>
+                                  <button
+                                    onClick={() => void handleDeleteClient(c.client_id, c.full_name)}
+                                    disabled={deletingClient === c.client_id}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                    aria-label="Excluir cliente"
+                                    title="Excluir cliente (e contratos/cobranças vinculados)"
+                                  >
+                                    {deletingClient === c.client_id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </TableCell>
                               </TableRow>
                             ))
                           )}
@@ -746,14 +807,19 @@ function StatCard({
   label,
   value,
   hint,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   hint?: string;
+  onClick?: () => void;
 }) {
   return (
-    <Card>
+    <Card
+      onClick={onClick}
+      className={onClick ? "cursor-pointer transition hover:border-primary/50 hover:bg-primary/5" : undefined}
+    >
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">{label}</span>
@@ -773,14 +839,19 @@ function MiniStat({
   label,
   value,
   hint,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   hint?: string;
+  onClick?: () => void;
 }) {
   return (
-    <Card>
+    <Card
+      onClick={onClick}
+      className={onClick ? "cursor-pointer transition hover:border-primary/50 hover:bg-primary/5" : undefined}
+    >
       <CardContent className="flex items-center justify-between pt-6">
         <div>
           <p className="text-xs text-muted-foreground">{label}</p>
@@ -799,10 +870,12 @@ function PlanCard({
   label,
   count,
   variant,
+  onClick,
 }: {
   label: string;
   count: number;
   variant: "muted" | "secondary" | "primary";
+  onClick?: () => void;
 }) {
   const styles =
     variant === "primary"
@@ -811,7 +884,10 @@ function PlanCard({
         ? "border-secondary/40 bg-secondary/10"
         : "border-border bg-muted/30";
   return (
-    <Card className={styles}>
+    <Card
+      onClick={onClick}
+      className={`${styles} ${onClick ? "cursor-pointer transition hover:border-primary/60 hover:shadow-md" : ""}`}
+    >
       <CardContent className="flex items-center justify-between pt-6">
         <div>
           <p className="text-sm text-muted-foreground">Plano {label}</p>
