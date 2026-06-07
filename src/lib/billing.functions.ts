@@ -69,7 +69,7 @@ export const checkSubscription = createServerFn({ method: "POST" })
     });
 
     const active = subs.data.find((s) =>
-      ["active", "trialing", "past_good", "past_due"].includes(s.status),
+      ["active", "trialing", "past_due"].includes(s.status),
     );
 
     let plan: PlanTier = "free";
