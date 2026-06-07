@@ -581,6 +581,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_client: { Args: { _client_id: string }; Returns: undefined }
       count_team_members: { Args: { _owner_id: string }; Returns: number }
       count_user_active_contracts: {
         Args: { _user_id: string }
