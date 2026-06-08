@@ -147,6 +147,20 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
     onChanged();
   };
 
+  const deleteContract = async () => {
+    if (!confirm(`Excluir definitivamente o contrato ${contract.contract_number}? Esta ação não pode ser desfeita.`)) return;
+    setLoadingAction(true);
+    const { error } = await supabase.from("contracts").delete().eq("id", contract.id);
+    setLoadingAction(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Contrato excluído");
+    onOpenChange(false);
+    onChanged();
+  };
+
   const downloadPdf = async () => {
     if (!user) return;
     setDownloading(true);
