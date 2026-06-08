@@ -236,12 +236,16 @@ function AdminPage() {
 
   const loadData = async () => {
     setLoading(true);
-    const [ovRes, usersRes, payRes, audRes, cliRes] = await Promise.all([
+    const [ovRes, usersRes, payRes, audRes, cliRes, ctrRes] = await Promise.all([
       supabase.rpc("get_admin_overview"),
       supabase.rpc("list_admin_users"),
       supabase.rpc("list_admin_recent_payments", { _limit: 25 }),
       supabase.rpc("list_admin_audit_logs", { _limit: 80 }),
       supabase.rpc("list_admin_clients", { _limit: 500 }),
+      (supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: { message: string } | null }>)("list_admin_contracts", { _limit: 500 }),
     ]);
     if (ovRes.error) toast.error(ovRes.error.message);
     else setOverview(ovRes.data as unknown as AdminOverview);
@@ -253,6 +257,8 @@ function AdminPage() {
     else setAudit((audRes.data as unknown as AuditRow[]) ?? []);
     if (cliRes.error) toast.error(cliRes.error.message);
     else setClients((cliRes.data as unknown as AdminClientRow[]) ?? []);
+    if (ctrRes.error) toast.error(ctrRes.error.message);
+    else setContracts((ctrRes.data as unknown as AdminContractRow[]) ?? []);
     try {
       const rv = await fetchReviews();
       setReviews(rv);
