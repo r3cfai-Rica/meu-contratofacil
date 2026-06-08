@@ -638,6 +638,106 @@ function AdminPage() {
                 </Card>
               </TabsContent>
 
+              <TabsContent value="contracts">
+                <Card>
+                  <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileSignature className="h-4 w-4" /> Contratos da plataforma
+                      </CardTitle>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {contracts.length} contratos cadastrados por todos os usuários
+                      </p>
+                    </div>
+                    <Input
+                      placeholder="Buscar nº, título, cliente, dono..."
+                      value={contractSearch}
+                      onChange={(e) => setContractSearch(e.target.value)}
+                      className="w-full sm:w-72"
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Número</TableHead>
+                            <TableHead>Título</TableHead>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Dono</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Valor</TableHead>
+                            <TableHead>Início</TableHead>
+                            <TableHead className="w-12"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {contracts.filter((c) => {
+                            const q = contractSearch.toLowerCase().trim();
+                            if (!q) return true;
+                            return (
+                              c.contract_number.toLowerCase().includes(q) ||
+                              c.title.toLowerCase().includes(q) ||
+                              c.client_name.toLowerCase().includes(q) ||
+                              c.owner_email.toLowerCase().includes(q)
+                            );
+                          }).length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={8} className="text-center text-muted-foreground">
+                                Nenhum contrato encontrado.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            contracts
+                              .filter((c) => {
+                                const q = contractSearch.toLowerCase().trim();
+                                if (!q) return true;
+                                return (
+                                  c.contract_number.toLowerCase().includes(q) ||
+                                  c.title.toLowerCase().includes(q) ||
+                                  c.client_name.toLowerCase().includes(q) ||
+                                  c.owner_email.toLowerCase().includes(q)
+                                );
+                              })
+                              .map((c) => (
+                                <TableRow key={c.contract_id}>
+                                  <TableCell className="font-mono text-xs">{c.contract_number}</TableCell>
+                                  <TableCell className="font-medium">{c.title}</TableCell>
+                                  <TableCell>{c.client_name || "—"}</TableCell>
+                                  <TableCell className="text-sm">
+                                    <div className="flex flex-col">
+                                      <span>{c.owner_name || "(sem nome)"}</span>
+                                      <span className="text-xs text-muted-foreground">{c.owner_email}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-sm capitalize">{c.status}</TableCell>
+                                  <TableCell className="text-right">{formatCurrencyBRL(Number(c.total_value))}</TableCell>
+                                  <TableCell className="text-sm">{formatDateBR(c.start_date)}</TableCell>
+                                  <TableCell>
+                                    <button
+                                      onClick={() => void handleDeleteContract(c.contract_id, c.contract_number)}
+                                      disabled={deletingContract === c.contract_id}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                      aria-label="Excluir contrato"
+                                      title="Excluir contrato"
+                                    >
+                                      {deletingContract === c.contract_id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="payments">
                 <Card>
                   <CardHeader>
