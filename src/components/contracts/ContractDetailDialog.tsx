@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, Download, History, Link as LinkIcon, Loader2, Mail, Send } from "lucide-react";
+import { Copy, Download, History, Link as LinkIcon, Loader2, Mail, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
