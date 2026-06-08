@@ -582,6 +582,10 @@ export type Database = {
     }
     Functions: {
       admin_delete_client: { Args: { _client_id: string }; Returns: undefined }
+      admin_delete_contract: {
+        Args: { _contract_id: string }
+        Returns: undefined
+      }
       count_team_members: { Args: { _owner_id: string }; Returns: number }
       count_user_active_contracts: {
         Args: { _user_id: string }
@@ -647,6 +651,23 @@ export type Database = {
           phone: string
           status: Database["public"]["Enums"]["client_status"]
           total_paid_cents: number
+        }[]
+      }
+      list_admin_contracts: {
+        Args: { _limit?: number }
+        Returns: {
+          client_name: string
+          contract_id: string
+          contract_number: string
+          created_at: string
+          owner_email: string
+          owner_name: string
+          owner_user_id: string
+          service_type: string
+          start_date: string
+          status: Database["public"]["Enums"]["contract_status"]
+          title: string
+          total_value: number
         }[]
       }
       list_admin_recent_payments: {

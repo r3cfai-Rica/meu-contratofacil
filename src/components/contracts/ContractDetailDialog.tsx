@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, Download, History, Link as LinkIcon, Loader2, Mail, Send } from "lucide-react";
+import { Copy, Download, History, Link as LinkIcon, Loader2, Mail, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
@@ -144,6 +144,20 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
       return;
     }
     toast.success(t("contracts.detail.contractCancelled"));
+    onChanged();
+  };
+
+  const deleteContract = async () => {
+    if (!confirm(`Excluir definitivamente o contrato ${contract.contract_number}? Esta ação não pode ser desfeita.`)) return;
+    setLoadingAction(true);
+    const { error } = await supabase.from("contracts").delete().eq("id", contract.id);
+    setLoadingAction(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Contrato excluído");
+    onOpenChange(false);
     onChanged();
   };
 
@@ -350,19 +364,28 @@ export function ContractDetailDialog({ contract, onOpenChange, onChanged }: Prop
             </div>
           </div>
 
-          {contract.status !== "cancelled" && contract.status !== "signed" && (
-            <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            {contract.status !== "cancelled" && contract.status !== "signed" && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={cancelContract}
                 disabled={loadingAction}
-                className="text-destructive hover:text-destructive"
+                className="text-muted-foreground hover:text-foreground"
               >
                 {t("contracts.detail.cancelContract")}
               </Button>
-            </div>
-          )}
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={deleteContract}
+              disabled={loadingAction}
+              className="gap-2 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" /> Excluir contrato
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

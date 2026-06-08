@@ -138,6 +138,20 @@ interface AdminClientRow {
   invoices_count: number;
   total_paid_cents: number;
 }
+interface AdminContractRow {
+  contract_id: string;
+  contract_number: string;
+  title: string;
+  service_type: string;
+  total_value: number;
+  status: string;
+  start_date: string;
+  created_at: string;
+  client_name: string;
+  owner_user_id: string;
+  owner_email: string;
+  owner_name: string;
+}
 
 function AdminPage() {
   const { isAdmin, loading: roleLoading } = useIsAdmin();
@@ -147,6 +161,9 @@ function AdminPage() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [clients, setClients] = useState<AdminClientRow[]>([]);
+  const [contracts, setContracts] = useState<AdminContractRow[]>([]);
+  const [contractSearch, setContractSearch] = useState("");
+  const [deletingContract, setDeletingContract] = useState<string | null>(null);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const fetchReviews = useServerFn(listAllReviewsAdmin);
   const moderateFn = useServerFn(moderateReview);
@@ -189,6 +206,24 @@ function AdminPage() {
     setClients((prev) => prev.filter((c) => c.client_id !== clientId));
   };
 
+  const handleDeleteContract = async (id: string, label: string) => {
+    if (!confirm(`Excluir contrato "${label}"? Histórico será apagado e cobranças vinculadas serão desvinculadas.`)) return;
+    setDeletingContract(id);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_delete_contract", {
+      _contract_id: id,
+    });
+    setDeletingContract(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Contrato excluído");
+    setContracts((prev) => prev.filter((c) => c.contract_id !== id));
+  };
+
   useEffect(() => {
     if (roleLoading) return;
     if (!isAdmin) {
@@ -201,12 +236,16 @@ function AdminPage() {
 
   const loadData = async () => {
     setLoading(true);
-    const [ovRes, usersRes, payRes, audRes, cliRes] = await Promise.all([
+    const [ovRes, usersRes, payRes, audRes, cliRes, ctrRes] = await Promise.all([
       supabase.rpc("get_admin_overview"),
       supabase.rpc("list_admin_users"),
       supabase.rpc("list_admin_recent_payments", { _limit: 25 }),
       supabase.rpc("list_admin_audit_logs", { _limit: 80 }),
       supabase.rpc("list_admin_clients", { _limit: 500 }),
+      (supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: { message: string } | null }>)("list_admin_contracts", { _limit: 500 }),
     ]);
     if (ovRes.error) toast.error(ovRes.error.message);
     else setOverview(ovRes.data as unknown as AdminOverview);
@@ -218,6 +257,8 @@ function AdminPage() {
     else setAudit((audRes.data as unknown as AuditRow[]) ?? []);
     if (cliRes.error) toast.error(cliRes.error.message);
     else setClients((cliRes.data as unknown as AdminClientRow[]) ?? []);
+    if (ctrRes.error) toast.error(ctrRes.error.message);
+    else setContracts((ctrRes.data as unknown as AdminContractRow[]) ?? []);
     try {
       const rv = await fetchReviews();
       setReviews(rv);
@@ -359,6 +400,7 @@ function AdminPage() {
                 <TabsList>
                   <TabsTrigger value="users">Usuários ({users.length})</TabsTrigger>
                   <TabsTrigger value="clients">Clientes ({clients.length})</TabsTrigger>
+                  <TabsTrigger value="contracts">Contratos ({contracts.length})</TabsTrigger>
                 </TabsList>
                 <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Financeiro</span>
                 <TabsList>
@@ -588,6 +630,106 @@ function AdminPage() {
                                 </TableCell>
                               </TableRow>
                             ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="contracts">
+                <Card>
+                  <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileSignature className="h-4 w-4" /> Contratos da plataforma
+                      </CardTitle>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {contracts.length} contratos cadastrados por todos os usuários
+                      </p>
+                    </div>
+                    <Input
+                      placeholder="Buscar nº, título, cliente, dono..."
+                      value={contractSearch}
+                      onChange={(e) => setContractSearch(e.target.value)}
+                      className="w-full sm:w-72"
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Número</TableHead>
+                            <TableHead>Título</TableHead>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Dono</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Valor</TableHead>
+                            <TableHead>Início</TableHead>
+                            <TableHead className="w-12"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {contracts.filter((c) => {
+                            const q = contractSearch.toLowerCase().trim();
+                            if (!q) return true;
+                            return (
+                              c.contract_number.toLowerCase().includes(q) ||
+                              c.title.toLowerCase().includes(q) ||
+                              c.client_name.toLowerCase().includes(q) ||
+                              c.owner_email.toLowerCase().includes(q)
+                            );
+                          }).length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={8} className="text-center text-muted-foreground">
+                                Nenhum contrato encontrado.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            contracts
+                              .filter((c) => {
+                                const q = contractSearch.toLowerCase().trim();
+                                if (!q) return true;
+                                return (
+                                  c.contract_number.toLowerCase().includes(q) ||
+                                  c.title.toLowerCase().includes(q) ||
+                                  c.client_name.toLowerCase().includes(q) ||
+                                  c.owner_email.toLowerCase().includes(q)
+                                );
+                              })
+                              .map((c) => (
+                                <TableRow key={c.contract_id}>
+                                  <TableCell className="font-mono text-xs">{c.contract_number}</TableCell>
+                                  <TableCell className="font-medium">{c.title}</TableCell>
+                                  <TableCell>{c.client_name || "—"}</TableCell>
+                                  <TableCell className="text-sm">
+                                    <div className="flex flex-col">
+                                      <span>{c.owner_name || "(sem nome)"}</span>
+                                      <span className="text-xs text-muted-foreground">{c.owner_email}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-sm capitalize">{c.status}</TableCell>
+                                  <TableCell className="text-right">{formatCurrencyBRL(Number(c.total_value))}</TableCell>
+                                  <TableCell className="text-sm">{formatDateBR(c.start_date)}</TableCell>
+                                  <TableCell>
+                                    <button
+                                      onClick={() => void handleDeleteContract(c.contract_id, c.contract_number)}
+                                      disabled={deletingContract === c.contract_id}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                      aria-label="Excluir contrato"
+                                      title="Excluir contrato"
+                                    >
+                                      {deletingContract === c.contract_id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
                           )}
                         </TableBody>
                       </Table>
