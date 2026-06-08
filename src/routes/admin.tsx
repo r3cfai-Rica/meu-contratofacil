@@ -400,6 +400,7 @@ function AdminPage() {
                 <TabsList>
                   <TabsTrigger value="users">Usuários ({users.length})</TabsTrigger>
                   <TabsTrigger value="clients">Clientes ({clients.length})</TabsTrigger>
+                  <TabsTrigger value="contracts">Contratos ({contracts.length})</TabsTrigger>
                 </TabsList>
                 <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Financeiro</span>
                 <TabsList>
