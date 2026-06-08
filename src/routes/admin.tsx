@@ -153,7 +153,7 @@ interface AdminContractRow {
   owner_name: string;
 }
 
-
+function AdminPage() {
   const { isAdmin, loading: roleLoading } = useIsAdmin();
   const navigate = useNavigate();
   const [overview, setOverview] = useState<AdminOverview | null>(null);
