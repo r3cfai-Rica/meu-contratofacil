@@ -138,8 +138,22 @@ interface AdminClientRow {
   invoices_count: number;
   total_paid_cents: number;
 }
+interface AdminContractRow {
+  contract_id: string;
+  contract_number: string;
+  title: string;
+  service_type: string;
+  total_value: number;
+  status: string;
+  start_date: string;
+  created_at: string;
+  client_name: string;
+  owner_user_id: string;
+  owner_email: string;
+  owner_name: string;
+}
 
-function AdminPage() {
+
   const { isAdmin, loading: roleLoading } = useIsAdmin();
   const navigate = useNavigate();
   const [overview, setOverview] = useState<AdminOverview | null>(null);
