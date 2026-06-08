@@ -161,6 +161,9 @@ function AdminPage() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [clients, setClients] = useState<AdminClientRow[]>([]);
+  const [contracts, setContracts] = useState<AdminContractRow[]>([]);
+  const [contractSearch, setContractSearch] = useState("");
+  const [deletingContract, setDeletingContract] = useState<string | null>(null);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const fetchReviews = useServerFn(listAllReviewsAdmin);
   const moderateFn = useServerFn(moderateReview);
