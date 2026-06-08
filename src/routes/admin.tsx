@@ -206,6 +206,24 @@ function AdminPage() {
     setClients((prev) => prev.filter((c) => c.client_id !== clientId));
   };
 
+  const handleDeleteContract = async (id: string, label: string) => {
+    if (!confirm(`Excluir contrato "${label}"? Histórico será apagado e cobranças vinculadas serão desvinculadas.`)) return;
+    setDeletingContract(id);
+    const { error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>)("admin_delete_contract", {
+      _contract_id: id,
+    });
+    setDeletingContract(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Contrato excluído");
+    setContracts((prev) => prev.filter((c) => c.contract_id !== id));
+  };
+
   useEffect(() => {
     if (roleLoading) return;
     if (!isAdmin) {
