@@ -50,6 +50,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { AdminClientDetailDialog } from "@/components/admin/AdminClientDetailDialog";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
