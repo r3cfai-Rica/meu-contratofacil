@@ -50,6 +50,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { formatCurrencyBRL, formatDateBR } from "@/lib/format";
+import { AdminClientDetailDialog } from "@/components/admin/AdminClientDetailDialog";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -128,7 +129,7 @@ interface AdminClientRow {
   email: string | null;
   phone: string | null;
   document: string | null;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "canceled";
   created_at: string;
   owner_user_id: string;
   owner_email: string;
@@ -176,6 +177,7 @@ function AdminPage() {
   const [clientPlanFilter, setClientPlanFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<string>("users");
   const [deletingClient, setDeletingClient] = useState<string | null>(null);
+  const [detailClientId, setDetailClientId] = useState<string | null>(null);
 
   const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
     setActiveTab(tab);
@@ -578,7 +580,11 @@ function AdminPage() {
                             </TableRow>
                           ) : (
                             filteredClients.map((c) => (
-                              <TableRow key={c.client_id}>
+                              <TableRow
+                                key={c.client_id}
+                                className="cursor-pointer"
+                                onClick={() => setDetailClientId(c.client_id)}
+                              >
                                 <TableCell>
                                   <div className="flex flex-col">
                                     <span className="font-medium">{c.full_name}</span>
@@ -603,8 +609,20 @@ function AdminPage() {
                                   <Badge className={planColor(c.owner_plan)}>{c.owner_plan.toUpperCase()}</Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant={c.status === "active" ? "default" : "secondary"}>
-                                    {c.status === "active" ? "Ativo" : "Inativo"}
+                                  <Badge
+                                    variant={
+                                      c.status === "active"
+                                        ? "default"
+                                        : c.status === "canceled"
+                                          ? "destructive"
+                                          : "secondary"
+                                    }
+                                  >
+                                    {c.status === "active"
+                                      ? "Ativo"
+                                      : c.status === "canceled"
+                                        ? "Cancelado"
+                                        : "Inativo"}
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">{c.contracts_count}</TableCell>
@@ -613,7 +631,7 @@ function AdminPage() {
                                   {formatCurrencyBRL((c.total_paid_cents ?? 0) / 100)}
                                 </TableCell>
                                 <TableCell className="text-sm">{formatDateBR(c.created_at)}</TableCell>
-                                <TableCell>
+                                <TableCell onClick={(e) => e.stopPropagation()}>
                                   <button
                                     onClick={() => void handleDeleteClient(c.client_id, c.full_name)}
                                     disabled={deletingClient === c.client_id}
@@ -927,6 +945,16 @@ function AdminPage() {
           </>
         )}
       </div>
+      <AdminClientDetailDialog
+        clientId={detailClientId}
+        open={detailClientId !== null}
+        onOpenChange={(o) => !o && setDetailClientId(null)}
+        onStatusChanged={(id, status) =>
+          setClients((prev) =>
+            prev.map((c) => (c.client_id === id ? { ...c, status } : c)),
+          )
+        }
+      />
     </AppLayout>
   );
 }
