@@ -586,6 +586,14 @@ export type Database = {
         Args: { _contract_id: string }
         Returns: undefined
       }
+      admin_get_client_details: { Args: { _client_id: string }; Returns: Json }
+      admin_update_client_status: {
+        Args: {
+          _client_id: string
+          _status: Database["public"]["Enums"]["client_status"]
+        }
+        Returns: undefined
+      }
       count_team_members: { Args: { _owner_id: string }; Returns: number }
       count_user_active_contracts: {
         Args: { _user_id: string }
@@ -716,7 +724,7 @@ export type Database = {
     Enums: {
       account_type: "mei" | "autonomo" | "prestador" | "liberal"
       app_role: "admin" | "user"
-      client_status: "active" | "inactive"
+      client_status: "active" | "inactive" | "canceled"
       contract_status:
         | "draft"
         | "sent"
@@ -863,7 +871,7 @@ export const Constants = {
     Enums: {
       account_type: ["mei", "autonomo", "prestador", "liberal"],
       app_role: ["admin", "user"],
-      client_status: ["active", "inactive"],
+      client_status: ["active", "inactive", "canceled"],
       contract_status: [
         "draft",
         "sent",
