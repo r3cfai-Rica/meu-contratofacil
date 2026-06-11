@@ -128,7 +128,7 @@ interface AdminClientRow {
   email: string | null;
   phone: string | null;
   document: string | null;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "canceled";
   created_at: string;
   owner_user_id: string;
   owner_email: string;
