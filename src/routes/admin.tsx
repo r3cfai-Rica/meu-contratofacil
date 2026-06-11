@@ -177,6 +177,7 @@ function AdminPage() {
   const [clientPlanFilter, setClientPlanFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<string>("users");
   const [deletingClient, setDeletingClient] = useState<string | null>(null);
+  const [detailClientId, setDetailClientId] = useState<string | null>(null);
 
   const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
     setActiveTab(tab);
