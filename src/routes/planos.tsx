@@ -1,16 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Loader2, Sparkles, ArrowLeft } from "lucide-react";
+import { Check, Loader2, Sparkles, ArrowLeft, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
-import { PLANS, PLAN_ORDER, type PlanTier } from "@/lib/plans";
+import { PLANS, PLAN_ORDER, LAUNCH_OFFER, type PlanTier } from "@/lib/plans";
 import { createCheckoutSession, changePlan } from "@/lib/billing.functions";
+import { createLaunchOfferCheckout } from "@/lib/launchOffer.functions";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/planos")({
   head: () => ({
