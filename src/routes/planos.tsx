@@ -96,10 +96,88 @@ function PlansPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <PlansHero />
+      {plan === "free" && <LaunchOfferBanner />}
       <PlansGrid currentPlan={plan} />
     </div>
   );
 }
+
+function LaunchOfferBanner() {
+  const { i18n } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const launchFn = useServerFn(createLaunchOfferCheckout);
+  const [loading, setLoading] = useState(false);
+  const isEnglish = i18n.language?.toLowerCase().startsWith("en");
+
+  const handleBuy = async () => {
+    if (!user) {
+      void navigate({ to: "/signup" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await launchFn();
+      if (result.url) {
+        window.location.href = result.url;
+      } else {
+        toast.error(isEnglish ? "Checkout error" : "Erro ao iniciar checkout");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border-2 border-primary bg-gradient-to-br from-primary/15 via-primary/5 to-background p-6 shadow-lg">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex-1">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">
+            <Zap className="h-3 w-3" />
+            {isEnglish ? "LAUNCH OFFER" : "OFERTA DE LANÇAMENTO"}
+          </div>
+          <h3 className="text-xl font-bold sm:text-2xl">
+            {isEnglish
+              ? "Pro plan with one single payment"
+              : "Plano Pro com pagamento único"}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isEnglish
+              ? "Pay once, no monthly subscription. PIX or credit card."
+              : "Pague uma única vez, sem mensalidade. PIX ou cartão de crédito."}
+          </p>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-sm text-muted-foreground line-through">
+              R$ {LAUNCH_OFFER.regularPriceBRL.toFixed(2).replace(".", ",")}
+            </span>
+            <span className="text-3xl font-bold text-primary">
+              R$ {LAUNCH_OFFER.amountBRL.toFixed(2).replace(".", ",")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {isEnglish ? "one-time" : "pagamento único"}
+            </span>
+          </div>
+        </div>
+        <Button
+          size="lg"
+          className="gap-2 sm:min-w-[180px]"
+          onClick={() => void handleBuy()}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Zap className="h-4 w-4" />
+          )}
+          {isEnglish ? "Buy now" : "Comprar agora"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 
 function PlansHero() {
   const { t } = useTranslation();
