@@ -945,6 +945,16 @@ function AdminPage() {
           </>
         )}
       </div>
+      <AdminClientDetailDialog
+        clientId={detailClientId}
+        open={detailClientId !== null}
+        onOpenChange={(o) => !o && setDetailClientId(null)}
+        onStatusChanged={(id, status) =>
+          setClients((prev) =>
+            prev.map((c) => (c.client_id === id ? { ...c, status } : c)),
+          )
+        }
+      />
     </AppLayout>
   );
 }
