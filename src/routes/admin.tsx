@@ -26,6 +26,8 @@ import {
   deleteReviewAdmin,
   type AdminReview,
 } from "@/lib/reviews.functions";
+import { adminDeleteUser } from "@/lib/adminUsers.functions";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
