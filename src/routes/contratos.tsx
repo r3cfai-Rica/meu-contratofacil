@@ -213,6 +213,7 @@ function ContractsPage() {
                 <TableHead>{t("common.value")}</TableHead>
                 <TableHead>{t("contracts.startDate")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -237,6 +238,21 @@ function ContractsPage() {
                   </TableCell>
                   <TableCell>
                     <ContractStatusBadge status={c.status} />
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={(e) => void handleDelete(e, c)}
+                      disabled={deletingId === c.id}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                      aria-label="Excluir contrato"
+                      title="Excluir contrato"
+                    >
+                      {deletingId === c.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}
