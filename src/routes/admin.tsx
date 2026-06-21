@@ -500,7 +500,7 @@ function AdminPage() {
                         <TableBody>
                           {filtered.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={8} className="text-center text-muted-foreground">
+                              <TableCell colSpan={9} className="text-center text-muted-foreground">
                                 Nenhum usuário encontrado.
                               </TableCell>
                             </TableRow>
@@ -531,6 +531,21 @@ function AdminPage() {
                                 <TableCell className="text-right">{u.invoices_count}</TableCell>
                                 <TableCell className="text-sm">
                                   {u.current_period_end ? formatDateBR(u.current_period_end) : "—"}
+                                </TableCell>
+                                <TableCell>
+                                  <button
+                                    onClick={() => void handleDeleteUser(u.user_id, u.email)}
+                                    disabled={deletingUser === u.user_id || u.user_id === currentUser?.id}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                                    aria-label="Excluir usuário"
+                                    title={u.user_id === currentUser?.id ? "Você não pode excluir sua própria conta" : "Excluir usuário e todos os dados"}
+                                  >
+                                    {deletingUser === u.user_id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </button>
                                 </TableCell>
                               </TableRow>
                             ))
