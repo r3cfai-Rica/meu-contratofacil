@@ -494,6 +494,7 @@ function AdminPage() {
                             <TableHead className="text-right">Clientes</TableHead>
                             <TableHead className="text-right">Cobranças</TableHead>
                             <TableHead>Próx. cobrança</TableHead>
+                            <TableHead className="w-12"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
