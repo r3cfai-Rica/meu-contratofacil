@@ -74,6 +74,21 @@ function ContractsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [selected, setSelected] = useState<Contract | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, c: Contract) => {
+    e.stopPropagation();
+    if (!confirm(`Excluir o contrato ${c.contract_number}? Esta ação não pode ser desfeita.`)) return;
+    setDeletingId(c.id);
+    const { error } = await supabase.from("contracts").delete().eq("id", c.id);
+    setDeletingId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Contrato excluído");
+    setContracts((prev) => prev.filter((x) => x.id !== c.id));
+  };
 
   const limit = planInfo.limits.maxActiveContracts;
   const activeCount = contracts.filter((c) => c.status !== "cancelled").length;
