@@ -180,6 +180,23 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState<string>("users");
   const [deletingClient, setDeletingClient] = useState<string | null>(null);
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const deleteUserFn = useServerFn(adminDeleteUser);
+  const { user: currentUser } = useAuth();
+
+  const handleDeleteUser = async (uid: string, email: string) => {
+    if (!confirm(`Excluir DEFINITIVAMENTE o usuário ${email} e TODOS os dados (contratos, clientes, cobranças, assinatura)? Esta ação não pode ser desfeita.`)) return;
+    setDeletingUser(uid);
+    try {
+      await deleteUserFn({ data: { userId: uid } });
+      toast.success("Usuário excluído");
+      setUsers((prev) => prev.filter((u) => u.user_id !== uid));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir usuário");
+    } finally {
+      setDeletingUser(null);
+    }
+  };
 
   const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
     setActiveTab(tab);
