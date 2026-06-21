@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { FileSignature, Plus, Search } from "lucide-react";
+import { FileSignature, Plus, Search, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/AppLayout";
@@ -74,6 +74,21 @@ function ContractsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [selected, setSelected] = useState<Contract | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, c: Contract) => {
+    e.stopPropagation();
+    if (!confirm(`Excluir o contrato ${c.contract_number}? Esta ação não pode ser desfeita.`)) return;
+    setDeletingId(c.id);
+    const { error } = await supabase.from("contracts").delete().eq("id", c.id);
+    setDeletingId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Contrato excluído");
+    setContracts((prev) => prev.filter((x) => x.id !== c.id));
+  };
 
   const limit = planInfo.limits.maxActiveContracts;
   const activeCount = contracts.filter((c) => c.status !== "cancelled").length;
@@ -198,6 +213,7 @@ function ContractsPage() {
                 <TableHead>{t("common.value")}</TableHead>
                 <TableHead>{t("contracts.startDate")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -222,6 +238,21 @@ function ContractsPage() {
                   </TableCell>
                   <TableCell>
                     <ContractStatusBadge status={c.status} />
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      onClick={(e) => void handleDelete(e, c)}
+                      disabled={deletingId === c.id}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                      aria-label="Excluir contrato"
+                      title="Excluir contrato"
+                    >
+                      {deletingId === c.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}

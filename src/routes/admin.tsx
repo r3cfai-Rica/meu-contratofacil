@@ -26,6 +26,8 @@ import {
   deleteReviewAdmin,
   type AdminReview,
 } from "@/lib/reviews.functions";
+import { adminDeleteUser } from "@/lib/adminUsers.functions";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -178,6 +180,23 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState<string>("users");
   const [deletingClient, setDeletingClient] = useState<string | null>(null);
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const deleteUserFn = useServerFn(adminDeleteUser);
+  const { user: currentUser } = useAuth();
+
+  const handleDeleteUser = async (uid: string, email: string) => {
+    if (!confirm(`Excluir DEFINITIVAMENTE o usuário ${email} e TODOS os dados (contratos, clientes, cobranças, assinatura)? Esta ação não pode ser desfeita.`)) return;
+    setDeletingUser(uid);
+    try {
+      await deleteUserFn({ data: { userId: uid } });
+      toast.success("Usuário excluído");
+      setUsers((prev) => prev.filter((u) => u.user_id !== uid));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir usuário");
+    } finally {
+      setDeletingUser(null);
+    }
+  };
 
   const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
     setActiveTab(tab);
@@ -475,12 +494,13 @@ function AdminPage() {
                             <TableHead className="text-right">Clientes</TableHead>
                             <TableHead className="text-right">Cobranças</TableHead>
                             <TableHead>Próx. cobrança</TableHead>
+                            <TableHead className="w-12"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filtered.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={8} className="text-center text-muted-foreground">
+                              <TableCell colSpan={9} className="text-center text-muted-foreground">
                                 Nenhum usuário encontrado.
                               </TableCell>
                             </TableRow>
@@ -511,6 +531,21 @@ function AdminPage() {
                                 <TableCell className="text-right">{u.invoices_count}</TableCell>
                                 <TableCell className="text-sm">
                                   {u.current_period_end ? formatDateBR(u.current_period_end) : "—"}
+                                </TableCell>
+                                <TableCell>
+                                  <button
+                                    onClick={() => void handleDeleteUser(u.user_id, u.email)}
+                                    disabled={deletingUser === u.user_id || u.user_id === currentUser?.id}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                                    aria-label="Excluir usuário"
+                                    title={u.user_id === currentUser?.id ? "Você não pode excluir sua própria conta" : "Excluir usuário e todos os dados"}
+                                  >
+                                    {deletingUser === u.user_id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
+                                  </button>
                                 </TableCell>
                               </TableRow>
                             ))

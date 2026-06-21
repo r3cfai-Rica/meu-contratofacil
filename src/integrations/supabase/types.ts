@@ -586,6 +586,10 @@ export type Database = {
         Args: { _contract_id: string }
         Returns: undefined
       }
+      admin_delete_user_cascade: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       admin_get_client_details: { Args: { _client_id: string }; Returns: Json }
       admin_update_client_status: {
         Args: {
