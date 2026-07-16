@@ -2,12 +2,21 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import ptBR from "@/locales/pt-BR.json";
 import enUS from "@/locales/en-US.json";
+import itIT from "@/locales/it-IT.json";
+import esES from "@/locales/es-ES.json";
 
 export const STORAGE_KEY = "contratofacil.lang";
 export const DEFAULT_LANGUAGE = "pt-BR";
 
-function normalizeLanguage(language?: string | null) {
-  return language?.toLowerCase().startsWith("en") ? "en-US" : "pt-BR";
+export const SUPPORTED_LANGUAGES = ["pt-BR", "en-US", "it-IT", "es-ES"] as const;
+export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+
+function normalizeLanguage(language?: string | null): SupportedLanguage {
+  const lang = language?.toLowerCase() ?? "";
+  if (lang.startsWith("en")) return "en-US";
+  if (lang.startsWith("it")) return "it-IT";
+  if (lang.startsWith("es")) return "es-ES";
+  return "pt-BR";
 }
 
 function getBrowserLanguage() {
@@ -24,6 +33,8 @@ if (!i18n.isInitialized) {
     resources: {
       "pt-BR": { translation: ptBR },
       "en-US": { translation: enUS },
+      "it-IT": { translation: itIT },
+      "es-ES": { translation: esES },
     },
     ns: ["translation"],
     defaultNS: "translation",

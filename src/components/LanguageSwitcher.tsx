@@ -12,6 +12,8 @@ import { DEFAULT_LANGUAGE, normalizeLanguage } from "@/lib/i18n";
 const LANGS = [
   { code: "pt-BR", flag: "🇧🇷", short: "PT", label: "Português (Brasil)" },
   { code: "en-US", flag: "🇺🇸", short: "EN", label: "English (US)" },
+  { code: "it-IT", flag: "🇮🇹", short: "IT", label: "Italiano" },
+  { code: "es-ES", flag: "🇪🇸", short: "ES", label: "Español" },
 ] as const;
 
 export function LanguageSwitcher({ className }: { className?: string }) {
@@ -23,8 +25,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
   }, [i18n.language, i18n.resolvedLanguage]);
 
   const current =
-    LANGS.find((l) => l.code === language) ??
-    (language.startsWith("en") ? LANGS[1] : LANGS[0]);
+    LANGS.find((l) => l.code === language) ?? LANGS[0];
 
   return (
     <DropdownMenu>
