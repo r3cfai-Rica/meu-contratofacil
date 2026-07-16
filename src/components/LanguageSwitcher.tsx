@@ -25,8 +25,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
   }, [i18n.language, i18n.resolvedLanguage]);
 
   const current =
-    LANGS.find((l) => l.code === language) ??
-    (language.startsWith("en") ? LANGS[1] : LANGS[0]);
+    LANGS.find((l) => l.code === language) ?? LANGS[0];
 
   return (
     <DropdownMenu>
