@@ -157,7 +157,7 @@ interface AdminContractRow {
 }
 
 function AdminPage() {
-  const { isAdmin, loading: roleLoading } = useIsAdmin();
+  const { canView, canWrite, loading: roleLoading } = useIsAdmin();
   const navigate = useNavigate();
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [users, setUsers] = useState<AdminUserRow[]>([]);
@@ -165,8 +165,10 @@ function AdminPage() {
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [clients, setClients] = useState<AdminClientRow[]>([]);
   const [contracts, setContracts] = useState<AdminContractRow[]>([]);
+  const [userRoles, setUserRoles] = useState<Record<string, "admin" | "viewer">>({});
   const [contractSearch, setContractSearch] = useState("");
   const [deletingContract, setDeletingContract] = useState<string | null>(null);
+  const [deletingPayment, setDeletingPayment] = useState<string | null>(null);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const fetchReviews = useServerFn(listAllReviewsAdmin);
   const moderateFn = useServerFn(moderateReview);
@@ -181,8 +183,14 @@ function AdminPage() {
   const [deletingClient, setDeletingClient] = useState<string | null>(null);
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [changingRole, setChangingRole] = useState<string | null>(null);
   const deleteUserFn = useServerFn(adminDeleteUser);
   const { user: currentUser } = useAuth();
+
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
   const handleDeleteUser = async (uid: string, email: string) => {
     if (!confirm(`Excluir DEFINITIVAMENTE o usuário ${email} e TODOS os dados (contratos, clientes, cobranças, assinatura)? Esta ação não pode ser desfeita.`)) return;
@@ -197,6 +205,35 @@ function AdminPage() {
       setDeletingUser(null);
     }
   };
+
+  const handleSetRole = async (uid: string, email: string, role: "admin" | "viewer" | "none") => {
+    const label = role === "admin" ? "administrador" : role === "viewer" ? "leitor (somente consulta)" : "usuário comum";
+    if (!confirm(`Definir ${email} como ${label}?`)) return;
+    setChangingRole(uid);
+    const { error } = await rpc("admin_set_user_role", { _user_id: uid, _role: role });
+    setChangingRole(null);
+    if (error) return toast.error(error.message);
+    toast.success("Papel atualizado");
+    setUserRoles((prev) => {
+      const next = { ...prev };
+      if (role === "none") delete next[uid];
+      else next[uid] = role;
+      return next;
+    });
+    setUsers((prev) => prev.map((u) => (u.user_id === uid ? { ...u, is_admin: role === "admin" } : u)));
+  };
+
+  const handleDeletePayment = async (invoiceId: string, desc: string) => {
+    if (!confirm(`Excluir a cobrança "${desc}"? Esta ação não pode ser desfeita.`)) return;
+    setDeletingPayment(invoiceId);
+    const { error } = await rpc("admin_delete_invoice", { _invoice_id: invoiceId });
+    setDeletingPayment(null);
+    if (error) return toast.error(error.message);
+    toast.success("Cobrança excluída");
+    setPayments((prev) => prev.filter((p) => p.invoice_id !== invoiceId));
+    void loadData();
+  };
+
 
   const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
     setActiveTab(tab);
