@@ -32,7 +32,7 @@ export function useIsAdmin(): AdminAccess {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .in("role", ["admin", "viewer"] as unknown as string[])
+      .in("role", ["admin", "viewer"])
       .then(({ data }) => {
         if (cancelled) return;
         const roles = (data ?? []).map((r) => (r as { role: string }).role);
