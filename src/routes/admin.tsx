@@ -284,13 +284,13 @@ function AdminPage() {
 
   useEffect(() => {
     if (roleLoading) return;
-    if (!isAdmin) {
+    if (!canView) {
       toast.error("Acesso restrito");
       navigate({ to: "/dashboard" });
       return;
     }
     void loadData();
-  }, [isAdmin, roleLoading, navigate]);
+  }, [canView, roleLoading, navigate]);
 
   const loadData = async () => {
     setLoading(true);
@@ -305,6 +305,14 @@ function AdminPage() {
         args: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: { message: string } | null }>)("list_admin_contracts", { _limit: 500 }),
     ]);
+    const rolesRes = await rpc("list_admin_user_roles");
+    if (!rolesRes.error) {
+      const map: Record<string, "admin" | "viewer"> = {};
+      for (const r of (rolesRes.data as Array<{ user_id: string; role: "admin" | "viewer" }>) ?? []) {
+        map[r.user_id] = r.role;
+      }
+      setUserRoles(map);
+    }
     if (ovRes.error) toast.error(ovRes.error.message);
     else setOverview(ovRes.data as unknown as AdminOverview);
     if (usersRes.error) toast.error(usersRes.error.message);
@@ -377,7 +385,7 @@ function AdminPage() {
     });
   }, [clients, clientSearch, clientPlanFilter]);
 
-  if (roleLoading || !isAdmin) {
+  if (roleLoading || !canView) {
     return (
       <AppLayout>
         <div className="flex h-64 items-center justify-center">
