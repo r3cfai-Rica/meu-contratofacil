@@ -1,0 +1,1 @@
+ALTER TABLE public.team_members ADD COLUMN IF NOT EXISTS permission TEXT NOT NULL DEFAULT 'editor' CHECK (permission IN ('viewer','editor'));

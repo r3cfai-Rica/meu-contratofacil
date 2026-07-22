@@ -17,6 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/use-plan";
@@ -44,6 +51,7 @@ interface TeamMemberRow {
   invite_token: string;
   invited_at: string;
   accepted_at: string | null;
+  permission: "viewer" | "editor";
 }
 
 function TeamPage() {
@@ -67,7 +75,7 @@ function TeamPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("team_members")
-      .select("id, email, status, invite_token, invited_at, accepted_at")
+      .select("id, email, status, invite_token, invited_at, accepted_at, permission")
       .eq("owner_id", user.id)
       .order("invited_at", { ascending: false });
     setLoading(false);
@@ -113,6 +121,20 @@ function TeamPage() {
     }
     toast.success(t("team.accessRevoked"));
     void load();
+  };
+
+  const updatePermission = async (id: string, permission: "viewer" | "editor") => {
+    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, permission } : m)));
+    const { error } = await supabase
+      .from("team_members")
+      .update({ permission })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      void load();
+      return;
+    }
+    toast.success(t("team.permissionUpdated", { defaultValue: "Permissão atualizada" }));
   };
 
   const copyInviteLink = (token: string) => {
@@ -233,6 +255,7 @@ function TeamPage() {
               <TableRow>
                 <TableHead>{t("team.emailHeader")}</TableHead>
                 <TableHead>{t("team.statusHeader")}</TableHead>
+                <TableHead>{t("team.permissionHeader", { defaultValue: "Permissão" })}</TableHead>
                 <TableHead>{t("team.invitedAtHeader")}</TableHead>
                 <TableHead className="text-right">{t("team.actionsHeader")}</TableHead>
               </TableRow>
@@ -249,6 +272,25 @@ function TeamPage() {
                     ) : (
                       <Badge variant="outline">{t("team.statusRevoked")}</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={m.permission ?? "editor"}
+                      onValueChange={(v) => updatePermission(m.id, v as "viewer" | "editor")}
+                      disabled={m.status === "revoked"}
+                    >
+                      <SelectTrigger className="h-8 w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="viewer">
+                          {t("team.permissionViewer", { defaultValue: "Somente ver" })}
+                        </SelectItem>
+                        <SelectItem value="editor">
+                          {t("team.permissionEditor", { defaultValue: "Editar" })}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(m.invited_at).toLocaleDateString(i18n.language)}
