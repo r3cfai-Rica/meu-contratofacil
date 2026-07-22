@@ -51,6 +51,7 @@ interface TeamMemberRow {
   invite_token: string;
   invited_at: string;
   accepted_at: string | null;
+  permission: "viewer" | "editor";
 }
 
 function TeamPage() {
