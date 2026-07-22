@@ -562,6 +562,11 @@ function AdminPage() {
                                           Admin
                                         </Badge>
                                       )}
+                                      {!u.is_admin && userRoles[u.user_id] === "viewer" && (
+                                        <Badge variant="outline" className="gap-1">
+                                          Leitor
+                                        </Badge>
+                                      )}
                                     </span>
                                     <span className="text-xs text-muted-foreground">{u.email}</span>
                                   </div>
@@ -578,19 +583,34 @@ function AdminPage() {
                                   {u.current_period_end ? formatDateBR(u.current_period_end) : "—"}
                                 </TableCell>
                                 <TableCell>
-                                  <button
-                                    onClick={() => void handleDeleteUser(u.user_id, u.email)}
-                                    disabled={deletingUser === u.user_id || u.user_id === currentUser?.id}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
-                                    aria-label="Excluir usuário"
-                                    title={u.user_id === currentUser?.id ? "Você não pode excluir sua própria conta" : "Excluir usuário e todos os dados"}
-                                  >
-                                    {deletingUser === u.user_id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </button>
+                                  {canWrite && u.user_id !== currentUser?.id && (
+                                    <div className="flex items-center gap-1">
+                                      <select
+                                        value={u.is_admin ? "admin" : (userRoles[u.user_id] === "viewer" ? "viewer" : "none")}
+                                        onChange={(e) => void handleSetRole(u.user_id, u.email, e.target.value as "admin" | "viewer" | "none")}
+                                        disabled={changingRole === u.user_id}
+                                        className="h-8 rounded-md border border-border/70 bg-background px-2 text-xs"
+                                        title="Definir papel"
+                                      >
+                                        <option value="none">Usuário</option>
+                                        <option value="viewer">Leitor</option>
+                                        <option value="admin">Admin</option>
+                                      </select>
+                                      <button
+                                        onClick={() => void handleDeleteUser(u.user_id, u.email)}
+                                        disabled={deletingUser === u.user_id}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                                        aria-label="Excluir usuário"
+                                        title="Excluir usuário e todos os dados"
+                                      >
+                                        {deletingUser === u.user_id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4" />
+                                        )}
+                                      </button>
+                                    </div>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))
