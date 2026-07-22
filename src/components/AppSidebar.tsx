@@ -39,7 +39,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { isAdmin } = useIsAdmin();
+  const { canView: isAdmin } = useIsAdmin();
   const { t } = useTranslation();
 
   return (

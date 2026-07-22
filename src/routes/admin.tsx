@@ -157,7 +157,7 @@ interface AdminContractRow {
 }
 
 function AdminPage() {
-  const { isAdmin, loading: roleLoading } = useIsAdmin();
+  const { canView, canWrite, loading: roleLoading } = useIsAdmin();
   const navigate = useNavigate();
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [users, setUsers] = useState<AdminUserRow[]>([]);
@@ -165,8 +165,10 @@ function AdminPage() {
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [clients, setClients] = useState<AdminClientRow[]>([]);
   const [contracts, setContracts] = useState<AdminContractRow[]>([]);
+  const [userRoles, setUserRoles] = useState<Record<string, "admin" | "viewer">>({});
   const [contractSearch, setContractSearch] = useState("");
   const [deletingContract, setDeletingContract] = useState<string | null>(null);
+  const [deletingPayment, setDeletingPayment] = useState<string | null>(null);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const fetchReviews = useServerFn(listAllReviewsAdmin);
   const moderateFn = useServerFn(moderateReview);
@@ -181,8 +183,14 @@ function AdminPage() {
   const [deletingClient, setDeletingClient] = useState<string | null>(null);
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [changingRole, setChangingRole] = useState<string | null>(null);
   const deleteUserFn = useServerFn(adminDeleteUser);
   const { user: currentUser } = useAuth();
+
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
   const handleDeleteUser = async (uid: string, email: string) => {
     if (!confirm(`Excluir DEFINITIVAMENTE o usuário ${email} e TODOS os dados (contratos, clientes, cobranças, assinatura)? Esta ação não pode ser desfeita.`)) return;
@@ -197,6 +205,35 @@ function AdminPage() {
       setDeletingUser(null);
     }
   };
+
+  const handleSetRole = async (uid: string, email: string, role: "admin" | "viewer" | "none") => {
+    const label = role === "admin" ? "administrador" : role === "viewer" ? "leitor (somente consulta)" : "usuário comum";
+    if (!confirm(`Definir ${email} como ${label}?`)) return;
+    setChangingRole(uid);
+    const { error } = await rpc("admin_set_user_role", { _user_id: uid, _role: role });
+    setChangingRole(null);
+    if (error) return toast.error(error.message);
+    toast.success("Papel atualizado");
+    setUserRoles((prev) => {
+      const next = { ...prev };
+      if (role === "none") delete next[uid];
+      else next[uid] = role;
+      return next;
+    });
+    setUsers((prev) => prev.map((u) => (u.user_id === uid ? { ...u, is_admin: role === "admin" } : u)));
+  };
+
+  const handleDeletePayment = async (invoiceId: string, desc: string) => {
+    if (!confirm(`Excluir a cobrança "${desc}"? Esta ação não pode ser desfeita.`)) return;
+    setDeletingPayment(invoiceId);
+    const { error } = await rpc("admin_delete_invoice", { _invoice_id: invoiceId });
+    setDeletingPayment(null);
+    if (error) return toast.error(error.message);
+    toast.success("Cobrança excluída");
+    setPayments((prev) => prev.filter((p) => p.invoice_id !== invoiceId));
+    void loadData();
+  };
+
 
   const goToTab = (tab: string, plan?: "all" | "free" | "pro" | "business") => {
     setActiveTab(tab);
@@ -247,13 +284,13 @@ function AdminPage() {
 
   useEffect(() => {
     if (roleLoading) return;
-    if (!isAdmin) {
+    if (!canView) {
       toast.error("Acesso restrito");
       navigate({ to: "/dashboard" });
       return;
     }
     void loadData();
-  }, [isAdmin, roleLoading, navigate]);
+  }, [canView, roleLoading, navigate]);
 
   const loadData = async () => {
     setLoading(true);
@@ -268,6 +305,14 @@ function AdminPage() {
         args: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: { message: string } | null }>)("list_admin_contracts", { _limit: 500 }),
     ]);
+    const rolesRes = await rpc("list_admin_user_roles");
+    if (!rolesRes.error) {
+      const map: Record<string, "admin" | "viewer"> = {};
+      for (const r of (rolesRes.data as Array<{ user_id: string; role: "admin" | "viewer" }>) ?? []) {
+        map[r.user_id] = r.role;
+      }
+      setUserRoles(map);
+    }
     if (ovRes.error) toast.error(ovRes.error.message);
     else setOverview(ovRes.data as unknown as AdminOverview);
     if (usersRes.error) toast.error(usersRes.error.message);
@@ -340,7 +385,7 @@ function AdminPage() {
     });
   }, [clients, clientSearch, clientPlanFilter]);
 
-  if (roleLoading || !isAdmin) {
+  if (roleLoading || !canView) {
     return (
       <AppLayout>
         <div className="flex h-64 items-center justify-center">
@@ -517,6 +562,11 @@ function AdminPage() {
                                           Admin
                                         </Badge>
                                       )}
+                                      {!u.is_admin && userRoles[u.user_id] === "viewer" && (
+                                        <Badge variant="outline" className="gap-1">
+                                          Leitor
+                                        </Badge>
+                                      )}
                                     </span>
                                     <span className="text-xs text-muted-foreground">{u.email}</span>
                                   </div>
@@ -533,19 +583,34 @@ function AdminPage() {
                                   {u.current_period_end ? formatDateBR(u.current_period_end) : "—"}
                                 </TableCell>
                                 <TableCell>
-                                  <button
-                                    onClick={() => void handleDeleteUser(u.user_id, u.email)}
-                                    disabled={deletingUser === u.user_id || u.user_id === currentUser?.id}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
-                                    aria-label="Excluir usuário"
-                                    title={u.user_id === currentUser?.id ? "Você não pode excluir sua própria conta" : "Excluir usuário e todos os dados"}
-                                  >
-                                    {deletingUser === u.user_id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </button>
+                                  {canWrite && u.user_id !== currentUser?.id && (
+                                    <div className="flex items-center gap-1">
+                                      <select
+                                        value={u.is_admin ? "admin" : (userRoles[u.user_id] === "viewer" ? "viewer" : "none")}
+                                        onChange={(e) => void handleSetRole(u.user_id, u.email, e.target.value as "admin" | "viewer" | "none")}
+                                        disabled={changingRole === u.user_id}
+                                        className="h-8 rounded-md border border-border/70 bg-background px-2 text-xs"
+                                        title="Definir papel"
+                                      >
+                                        <option value="none">Usuário</option>
+                                        <option value="viewer">Leitor</option>
+                                        <option value="admin">Admin</option>
+                                      </select>
+                                      <button
+                                        onClick={() => void handleDeleteUser(u.user_id, u.email)}
+                                        disabled={deletingUser === u.user_id}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
+                                        aria-label="Excluir usuário"
+                                        title="Excluir usuário e todos os dados"
+                                      >
+                                        {deletingUser === u.user_id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4" />
+                                        )}
+                                      </button>
+                                    </div>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -667,19 +732,21 @@ function AdminPage() {
                                 </TableCell>
                                 <TableCell className="text-sm">{formatDateBR(c.created_at)}</TableCell>
                                 <TableCell onClick={(e) => e.stopPropagation()}>
-                                  <button
-                                    onClick={() => void handleDeleteClient(c.client_id, c.full_name)}
-                                    disabled={deletingClient === c.client_id}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                                    aria-label="Excluir cliente"
-                                    title="Excluir cliente (e contratos/cobranças vinculados)"
-                                  >
-                                    {deletingClient === c.client_id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </button>
+                                  {canWrite && (
+                                    <button
+                                      onClick={() => void handleDeleteClient(c.client_id, c.full_name)}
+                                      disabled={deletingClient === c.client_id}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                      aria-label="Excluir cliente"
+                                      title="Excluir cliente (e contratos/cobranças vinculados)"
+                                    >
+                                      {deletingClient === c.client_id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -767,19 +834,21 @@ function AdminPage() {
                                   <TableCell className="text-right">{formatCurrencyBRL(Number(c.total_value))}</TableCell>
                                   <TableCell className="text-sm">{formatDateBR(c.start_date)}</TableCell>
                                   <TableCell>
-                                    <button
-                                      onClick={() => void handleDeleteContract(c.contract_id, c.contract_number)}
-                                      disabled={deletingContract === c.contract_id}
-                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                                      aria-label="Excluir contrato"
-                                      title="Excluir contrato"
-                                    >
-                                      {deletingContract === c.contract_id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="h-4 w-4" />
-                                      )}
-                                    </button>
+                                    {canWrite && (
+                                      <button
+                                        onClick={() => void handleDeleteContract(c.contract_id, c.contract_number)}
+                                        disabled={deletingContract === c.contract_id}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                        aria-label="Excluir contrato"
+                                        title="Excluir contrato"
+                                      >
+                                        {deletingContract === c.contract_id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4" />
+                                        )}
+                                      </button>
+                                    )}
                                   </TableCell>
                                 </TableRow>
                               ))
@@ -808,12 +877,13 @@ function AdminPage() {
                             <TableHead>Cliente</TableHead>
                             <TableHead>Descrição</TableHead>
                             <TableHead className="text-right">Valor</TableHead>
+                            {canWrite && <TableHead className="w-12"></TableHead>}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {payments.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={5} className="text-center text-muted-foreground">
+                              <TableCell colSpan={canWrite ? 6 : 5} className="text-center text-muted-foreground">
                                 Nenhum pagamento ainda.
                               </TableCell>
                             </TableRow>
@@ -829,6 +899,23 @@ function AdminPage() {
                                 <TableCell className="text-right font-medium">
                                   {formatCurrencyBRL(p.amount_cents / 100)}
                                 </TableCell>
+                                {canWrite && (
+                                  <TableCell>
+                                    <button
+                                      onClick={() => void handleDeletePayment(p.invoice_id, p.description)}
+                                      disabled={deletingPayment === p.invoice_id}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                      aria-label="Excluir cobrança"
+                                      title="Excluir cobrança"
+                                    >
+                                      {deletingPayment === p.invoice_id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </TableCell>
+                                )}
                               </TableRow>
                             ))
                           )}
@@ -943,30 +1030,32 @@ function AdminPage() {
                                   {formatDateBR(r.created_at)}
                                 </span>
                               </div>
-                              <div className="flex gap-2">
-                                {r.status !== "approved" && (
+                              {canWrite && (
+                                <div className="flex gap-2">
+                                  {r.status !== "approved" && (
+                                    <button
+                                      onClick={() => void handleModerate(r.id, "approved")}
+                                      className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-primary/10 hover:text-primary"
+                                    >
+                                      <Check className="h-3.5 w-3.5" /> Aprovar
+                                    </button>
+                                  )}
+                                  {r.status !== "rejected" && (
+                                    <button
+                                      onClick={() => void handleModerate(r.id, "rejected")}
+                                      className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
+                                    >
+                                      <X className="h-3.5 w-3.5" /> Rejeitar
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => void handleModerate(r.id, "approved")}
-                                    className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-primary/10 hover:text-primary"
-                                  >
-                                    <Check className="h-3.5 w-3.5" /> Aprovar
-                                  </button>
-                                )}
-                                {r.status !== "rejected" && (
-                                  <button
-                                    onClick={() => void handleModerate(r.id, "rejected")}
+                                    onClick={() => void handleDeleteReview(r.id)}
                                     className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
                                   >
-                                    <X className="h-3.5 w-3.5" /> Rejeitar
+                                    <Trash2 className="h-3.5 w-3.5" /> Apagar
                                   </button>
-                                )}
-                                <button
-                                  onClick={() => void handleDeleteReview(r.id)}
-                                  className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" /> Apagar
-                                </button>
-                              </div>
+                                </div>
+                              )}
                             </div>
                             <p className="mt-3 text-sm text-foreground/90">"{r.comment}"</p>
                           </div>

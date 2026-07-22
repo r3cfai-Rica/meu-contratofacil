@@ -586,11 +586,19 @@ export type Database = {
         Args: { _contract_id: string }
         Returns: undefined
       }
+      admin_delete_invoice: {
+        Args: { _invoice_id: string }
+        Returns: undefined
+      }
       admin_delete_user_cascade: {
         Args: { _user_id: string }
         Returns: undefined
       }
       admin_get_client_details: { Args: { _client_id: string }; Returns: Json }
+      admin_set_user_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: undefined
+      }
       admin_update_client_status: {
         Args: {
           _client_id: string
@@ -617,6 +625,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["plan_tier"]
       }
+      has_admin_access: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -693,6 +702,13 @@ export type Database = {
           user_email: string
         }[]
       }
+      list_admin_user_roles: {
+        Args: never
+        Returns: {
+          role: string
+          user_id: string
+        }[]
+      }
       list_admin_users: {
         Args: never
         Returns: {
@@ -727,7 +743,7 @@ export type Database = {
     }
     Enums: {
       account_type: "mei" | "autonomo" | "prestador" | "liberal"
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "viewer"
       client_status: "active" | "inactive" | "canceled"
       contract_status:
         | "draft"
@@ -874,7 +890,7 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["mei", "autonomo", "prestador", "liberal"],
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "viewer"],
       client_status: ["active", "inactive", "canceled"],
       contract_status: [
         "draft",
