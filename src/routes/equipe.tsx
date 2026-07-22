@@ -75,7 +75,7 @@ function TeamPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("team_members")
-      .select("id, email, status, invite_token, invited_at, accepted_at")
+      .select("id, email, status, invite_token, invited_at, accepted_at, permission")
       .eq("owner_id", user.id)
       .order("invited_at", { ascending: false });
     setLoading(false);
