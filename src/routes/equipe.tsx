@@ -123,6 +123,20 @@ function TeamPage() {
     void load();
   };
 
+  const updatePermission = async (id: string, permission: "viewer" | "editor") => {
+    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, permission } : m)));
+    const { error } = await supabase
+      .from("team_members")
+      .update({ permission })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      void load();
+      return;
+    }
+    toast.success(t("team.permissionUpdated", { defaultValue: "Permissão atualizada" }));
+  };
+
   const copyInviteLink = (token: string) => {
     const url = `${window.location.origin}/aceitar-convite/${token}`;
     void navigator.clipboard.writeText(url);
