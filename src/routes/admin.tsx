@@ -873,12 +873,13 @@ function AdminPage() {
                             <TableHead>Cliente</TableHead>
                             <TableHead>Descrição</TableHead>
                             <TableHead className="text-right">Valor</TableHead>
+                            {canWrite && <TableHead className="w-12"></TableHead>}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {payments.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={5} className="text-center text-muted-foreground">
+                              <TableCell colSpan={canWrite ? 6 : 5} className="text-center text-muted-foreground">
                                 Nenhum pagamento ainda.
                               </TableCell>
                             </TableRow>
@@ -894,6 +895,23 @@ function AdminPage() {
                                 <TableCell className="text-right font-medium">
                                   {formatCurrencyBRL(p.amount_cents / 100)}
                                 </TableCell>
+                                {canWrite && (
+                                  <TableCell>
+                                    <button
+                                      onClick={() => void handleDeletePayment(p.invoice_id, p.description)}
+                                      disabled={deletingPayment === p.invoice_id}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                      aria-label="Excluir cobrança"
+                                      title="Excluir cobrança"
+                                    >
+                                      {deletingPayment === p.invoice_id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </TableCell>
+                                )}
                               </TableRow>
                             ))
                           )}
