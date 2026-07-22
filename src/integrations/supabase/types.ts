@@ -526,6 +526,7 @@ export type Database = {
           invited_at: string
           member_user_id: string | null
           owner_id: string
+          permission: string
           status: Database["public"]["Enums"]["team_invite_status"]
           updated_at: string
         }
@@ -538,6 +539,7 @@ export type Database = {
           invited_at?: string
           member_user_id?: string | null
           owner_id: string
+          permission?: string
           status?: Database["public"]["Enums"]["team_invite_status"]
           updated_at?: string
         }
@@ -550,6 +552,7 @@ export type Database = {
           invited_at?: string
           member_user_id?: string | null
           owner_id?: string
+          permission?: string
           status?: Database["public"]["Enums"]["team_invite_status"]
           updated_at?: string
         }
