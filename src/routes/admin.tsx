@@ -732,19 +732,21 @@ function AdminPage() {
                                 </TableCell>
                                 <TableCell className="text-sm">{formatDateBR(c.created_at)}</TableCell>
                                 <TableCell onClick={(e) => e.stopPropagation()}>
-                                  <button
-                                    onClick={() => void handleDeleteClient(c.client_id, c.full_name)}
-                                    disabled={deletingClient === c.client_id}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                                    aria-label="Excluir cliente"
-                                    title="Excluir cliente (e contratos/cobranças vinculados)"
-                                  >
-                                    {deletingClient === c.client_id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </button>
+                                  {canWrite && (
+                                    <button
+                                      onClick={() => void handleDeleteClient(c.client_id, c.full_name)}
+                                      disabled={deletingClient === c.client_id}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                      aria-label="Excluir cliente"
+                                      title="Excluir cliente (e contratos/cobranças vinculados)"
+                                    >
+                                      {deletingClient === c.client_id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -832,19 +834,21 @@ function AdminPage() {
                                   <TableCell className="text-right">{formatCurrencyBRL(Number(c.total_value))}</TableCell>
                                   <TableCell className="text-sm">{formatDateBR(c.start_date)}</TableCell>
                                   <TableCell>
-                                    <button
-                                      onClick={() => void handleDeleteContract(c.contract_id, c.contract_number)}
-                                      disabled={deletingContract === c.contract_id}
-                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                                      aria-label="Excluir contrato"
-                                      title="Excluir contrato"
-                                    >
-                                      {deletingContract === c.contract_id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="h-4 w-4" />
-                                      )}
-                                    </button>
+                                    {canWrite && (
+                                      <button
+                                        onClick={() => void handleDeleteContract(c.contract_id, c.contract_number)}
+                                        disabled={deletingContract === c.contract_id}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                        aria-label="Excluir contrato"
+                                        title="Excluir contrato"
+                                      >
+                                        {deletingContract === c.contract_id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4" />
+                                        )}
+                                      </button>
+                                    )}
                                   </TableCell>
                                 </TableRow>
                               ))
@@ -1026,30 +1030,32 @@ function AdminPage() {
                                   {formatDateBR(r.created_at)}
                                 </span>
                               </div>
-                              <div className="flex gap-2">
-                                {r.status !== "approved" && (
+                              {canWrite && (
+                                <div className="flex gap-2">
+                                  {r.status !== "approved" && (
+                                    <button
+                                      onClick={() => void handleModerate(r.id, "approved")}
+                                      className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-primary/10 hover:text-primary"
+                                    >
+                                      <Check className="h-3.5 w-3.5" /> Aprovar
+                                    </button>
+                                  )}
+                                  {r.status !== "rejected" && (
+                                    <button
+                                      onClick={() => void handleModerate(r.id, "rejected")}
+                                      className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
+                                    >
+                                      <X className="h-3.5 w-3.5" /> Rejeitar
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => void handleModerate(r.id, "approved")}
-                                    className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-primary/10 hover:text-primary"
-                                  >
-                                    <Check className="h-3.5 w-3.5" /> Aprovar
-                                  </button>
-                                )}
-                                {r.status !== "rejected" && (
-                                  <button
-                                    onClick={() => void handleModerate(r.id, "rejected")}
+                                    onClick={() => void handleDeleteReview(r.id)}
                                     className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
                                   >
-                                    <X className="h-3.5 w-3.5" /> Rejeitar
+                                    <Trash2 className="h-3.5 w-3.5" /> Apagar
                                   </button>
-                                )}
-                                <button
-                                  onClick={() => void handleDeleteReview(r.id)}
-                                  className="inline-flex items-center gap-1 rounded-md border border-border/70 px-2 py-1 text-xs hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" /> Apagar
-                                </button>
-                              </div>
+                                </div>
+                              )}
                             </div>
                             <p className="mt-3 text-sm text-foreground/90">"{r.comment}"</p>
                           </div>
