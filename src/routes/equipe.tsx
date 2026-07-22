@@ -255,6 +255,7 @@ function TeamPage() {
               <TableRow>
                 <TableHead>{t("team.emailHeader")}</TableHead>
                 <TableHead>{t("team.statusHeader")}</TableHead>
+                <TableHead>{t("team.permissionHeader", { defaultValue: "Permissão" })}</TableHead>
                 <TableHead>{t("team.invitedAtHeader")}</TableHead>
                 <TableHead className="text-right">{t("team.actionsHeader")}</TableHead>
               </TableRow>
@@ -271,6 +272,25 @@ function TeamPage() {
                     ) : (
                       <Badge variant="outline">{t("team.statusRevoked")}</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={m.permission ?? "editor"}
+                      onValueChange={(v) => updatePermission(m.id, v as "viewer" | "editor")}
+                      disabled={m.status === "revoked"}
+                    >
+                      <SelectTrigger className="h-8 w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="viewer">
+                          {t("team.permissionViewer", { defaultValue: "Somente ver" })}
+                        </SelectItem>
+                        <SelectItem value="editor">
+                          {t("team.permissionEditor", { defaultValue: "Editar" })}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(m.invited_at).toLocaleDateString(i18n.language)}
